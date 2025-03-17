@@ -1,10 +1,19 @@
+import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'features/tasks/tasks_page.dart';
 import 'features/habits/habits_page.dart';
 import 'features/rewards/rewards_page.dart';
+import 'features/settings/settings_page.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,6 +21,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -33,6 +43,26 @@ class MyApp extends StatelessWidget {
           bodySmall: TextStyle(color: Colors.black),
         ),
       ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme(
+          brightness: Brightness.dark,
+          primary: Colors.white,
+          onPrimary: Colors.white,
+          secondary: Colors.white,
+          onSecondary: Colors.white,
+          error: Colors.red,
+          onError: Colors.black,
+          surface: Colors.black,
+          onSurface: Colors.white,
+        ),
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodySmall: TextStyle(color: Colors.white),
+        ),
+      ),
+      themeMode: themeNotifier.themeMode,
       home: const HomePage(),
     );
   }
@@ -57,29 +87,54 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _openSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsPage()),
+    );
+  }
+
+  void _openRewards(BuildContext context) {
+    setState(() {
+      _currentIndex = 2;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GestureDetector(
-              onTap: () {
-                // Azione da eseguire quando si tocca l'icona della gift card
-                print('Icona della gift card toccata');
-              },
-              child: Row(
-                children: [
-                  Icon(Icons.card_giftcard, size: 30, color: Colors.black),
-                  SizedBox(width: 8),
-                  Text(
-                    '$rewardsCount',
-                    style: TextStyle(fontSize: 24, color: Colors.black),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () {
+              _openRewards(context);
+            },
+            child: Row(
+              children: [
+                Icon(
+                  Icons.card_giftcard,
+                  size: 21,
+                  color: ColorScheme.of(context).primary,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '$rewardsCount',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: ColorScheme.of(context).primary,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            iconSize: 21,
+            color: ColorScheme.of(context).primary,
+            onPressed: () => _openSettings(context),
           ),
         ],
       ),
