@@ -93,6 +93,57 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       return;
     }
 
+    // Verifica se stiamo rischedulando un task completato
+    final bool isReschedulingCompletedTask =
+        widget.task != null && widget.task!.completionTime != 0;
+
+    // Verifica se la data selezionata è valida (non antecedente a oggi)
+    final bool isDeadlineValid = _deadline.isAfter(
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
+
+    if (!isDeadlineValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'The deadline must be at least today. Please select a valid date.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Se stiamo rischedulando un task completato, mostra una conferma
+    if (isReschedulingCompletedTask) {
+      final bool? shouldReschedule = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Reschedule Completed Task'),
+              content: Text(
+                'Rescheduling this task will reset its completion status and you will lose the ${widget.task!.score} points earned.\n\n'
+                'The task will be rescheduled with the deadline: ${DateFormat('dd/MM/yyyy').format(_deadline)}.\n\n'
+                'Do you want to continue?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.orange),
+                  child: const Text('Reschedule'),
+                ),
+              ],
+            ),
+      );
+
+      if (shouldReschedule != true) {
+        return;
+      }
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -104,7 +155,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       title: _titleController.text,
       description: _descriptionController.text,
       deadline: _deadline.millisecondsSinceEpoch,
-      completionTime: widget.task?.completionTime ?? 0,
+      // Reimposta il completionTime a 0 se stiamo rischedulando
+      completionTime:
+          isReschedulingCompletedTask ? 0 : (widget.task?.completionTime ?? 0),
       score: double.parse(_scoreController.text),
       penalty: double.parse(_penaltyController.text),
       createdTime: widget.task?.createdTime ?? now,
