@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'features/tasks/tasks_page.dart';
 import 'features/habits/habits_page.dart';
 import 'features/rewards/rewards_page.dart';
@@ -8,6 +11,13 @@ import 'features/settings/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inizializza sqflite_ffi per macOS
+  if (Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeNotifier(),
