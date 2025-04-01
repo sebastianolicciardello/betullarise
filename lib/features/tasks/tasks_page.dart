@@ -1,8 +1,13 @@
+import 'package:betullarise/database/points_database_helper.dart';
+import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
 import 'package:betullarise/features/tasks/task_detail_page.dart';
+import 'package:provider/provider.dart';
+
+import '../../model/point.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
@@ -275,6 +280,7 @@ class _TasksPageState extends State<TasksPage> {
                     IconButton(
                       icon: const Icon(Icons.circle_outlined),
                       onPressed: () async {
+                        // First update the task to mark it as completed
                         await _dbHelper.updateTask(
                           task.copyWith(
                             completionTime:
@@ -282,7 +288,40 @@ class _TasksPageState extends State<TasksPage> {
                             updatedTime: DateTime.now().millisecondsSinceEpoch,
                           ),
                         );
+
+                        // Then insert a new point with the task's score
+                        final pointsDb = PointsDatabaseHelper.instance;
+                        await pointsDb.insertPoint(
+                          Point(
+                            taskId: task.id!,
+                            points:
+                                task.score, // Using the task's score as points value
+                            insertTime: DateTime.now().millisecondsSinceEpoch,
+                          ),
+                        );
+
+                        // Aggiorna il provider per riflettere i nuovi punti
+                        if (mounted) {
+                          Provider.of<PointsProvider>(
+                            context,
+                            listen: false,
+                          ).addPoints(task.score);
+                        }
+
+                        // Reload tasks to update UI
                         _loadTasks();
+
+                        // Show a confirmation snackbar or some visual feedback
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Task completed! +${task.score} points',
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       },
                     ),
                 ],

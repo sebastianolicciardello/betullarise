@@ -6,7 +6,7 @@ import 'package:path/path.dart';
 
 class TasksDatabaseHelper {
   // Nome del database e tabella
-  static const _databaseName = 'tasks.db';
+  static const _databaseName = 'betullarise.db';
   static const _databaseVersion = 1;
   static const tableTasks = 'tasks';
 

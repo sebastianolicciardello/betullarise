@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:betullarise/provider/theme_notifier.dart';
+import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -19,8 +20,11 @@ void main() async {
   }
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeNotifier(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+        ChangeNotifierProvider(create: (_) => PointsProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -87,9 +91,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-  int rewardsCount = 5;
 
   final List<Widget> _pages = const [TasksPage(), HabitsPage(), RewardsPage()];
+
+  @override
+  void initState() {
+    super.initState();
+    // Carica i punti totali tramite il provider quando la pagina viene inizializzata
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PointsProvider>(context, listen: false).loadTotalPoints();
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -112,61 +124,66 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () {
-              _openRewards(context);
-            },
-            child: Row(
-              children: [
-                Icon(
-                  Icons.card_giftcard,
-                  size: 21,
-                  color: ColorScheme.of(context).primary,
+    // Usa Consumer per accedere ai punti totali dal provider
+    return Consumer<PointsProvider>(
+      builder: (context, pointsProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  _openRewards(context);
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.card_giftcard,
+                      size: 21,
+                      color: ColorScheme.of(context).primary,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '${pointsProvider.totalPoints.toInt()}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: ColorScheme.of(context).primary,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 8),
-                Text(
-                  '$rewardsCount',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: ColorScheme.of(context).primary,
-                  ),
-                ),
-              ],
+              ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                iconSize: 21,
+                color: ColorScheme.of(context).primary,
+                onPressed: () => _openSettings(context),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            iconSize: 21,
-            color: ColorScheme.of(context).primary,
-            onPressed: () => _openSettings(context),
+          body: _pages[_currentIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _onItemTapped,
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.task_alt_rounded),
+                label: 'Tasks',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.loop_rounded),
+                label: 'Habits',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.card_giftcard_rounded),
+                label: 'Rewards',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.task_alt_rounded),
-            label: 'Tasks',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.loop_rounded),
-            label: 'Habits',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard_rounded),
-            label: 'Rewards',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
