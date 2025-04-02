@@ -1,7 +1,10 @@
+import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
+import 'package:provider/provider.dart';
+import 'package:betullarise/database/points_database_helper.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
@@ -199,7 +202,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           (context) => AlertDialog(
             title: const Text('Delete Task'),
             content: Text(
-              'Are you sure you want to delete "${_titleController.text}"?',
+              'Are you sure you want to delete "${_titleController.text}"?\n\n${widget.task?.completionTime != 0 ? 'If you delete this task, you will NOT lose the ${widget.task!.score} points earned from completing it.' : ''}',
             ),
             actions: [
               TextButton(
@@ -242,6 +245,81 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting task: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelTask() async {
+    // Show confirmation dialog
+    final bool? shouldCancel = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Cancel Task'),
+            content: Text(
+              'Are you sure you want to cancel "${_titleController.text}"?\n\n'
+              'This will remove the task and revoke the ${widget.task!.score} points earned from completing it.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Keep Task'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Cancel Task'),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldCancel != true || widget.task?.id == null) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. Get the point record for this task
+      final pointsDbHelper = PointsDatabaseHelper.instance;
+      final point = await pointsDbHelper.queryPointById(widget.task!.id!);
+
+      // 2. If there are points associated with this task, subtract them from the provider
+      if (point != null && mounted) {
+        // Update the points provider
+        final pointsProvider = Provider.of<PointsProvider>(
+          context,
+          listen: false,
+        );
+        await pointsProvider.addPoints(-point.points); // Subtract the points
+
+        // 3. Remove the points record from the database
+        await pointsDbHelper.deletePoint(widget.task!.id!);
+      }
+
+      // 4. Delete the task from the tasks table
+      await _dbHelper.deleteTask(widget.task!.id!);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        // Return to previous screen indicating that a change occurred
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error canceling task: ${e.toString()}')),
         );
       }
     }
@@ -400,6 +478,29 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ),
                         ),
                       ),
+                      if (isCompleted) ...[
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _cancelTask,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: Theme.of(context).focusColor,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel Task',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
