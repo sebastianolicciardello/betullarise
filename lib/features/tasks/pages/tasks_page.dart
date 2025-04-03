@@ -1,13 +1,14 @@
 import 'package:betullarise/database/points_database_helper.dart';
+import 'package:betullarise/features/tasks/handlers/expired_tasks_handler.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
-import 'package:betullarise/features/tasks/task_detail_page.dart';
+import 'package:betullarise/features/tasks/pages/task_detail_page.dart';
 import 'package:provider/provider.dart';
 
-import '../../model/point.dart';
+import '../../../model/point.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
@@ -64,6 +65,11 @@ class _TasksPageState extends State<TasksPage> {
       _completedTasks = completed;
       _isLoading = false;
     });
+
+    // After loading tasks, check if there are any expired ones
+    if (mounted) {
+      ExpiredTasksHandler.handleExpiredTasks(context);
+    }
   }
 
   String _formatDate(int timestamp) {
