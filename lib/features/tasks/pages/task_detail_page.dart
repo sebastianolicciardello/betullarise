@@ -151,23 +151,45 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       _isLoading = true;
     });
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final task = Task(
-      id: widget.task?.id,
-      title: _titleController.text,
-      description: _descriptionController.text,
-      deadline: _deadline.millisecondsSinceEpoch,
-      // Reimposta il completionTime a 0 se stiamo rischedulando
-      completionTime:
-          isReschedulingCompletedTask ? 0 : (widget.task?.completionTime ?? 0),
-      score: double.parse(_scoreController.text),
-      penalty: double.parse(_penaltyController.text),
-      createdTime: widget.task?.createdTime ?? now,
-      updatedTime: now,
-    );
-
     try {
+      // Se stiamo rischedulando un task completato, sottraiamo i punti prima di aggiornare il task
+      if (isReschedulingCompletedTask && widget.task?.id != null) {
+        // 1. Ottieni i punti associati a questo task
+        final pointsDbHelper = PointsDatabaseHelper.instance;
+        final point = await pointsDbHelper.queryPointById(widget.task!.id!);
+
+        // 2. Se ci sono punti associati a questo task, sottraili dal provider
+        if (point != null && mounted) {
+          // Aggiorna il provider dei punti
+          final pointsProvider = Provider.of<PointsProvider>(
+            context,
+            listen: false,
+          );
+          await pointsProvider.addPoints(-point.points); // Sottrai i punti
+
+          // 3. Rimuovi il record dei punti dal database
+          await pointsDbHelper.deletePoint(widget.task!.id!);
+        }
+      }
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      final task = Task(
+        id: widget.task?.id,
+        title: _titleController.text,
+        description: _descriptionController.text,
+        deadline: _deadline.millisecondsSinceEpoch,
+        // Reimposta il completionTime a 0 se stiamo rischedulando
+        completionTime:
+            isReschedulingCompletedTask
+                ? 0
+                : (widget.task?.completionTime ?? 0),
+        score: double.parse(_scoreController.text),
+        penalty: double.parse(_penaltyController.text),
+        createdTime: widget.task?.createdTime ?? now,
+        updatedTime: now,
+      );
+
       if (widget.task == null) {
         await _dbHelper.insertTask(task);
       } else {

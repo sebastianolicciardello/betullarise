@@ -132,30 +132,32 @@ class _HomePageState extends State<HomePage> {
       builder: (context, pointsProvider, child) {
         return Scaffold(
           appBar: AppBar(
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  _openRewards(context);
-                },
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.card_giftcard,
-                      size: 21,
-                      color: ColorScheme.of(context).primary,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '${pointsProvider.totalPoints.toInt()}',
-                      style: TextStyle(
-                        fontSize: 16,
+            title: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    _openRewards(context);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.card_giftcard,
+                        size: 21,
                         color: ColorScheme.of(context).primary,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 4),
+                      Text(
+                        '${pointsProvider.totalPoints.toInt()}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: ColorScheme.of(context).primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
             actions: [
               IconButton(
@@ -165,6 +167,8 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () => _openSettings(context),
               ),
             ],
+            automaticallyImplyLeading:
+                false, // Disabilita il pulsante back automatico
           ),
           body: _pages[_currentIndex],
           bottomNavigationBar: BottomNavigationBar(

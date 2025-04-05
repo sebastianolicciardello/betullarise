@@ -88,7 +88,23 @@ class PointsDatabaseHelper {
   // Inserimento di un nuovo Point
   Future<int> insertPoint(Point point) async {
     Database db = await instance.database;
-    return await db.insert(tablePoints, point.toMap());
+
+    // Verifica se esiste già un punto per questo task
+    if (point.taskId == null) return 0;
+    final existing = await queryPointById(point.taskId!);
+
+    if (existing != null) {
+      // Aggiorna il record esistente
+      return await db.update(
+        tablePoints,
+        {columnPoints: point.points, columnInsertTime: point.insertTime},
+        where: '$columnTaskId = ?',
+        whereArgs: [point.taskId],
+      );
+    } else {
+      // Inserisci un nuovo record
+      return await db.insert(tablePoints, point.toMap());
+    }
   }
 
   // Eliminazione di punti per id
