@@ -299,7 +299,8 @@ class _TasksPageState extends State<TasksPage> {
                         final pointsDb = PointsDatabaseHelper.instance;
                         await pointsDb.insertPoint(
                           Point(
-                            taskId: task.id!,
+                            referenceId: task.id!,
+                            type: 'task',
                             points:
                                 task.score, // Using the task's score as points value
                             insertTime: DateTime.now().millisecondsSinceEpoch,
@@ -311,7 +312,14 @@ class _TasksPageState extends State<TasksPage> {
                           Provider.of<PointsProvider>(
                             context,
                             listen: false,
-                          ).addPoints(task.score);
+                          ).savePoints(
+                            Point(
+                              referenceId: task.id!,
+                              type: 'task',
+                              points: task.score,
+                              insertTime: DateTime.now().millisecondsSinceEpoch,
+                            ),
+                          );
                         }
 
                         // Reload tasks to update UI

@@ -156,19 +156,17 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       if (isReschedulingCompletedTask && widget.task?.id != null) {
         // 1. Ottieni i punti associati a questo task
         final pointsDbHelper = PointsDatabaseHelper.instance;
-        final point = await pointsDbHelper.queryPointById(widget.task!.id!);
+        final point = await pointsDbHelper
+            .queryPointByReferenceIdOnlyPositiveTasks(widget.task!.id!);
 
         // 2. Se ci sono punti associati a questo task, sottraili dal provider
         if (point != null && mounted) {
-          // Aggiorna il provider dei punti
           final pointsProvider = Provider.of<PointsProvider>(
             context,
             listen: false,
           );
-          await pointsProvider.addPoints(-point.points); // Sottrai i punti
 
-          // 3. Rimuovi il record dei punti dal database
-          await pointsDbHelper.deletePoint(widget.task!.id!);
+          await pointsProvider.removePointsByEntity(point); // Sottrai i punti
         }
       }
 
@@ -308,7 +306,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     try {
       // 1. Get the point record for this task
       final pointsDbHelper = PointsDatabaseHelper.instance;
-      final point = await pointsDbHelper.queryPointById(widget.task!.id!);
+      final point = await pointsDbHelper
+          .queryPointByReferenceIdOnlyPositiveTasks(widget.task!.id!);
 
       // 2. If there are points associated with this task, subtract them from the provider
       if (point != null && mounted) {
@@ -317,10 +316,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           context,
           listen: false,
         );
-        await pointsProvider.addPoints(-point.points); // Subtract the points
-
-        // 3. Remove the points record from the database
-        await pointsDbHelper.deletePoint(widget.task!.id!);
+        await pointsProvider.removePointsByEntity(point); // Subtract the points
       }
 
       // 4. Delete the task from the tasks table

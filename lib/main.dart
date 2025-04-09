@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Carica i punti totali tramite il provider quando la pagina viene inizializzata
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PointsProvider>(context, listen: false).loadTotalPoints();
+      Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
       // Check for expired tasks when the app starts
       ExpiredTasksHandler.handleExpiredTasks(context);
     });

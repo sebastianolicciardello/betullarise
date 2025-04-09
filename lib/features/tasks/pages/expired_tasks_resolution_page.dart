@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
-import 'package:betullarise/database/points_database_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/provider/points_provider.dart';
@@ -44,21 +43,15 @@ class _ExpiredTasksResolutionPageState
       );
 
       // Add points for completion
-      final pointsDb = PointsDatabaseHelper.instance;
-      await pointsDb.insertPoint(
-        Point(
-          taskId: task.id!,
-          points: task.score,
-          insertTime: DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
-
-      // Update points in provider
       if (mounted) {
-        Provider.of<PointsProvider>(
-          context,
-          listen: false,
-        ).addPoints(task.score);
+        Provider.of<PointsProvider>(context, listen: false).savePoints(
+          Point(
+            referenceId: task.id!,
+            type: 'task',
+            points: task.score,
+            insertTime: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -96,21 +89,15 @@ class _ExpiredTasksResolutionPageState
 
     try {
       // Add the penalty to points database as negative points
-      final pointsDb = PointsDatabaseHelper.instance;
-      await pointsDb.insertPoint(
-        Point(
-          taskId: task.id!,
-          points: -task.penalty, // Negative points for penalty
-          insertTime: DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
-
-      // Update points in provider
       if (mounted) {
-        Provider.of<PointsProvider>(
-          context,
-          listen: false,
-        ).addPoints(-task.penalty);
+        Provider.of<PointsProvider>(context, listen: false).savePoints(
+          Point(
+            referenceId: task.id!,
+            type: 'task',
+            points: -task.penalty, // Negative points for penalty
+            insertTime: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -121,9 +108,7 @@ class _ExpiredTasksResolutionPageState
       }
 
       // Show dialog to ask whether to reschedule or delete
-      if (mounted) {
-        await _showRescheduleOrDeleteDialog(task);
-      }
+      await _showRescheduleOrDeleteDialog(task);
     } catch (e) {
       setState(() {
         _isProcessing = false;

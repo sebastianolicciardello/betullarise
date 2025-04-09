@@ -21,10 +21,13 @@ class Habit {
     // Validazione del tipo
     assert(
       type == 'single' ||
+          type == 'singleWithPenalty' ||
+          type == 'singleWithScore' ||
           type == 'multipler' ||
-          type == 'badMultipler' ||
+          type == 'multiplerWithScore' ||
+          type == 'multiplerWithPenalty' ||
           type == 'counter',
-      'Type must be one of: single, multipler, badMultipler, counter',
+      'Type must be one of: single, singleWithPenalty, singleWithScore, multipler, multiplerWithScore, multiplerWithPenalty, counter',
     );
   }
 
