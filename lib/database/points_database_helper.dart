@@ -34,7 +34,7 @@ class PointsDatabaseHelper {
 
   Future<Database> get database async {
     try {
-      developer.log("get database chiamato", name: "DATABASE");
+      developer.log("get database chiamato", name: "POINTS");
       if (_database != null) return _database!;
       // Se il database non è stato ancora inizializzato, crealo
       _database = await _initDatabase();
@@ -102,7 +102,7 @@ class PointsDatabaseHelper {
 
   // Create the new table schema if it doesn't exist
   Future _onCreate(Database db, int version) async {
-    developer.log("Creating database tables", name: "DATABASE");
+    developer.log("Creating database tables", name: "POINTS");
     await db.execute('''
       CREATE TABLE $tablePoints (
         $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,7 +112,7 @@ class PointsDatabaseHelper {
         $columnInsertTime INTEGER NOT NULL
       )
     ''');
-    developer.log("Table created successfully", name: "DATABASE");
+    developer.log("Table created successfully", name: "POINTS");
   }
 
   // Make sure the points table exists when we open the database
@@ -143,24 +143,30 @@ class PointsDatabaseHelper {
   Future<int> insertPoint(Point point) async {
     Database db = await instance.database;
 
-    // Check if a point already exists for this reference and type
     if (point.referenceId == null) return 0;
-    final existing = await queryPointByReferenceAndType(
-      point.referenceId!,
-      point.type,
-    );
 
-    if (existing != null) {
-      // Update the existing record
-      return await db.update(
-        tablePoints,
-        {columnPoints: point.points, columnInsertTime: point.insertTime},
-        where: '$columnReferenceId = ? AND $columnType = ?',
-        whereArgs: [point.referenceId, point.type],
-      );
-    } else {
-      // Insert a new record
+    // Per gli habits, aggiungi sempre un nuovo record
+    if (point.type == 'habit') {
       return await db.insert(tablePoints, point.toMap());
+    } else {
+      // Check if a point already exists for this reference and type
+      final existing = await queryPointByReferenceAndType(
+        point.referenceId!,
+        point.type,
+      );
+
+      if (existing != null) {
+        // Update the existing record
+        return await db.update(
+          tablePoints,
+          {columnPoints: point.points, columnInsertTime: point.insertTime},
+          where: '$columnReferenceId = ? AND $columnType = ?',
+          whereArgs: [point.referenceId, point.type],
+        );
+      } else {
+        // Insert a new record
+        return await db.insert(tablePoints, point.toMap());
+      }
     }
   }
 
@@ -258,16 +264,5 @@ class PointsDatabaseHelper {
       whereArgs: [type],
     );
     return maps.map((map) => Point.fromMap(map)).toList();
-  }
-
-  // Delete the database
-  Future<void> deleteDatabase() async {
-    final path = await getDatabasePath();
-    final file = File(path);
-    if (await file.exists()) {
-      await file.delete();
-      _database = null;
-      developer.log("Database deleted successfully", name: "DATABASE");
-    }
   }
 }

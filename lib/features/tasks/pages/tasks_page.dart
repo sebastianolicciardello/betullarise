@@ -277,9 +277,9 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text('Score: ${task.score.toStringAsFixed(1)}'),
+                      Text('Score: +${task.score.toStringAsFixed(1)}'),
                       const SizedBox(height: 4),
-                      Text('Penalty: ${task.penalty.toStringAsFixed(1)}'),
+                      Text('Penalty: -${task.penalty.toStringAsFixed(1)}'),
                     ],
                   ),
                   if (!isCompleted)
