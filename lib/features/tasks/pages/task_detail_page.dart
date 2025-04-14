@@ -394,12 +394,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           alignLabelWithHint: true,
                         ),
                         maxLines: 4,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Write a description';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(

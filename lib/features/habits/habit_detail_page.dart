@@ -252,12 +252,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           alignLabelWithHint: true,
                         ),
                         maxLines: 4,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a description';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       const Text(

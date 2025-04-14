@@ -151,7 +151,11 @@ class _HomePageState extends State<HomePage> {
                         '${pointsProvider.totalPoints.toInt()}',
                         style: TextStyle(
                           fontSize: 16,
-                          color: ColorScheme.of(context).primary,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              pointsProvider.totalPoints > 0
+                                  ? ColorScheme.of(context).primary
+                                  : Colors.red,
                         ),
                       ),
                     ],

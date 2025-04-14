@@ -51,7 +51,11 @@ class _HabitsPageState extends State<HabitsPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.close_sharp, size: 64, color: Colors.grey),
+                    const Icon(
+                      Icons.loop_rounded,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'No habits created',

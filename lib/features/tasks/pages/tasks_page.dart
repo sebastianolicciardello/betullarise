@@ -88,7 +88,11 @@ class _TasksPageState extends State<TasksPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.close_sharp, size: 64, color: Colors.grey),
+                    const Icon(
+                      Icons.task_alt_rounded,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'No tasks created',

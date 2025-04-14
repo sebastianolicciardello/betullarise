@@ -145,8 +145,8 @@ class PointsDatabaseHelper {
 
     if (point.referenceId == null) return 0;
 
-    // Per gli habits, aggiungi sempre un nuovo record
-    if (point.type == 'habit') {
+    // Per gli habits e i rewards, aggiungi sempre un nuovo record
+    if (point.type == 'habit' || point.type == 'reward') {
       return await db.insert(tablePoints, point.toMap());
     } else {
       // Check if a point already exists for this reference and type

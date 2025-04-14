@@ -1,7 +1,7 @@
 class Point {
   int? id; // Unique identifier for the point
   int? referenceId; // Reference to task or habit ID
-  String type; // Type: "task" or "habit"
+  String type; // Type: "task", "habit" or "reward"
   double points;
   int insertTime;
 
