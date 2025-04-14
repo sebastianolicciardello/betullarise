@@ -41,6 +41,156 @@ class _RewardsPageState extends State<RewardsPage> {
     });
   }
 
+  void _showEditPointsDialog() {
+    final TextEditingController pointsController = TextEditingController(
+      text: _currentPoints.toStringAsFixed(1),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Modify Points'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Current points: ${_currentPoints.toStringAsFixed(1)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: pointsController,
+                decoration: const InputDecoration(
+                  labelText: 'New Points Value',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final newPointsText = pointsController.text.trim();
+                final newPoints = double.tryParse(newPointsText);
+
+                if (newPoints == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a valid number'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // Close the first dialog
+                Navigator.pop(context);
+
+                // Show confirmation dialog
+                _showConfirmPointsChangeDialog(newPoints);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              child: const Text('Next'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConfirmPointsChangeDialog(double newPoints) {
+    final double difference = newPoints - _currentPoints;
+    final String changeText =
+        difference >= 0
+            ? '+${difference.toStringAsFixed(1)}'
+            : difference.toStringAsFixed(1);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Points Change'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Current points: ${_currentPoints.toStringAsFixed(1)}'),
+              Text(
+                'New points: ${newPoints.toStringAsFixed(1)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Change: $changeText points',
+                style: TextStyle(
+                  color:
+                      difference >= 0
+                          ? Theme.of(context).primaryColor
+                          : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Are you sure you want to change the points?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _updatePointsValue(difference);
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updatePointsValue(double pointsDifference) {
+    final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
+
+    // Create a point entry to adjust the total points
+    pointsProvider.savePoints(
+      Point(
+        referenceId: 0, // Using 0 as a special reference for manual adjustment
+        type: 'manual_adjustment',
+        points: pointsDifference,
+        insertTime: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+
+    final changeText =
+        pointsDifference >= 0
+            ? '+${pointsDifference.toStringAsFixed(1)}'
+            : pointsDifference.toStringAsFixed(1);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Points updated! $changeText points'),
+        backgroundColor: pointsDifference >= 0 ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +202,29 @@ class _RewardsPageState extends State<RewardsPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // Points Display
+                  // Points Display and Manual Edit Button
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _showEditPointsDialog,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Modify Points'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.surface,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Divider between points section and rewards list
+                  const Divider(height: 1),
 
                   // Rewards List
                   Expanded(

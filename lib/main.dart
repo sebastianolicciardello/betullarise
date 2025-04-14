@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color:
-                              pointsProvider.totalPoints > 0
+                              pointsProvider.totalPoints >= 0
                                   ? ColorScheme.of(context).primary
                                   : Colors.red,
                         ),
