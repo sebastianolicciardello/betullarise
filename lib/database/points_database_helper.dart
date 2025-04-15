@@ -182,6 +182,21 @@ class PointsDatabaseHelper {
     );
   }
 
+  // Delete points by reference ID, type and insertTime
+  Future<int> deletePointUndo(
+    int referenceId,
+    String type,
+    int insertTime,
+  ) async {
+    Database db = await instance.database;
+    return await db.delete(
+      tablePoints,
+      where:
+          '$columnReferenceId = ? AND $columnType = ? AND $columnInsertTime = ?',
+      whereArgs: [referenceId, type, insertTime],
+    );
+  }
+
   // Calculate total points
   Future<double> getTotalPoints() async {
     Database db = await instance.database;

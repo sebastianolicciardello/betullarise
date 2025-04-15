@@ -42,33 +42,76 @@ class _ExpiredTasksResolutionPageState
         ),
       );
 
+      // Create a point for the task
+      final point = Point(
+        referenceId: task.id!,
+        type: 'task',
+        points: task.score,
+        insertTime: DateTime.now().millisecondsSinceEpoch,
+      );
+
       // Add points for completion
       if (mounted) {
-        Provider.of<PointsProvider>(context, listen: false).savePoints(
-          Point(
-            referenceId: task.id!,
-            type: 'task',
-            points: task.score,
-            insertTime: DateTime.now().millisecondsSinceEpoch,
-          ),
-        );
+        Provider.of<PointsProvider>(context, listen: false).savePoints(point);
 
+        // Remove task from list
+        setState(() {
+          _remainingTasks.remove(task);
+          _isProcessing = false;
+        });
+
+        // Show snackbar with undo button
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Task completed! +${task.score} points'),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'UNDO',
+              textColor: Colors.red,
+              onPressed: () async {
+                // Revert task to incomplete
+                await _dbHelper.updateTask(
+                  task.copyWith(
+                    completionTime: 0,
+                    updatedTime: DateTime.now().millisecondsSinceEpoch,
+                  ),
+                );
+
+                if (mounted) {
+                  // Remove the points
+                  final pointsProvider = Provider.of<PointsProvider>(
+                    context,
+                    listen: false,
+                  );
+                  pointsProvider.removePointsByEntity(point);
+
+                  // Add the task back to the list
+                  setState(() {
+                    _remainingTasks.add(task);
+                    // Sort by deadline
+                    _remainingTasks.sort(
+                      (a, b) => a.deadline.compareTo(b.deadline),
+                    );
+                  });
+
+                  // Show confirmation
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Task completion undone. -${task.score} points',
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         );
+
+        // Check if all tasks are handled
+        _checkIfAllTasksHandled();
       }
-
-      // Remove task from list
-      setState(() {
-        _remainingTasks.remove(task);
-        _isProcessing = false;
-      });
-
-      // Check if all tasks are handled
-      _checkIfAllTasksHandled();
     } catch (e) {
       setState(() {
         _isProcessing = false;
@@ -88,27 +131,63 @@ class _ExpiredTasksResolutionPageState
     });
 
     try {
+      // Store the original task for potential undo
+      final originalTask = task;
+
+      // Create point
+      final point = Point(
+        referenceId: task.id!,
+        type: 'task',
+        points: -task.penalty, // Negative points for penalty
+        insertTime: DateTime.now().millisecondsSinceEpoch,
+      );
+
       // Add the penalty to points database as negative points
       if (mounted) {
-        Provider.of<PointsProvider>(context, listen: false).savePoints(
-          Point(
-            referenceId: task.id!,
-            type: 'task',
-            points: -task.penalty, // Negative points for penalty
-            insertTime: DateTime.now().millisecondsSinceEpoch,
-          ),
-        );
+        Provider.of<PointsProvider>(context, listen: false).savePoints(point);
 
+        // Show snackbar with undo button
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Penalty applied: -${task.penalty} points'),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'UNDO',
+              onPressed: () async {
+                // Remove the penalty points
+                final pointsProvider = Provider.of<PointsProvider>(
+                  context,
+                  listen: false,
+                );
+                pointsProvider.removePointsByEntity(point);
+
+                // Add the task back to the list if it was removed
+                if (!_remainingTasks.contains(originalTask)) {
+                  setState(() {
+                    _remainingTasks.add(originalTask);
+                    // Sort by deadline
+                    _remainingTasks.sort(
+                      (a, b) => a.deadline.compareTo(b.deadline),
+                    );
+                    _isProcessing = false;
+                  });
+                }
+
+                // Show confirmation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Penalty undone. +${task.penalty} points'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
           ),
         );
-      }
 
-      // Show dialog to ask whether to reschedule or delete
-      await _showRescheduleOrDeleteDialog(task);
+        // Show dialog to ask whether to reschedule or delete
+        await _showRescheduleOrDeleteDialog(task);
+      }
     } catch (e) {
       setState(() {
         _isProcessing = false;

@@ -311,32 +311,73 @@ class _TasksPageState extends State<TasksPage> {
                           ),
                         );
 
+                        // Create point object for the provider
+                        final point = Point(
+                          referenceId: task.id!,
+                          type: 'task',
+                          points: task.score,
+                          insertTime: DateTime.now().millisecondsSinceEpoch,
+                        );
+
                         // Aggiorna il provider per riflettere i nuovi punti
                         if (mounted) {
                           Provider.of<PointsProvider>(
                             context,
                             listen: false,
-                          ).savePoints(
-                            Point(
-                              referenceId: task.id!,
-                              type: 'task',
-                              points: task.score,
-                              insertTime: DateTime.now().millisecondsSinceEpoch,
-                            ),
-                          );
+                          ).savePoints(point);
                         }
 
                         // Reload tasks to update UI
                         _loadTasks();
 
-                        // Show a confirmation snackbar or some visual feedback
+                        // Show a confirmation snackbar with undo button
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 'Task completed! +${task.score} points',
                               ),
-                              duration: const Duration(seconds: 2),
+                              duration: const Duration(
+                                seconds: 4,
+                              ), // Extended duration for undo action
+                              action: SnackBarAction(
+                                label: 'UNDO',
+                                textColor: Colors.red,
+                                onPressed: () async {
+                                  // Revert the task back to incomplete
+                                  await _dbHelper.updateTask(
+                                    task.copyWith(
+                                      completionTime:
+                                          0, // Reset completion time to 0 (incomplete)
+                                      updatedTime:
+                                          DateTime.now().millisecondsSinceEpoch,
+                                    ),
+                                  );
+
+                                  // Update the provider to reflect the removed points
+                                  if (mounted) {
+                                    Provider.of<PointsProvider>(
+                                      context,
+                                      listen: false,
+                                    ).removePointsByEntity(point);
+                                  }
+
+                                  // Reload tasks to update UI
+                                  _loadTasks();
+
+                                  // Show feedback that the action was undone
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Task completion undone. -${task.score} points',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
                             ),
                           );
                         }

@@ -167,26 +167,49 @@ class _RewardsPageState extends State<RewardsPage> {
   void _updatePointsValue(double pointsDifference) {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
 
-    // Create a point entry to adjust the total points
-    pointsProvider.savePoints(
-      Point(
-        referenceId: 0, // Using 0 as a special reference for manual adjustment
-        type: 'manual_adjustment',
-        points: pointsDifference,
-        insertTime: DateTime.now().millisecondsSinceEpoch,
-      ),
+    // Creazione dell'entry per la modifica manuale dei punti
+    final point = Point(
+      referenceId:
+          0, // Usato 0 come riferimento speciale per la modifica manuale
+      type: 'manual_adjustment',
+      points: pointsDifference,
+      insertTime: DateTime.now().millisecondsSinceEpoch,
     );
+
+    // Salva l'entry
+    pointsProvider.savePoints(point);
 
     final changeText =
         pointsDifference >= 0
             ? '+${pointsDifference.toStringAsFixed(1)}'
             : pointsDifference.toStringAsFixed(1);
 
+    // Mostra uno SnackBar con l'azione UNDO per annullare la modifica
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Points updated! $changeText points'),
-        backgroundColor: pointsDifference >= 0 ? Colors.green : Colors.red,
-        duration: const Duration(seconds: 2),
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        duration: const Duration(
+          seconds: 4,
+        ), // Durata estesa per poter premere UNDO
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: Colors.red,
+          onPressed: () {
+            // Rimuove l'entry dei punti salvata per annullare la modifica
+            pointsProvider.removePointsByEntity(point);
+
+            // Mostra conferma dell'annullamento
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Manual point modification undone. ${pointsDifference >= 0 ? '-' : '+'}${pointsDifference.toStringAsFixed(1)} points',
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -525,20 +548,41 @@ class _RewardsPageState extends State<RewardsPage> {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
 
     // Create a negative points entry to reduce total points
-    pointsProvider.savePoints(
-      Point(
-        referenceId: rewardId,
-        type: 'reward',
-        points: -points, // Negative points since we're redeeming
-        insertTime: DateTime.now().millisecondsSinceEpoch,
-      ),
+    final point = Point(
+      referenceId: rewardId,
+      type: 'reward',
+      points: -points, // Negative points since we're redeeming
+      insertTime: DateTime.now().millisecondsSinceEpoch,
     );
+
+    // Save the points
+    pointsProvider.savePoints(point);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Reward redeemed! -${points.toStringAsFixed(1)} points'),
         backgroundColor: Theme.of(context).colorScheme.secondary,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(
+          seconds: 4,
+        ), // Extended duration for undo action
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: Colors.red,
+          onPressed: () {
+            // Remove the points entry
+            pointsProvider.removePointsByEntity(point);
+
+            // Show confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Reward redemption undone. +${points.toStringAsFixed(1)} points',
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

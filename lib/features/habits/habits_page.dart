@@ -171,7 +171,7 @@ class _HabitsPageState extends State<HabitsPage> {
                   IconButton(
                     icon: const Icon(Icons.circle_outlined),
                     onPressed: () {
-                      _showCompleteTaskDialog(habit);
+                      _handleHabitCompletion(habit);
                     },
                   ),
                 ],
@@ -181,6 +181,28 @@ class _HabitsPageState extends State<HabitsPage> {
         ),
       ),
     );
+  }
+
+  void _handleHabitCompletion(Habit habit) {
+    final bool hasScore = habit.score > 0;
+    final bool hasPenalty = habit.penalty > 0;
+
+    // Per habit 'single' con solo score o solo penalty, esegui direttamente
+    if (habit.type.startsWith('single')) {
+      if (hasScore && hasPenalty) {
+        // Se ha entrambi score e penalty, mostra il popup di conferma
+        _showCompleteTaskDialog(habit);
+      } else if (hasScore) {
+        // Solo score, esegui direttamente
+        _addPoints(habit.id!, habit.score);
+      } else if (hasPenalty) {
+        // Solo penalty, esegui direttamente
+        _addPoints(habit.id!, -habit.penalty);
+      }
+    } else if (habit.type.startsWith('multipler')) {
+      // Per multipler mantieni il comportamento attuale
+      _showCompleteTaskDialog(habit);
+    }
   }
 
   void _showCompleteTaskDialog(Habit habit) {
@@ -196,10 +218,7 @@ class _HabitsPageState extends State<HabitsPage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (hasScore && hasPenalty)
-                  const Text('What would you like to do?')
-                else
-                  const Text('Confirm this action:'),
+                const Text('What would you like to do?'),
                 const SizedBox(height: 8),
                 if (hasScore)
                   Text(
@@ -320,14 +339,16 @@ class _HabitsPageState extends State<HabitsPage> {
   void _addPoints(int habitId, double points) {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
 
-    pointsProvider.savePoints(
-      Point(
-        referenceId: habitId,
-        type: 'habit',
-        points: points,
-        insertTime: DateTime.now().millisecondsSinceEpoch,
-      ),
+    // Create a point object
+    final point = Point(
+      referenceId: habitId,
+      type: 'habit',
+      points: points,
+      insertTime: DateTime.now().millisecondsSinceEpoch,
     );
+
+    // Save the points
+    pointsProvider.savePoints(point);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -336,7 +357,29 @@ class _HabitsPageState extends State<HabitsPage> {
               ? 'Good job! +${points.toStringAsFixed(1)} points'
               : 'Better luck next time! ${points.toStringAsFixed(1)} points',
         ),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(
+          seconds: 4,
+        ), // Extended duration for undo action
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: Colors.red,
+          onPressed: () {
+            // Remove the points
+            pointsProvider.removePointsByEntity(point);
+
+            // Show confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  points >= 0
+                      ? 'Habit completion undone. -${points.toStringAsFixed(1)} points'
+                      : 'Habit failure undone. +${(-points).toStringAsFixed(1)} points',
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -54,9 +54,10 @@ class PointsProvider with ChangeNotifier {
   // Remove points for a specific point
   Future<void> removePointsByEntity(Point point) async {
     try {
-      await PointsDatabaseHelper.instance.deletePoint(
+      await PointsDatabaseHelper.instance.deletePointUndo(
         point.referenceId!,
         point.type,
+        point.insertTime,
       );
       await loadAllPoints();
     } catch (e) {
