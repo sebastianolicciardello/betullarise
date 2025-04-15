@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background monocromatico che supporta il tinting dinamico di Material You -->
+    <path
+        android:fillColor="@android:color/system_accent1_100"
+        android:pathData="M0,0h108v108h-108z" />
+        
+    <!-- Puoi anche creare un background con gradiente o pattern -->
+    <!-- Ecco un esempio di un pattern a cerchi concentrici molto leggero -->
+    <path
+        android:fillColor="@android:color/system_accent1_200"
+        android:fillAlpha="0.2"
+        android:pathData="M54,54m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0" />
+        
+    <path
+        android:fillColor="@android:color/system_accent1_300"
+        android:fillAlpha="0.1"
+        android:pathData="M54,54m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
+</vector>
