@@ -16,13 +16,50 @@ class RewardsPage extends StatefulWidget {
 class _RewardsPageState extends State<RewardsPage> {
   final RewardsDatabaseHelper _dbHelper = RewardsDatabaseHelper.instance;
   List<Reward> _rewards = [];
+  List<Reward> _filteredRewards = [];
   bool _isLoading = true;
+  bool _isSearching = false;
   double _currentPoints = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _loadRewards();
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _filterRewards(_searchController.text);
+  }
+
+  void _filterRewards(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredRewards = List.from(_rewards);
+        _isSearching = false;
+      });
+      return;
+    }
+
+    final lowerCaseQuery = query.toLowerCase();
+    final filtered =
+        _rewards.where((reward) {
+          return reward.title.toLowerCase().contains(lowerCaseQuery) ||
+              reward.description.toLowerCase().contains(lowerCaseQuery);
+        }).toList();
+
+    setState(() {
+      _filteredRewards = filtered;
+      _isSearching = true;
+    });
   }
 
   Future<void> _loadRewards() async {
@@ -37,6 +74,7 @@ class _RewardsPageState extends State<RewardsPage> {
 
     setState(() {
       _rewards = rewards;
+      _filteredRewards = List.from(rewards);
       _isLoading = false;
     });
   }
@@ -223,65 +261,97 @@ class _RewardsPageState extends State<RewardsPage> {
 
           return _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  // Points Display and Manual Edit Button
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _showEditPointsDialog,
-                          icon: const Icon(Icons.edit),
-                          label: const Text('Modify Points'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.surface,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.primary,
+              : RefreshIndicator(
+                onRefresh: _loadRewards,
+                child: ListView(
+                  padding: const EdgeInsets.only(top: 16, bottom: 80),
+                  children: [
+                    // Points Display and Manual Edit Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: _showEditPointsDialog,
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Modify Points'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.surface,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search rewards...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
 
-                  // Divider between points section and rewards list
-                  const Divider(height: 1),
-
-                  // Rewards List
-                  Expanded(
-                    child:
-                        _rewards.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.card_giftcard,
-                                    size: 64,
-                                    color: Colors.grey,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  const Text(
-                                    'No rewards created',
-                                    style: TextStyle(fontSize: 18),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : RefreshIndicator(
-                              onRefresh: _loadRewards,
-                              child: ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _rewards.length,
-                                itemBuilder: (context, index) {
-                                  return _buildRewardCard(_rewards[index]);
-                                },
-                              ),
+                    // Rewards List
+                    if (_filteredRewards.isEmpty && _isSearching) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey,
                             ),
-                  ),
-                ],
+                            const SizedBox(height: 16),
+                            Text(
+                              'No rewards found for "${_searchController.text}"',
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_rewards.isEmpty) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.card_giftcard,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No rewards created',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      ..._filteredRewards.map(_buildRewardCard),
+                    ],
+                  ],
+                ),
               );
         },
       ),
@@ -322,7 +392,7 @@ class _RewardsPageState extends State<RewardsPage> {
     final bool canAfford = _currentPoints >= reward.points;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(

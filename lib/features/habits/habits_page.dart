@@ -16,12 +16,49 @@ class HabitsPage extends StatefulWidget {
 class _HabitsPageState extends State<HabitsPage> {
   final HabitsDatabaseHelper _dbHelper = HabitsDatabaseHelper.instance;
   List<Habit> _habits = [];
+  List<Habit> _filteredHabits = [];
   bool _isLoading = true;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _loadHabits();
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _filterHabits(_searchController.text);
+  }
+
+  void _filterHabits(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredHabits = List.from(_habits);
+        _isSearching = false;
+      });
+      return;
+    }
+
+    final lowerCaseQuery = query.toLowerCase();
+    final filtered =
+        _habits.where((habit) {
+          return habit.title.toLowerCase().contains(lowerCaseQuery) ||
+              habit.description.toLowerCase().contains(lowerCaseQuery);
+        }).toList();
+
+    setState(() {
+      _filteredHabits = filtered;
+      _isSearching = true;
+    });
   }
 
   Future<void> _loadHabits() async {
@@ -36,6 +73,7 @@ class _HabitsPageState extends State<HabitsPage> {
 
     setState(() {
       _habits = habits;
+      _filteredHabits = List.from(habits);
       _isLoading = false;
     });
   }
@@ -46,32 +84,72 @@ class _HabitsPageState extends State<HabitsPage> {
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _habits.isEmpty
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.loop_rounded,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No habits created',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-              )
               : RefreshIndicator(
                 onRefresh: _loadHabits,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _habits.length,
-                  itemBuilder: (context, index) {
-                    return _buildHabitCard(_habits[index]);
-                  },
+                child: ListView(
+                  padding: const EdgeInsets.only(top: 16, bottom: 80),
+                  children: [
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search habits...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Habits List
+                    if (_filteredHabits.isEmpty && _isSearching) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No habits found for "${_searchController.text}"',
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_habits.isEmpty) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.loop_rounded,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No habits created',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      ..._filteredHabits.map(_buildHabitCard),
+                    ],
+                  ],
                 ),
               ),
       floatingActionButton: FloatingActionButton(
@@ -109,7 +187,7 @@ class _HabitsPageState extends State<HabitsPage> {
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(

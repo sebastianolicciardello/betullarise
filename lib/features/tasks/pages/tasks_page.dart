@@ -21,13 +21,53 @@ class _TasksPageState extends State<TasksPage> {
   final TasksDatabaseHelper _dbHelper = TasksDatabaseHelper.instance;
   List<Task> _incompleteTasks = [];
   List<Task> _completedTasks = [];
+  List<Task> _filteredIncompleteTasks = [];
+  List<Task> _filteredCompletedTasks = [];
   bool _isLoading = true;
   bool _showCompletedTasks = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _filterTasks(_searchController.text);
+  }
+
+  void _filterTasks(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredIncompleteTasks = List.from(_incompleteTasks);
+        _filteredCompletedTasks = List.from(_completedTasks);
+      });
+      return;
+    }
+
+    final lowerCaseQuery = query.toLowerCase();
+    setState(() {
+      _filteredIncompleteTasks =
+          _incompleteTasks.where((task) {
+            return task.title.toLowerCase().contains(lowerCaseQuery) ||
+                task.description.toLowerCase().contains(lowerCaseQuery);
+          }).toList();
+
+      _filteredCompletedTasks =
+          _completedTasks.where((task) {
+            return task.title.toLowerCase().contains(lowerCaseQuery) ||
+                task.description.toLowerCase().contains(lowerCaseQuery);
+          }).toList();
+    });
   }
 
   Future<void> _loadTasks() async {
@@ -51,10 +91,9 @@ class _TasksPageState extends State<TasksPage> {
     // Sort incomplete tasks by deadline, then by title
     incomplete.sort((a, b) {
       final deadlineComparison = a.deadline.compareTo(b.deadline);
-      if (deadlineComparison != 0) {
-        return deadlineComparison;
-      }
-      return a.title.compareTo(b.title);
+      return deadlineComparison != 0
+          ? deadlineComparison
+          : a.title.compareTo(b.title);
     });
 
     // Sort completed tasks by completion time (most recent first)
@@ -63,6 +102,8 @@ class _TasksPageState extends State<TasksPage> {
     setState(() {
       _incompleteTasks = incomplete;
       _completedTasks = completed;
+      _filteredIncompleteTasks = List.from(incomplete);
+      _filteredCompletedTasks = List.from(completed);
       _isLoading = false;
     });
 
@@ -83,91 +124,115 @@ class _TasksPageState extends State<TasksPage> {
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _incompleteTasks.isEmpty && _completedTasks.isEmpty
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.task_alt_rounded,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No tasks created',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-              )
               : RefreshIndicator(
                 onRefresh: _loadTasks,
                 child: ListView(
+                  padding: const EdgeInsets.only(top: 16, bottom: 80),
                   children: [
-                    // Incomplete tasks
-                    if (_incompleteTasks.isNotEmpty) ...[
-                      const Padding(
-                        padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
-                        child: Text(
-                          'TODO',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search tasks...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                       ),
-                      ..._incompleteTasks.map((task) => _buildTaskCard(task)),
-                    ],
+                    ),
 
-                    // Completed tasks (collapsible section)
-                    if (_completedTasks.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 16,
-                          top: 24,
-                          right: 16,
-                          bottom: 8,
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _showCompletedTasks = !_showCompletedTasks;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              const Text(
-                                'COMPLETED',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '(${_completedTasks.length})',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                _showCompletedTasks
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                              ),
-                            ],
-                          ),
+                    if (_filteredIncompleteTasks.isEmpty &&
+                        _filteredCompletedTasks.isEmpty &&
+                        _searchController.text.isNotEmpty) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No tasks found for "${_searchController.text}"',
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ],
                         ),
                       ),
-                      if (_showCompletedTasks)
-                        ..._completedTasks.map((task) => _buildTaskCard(task)),
-                    ],
+                    ] else if (_incompleteTasks.isEmpty &&
+                        _completedTasks.isEmpty) ...[
+                      const SizedBox(height: 64),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.task_alt_rounded,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No tasks created',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      ..._filteredIncompleteTasks.map(_buildTaskCard),
 
-                    // Add bottom space for better UX
-                    const SizedBox(height: 80),
+                      if (_filteredCompletedTasks.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _showCompletedTasks = !_showCompletedTasks;
+                              });
+                            },
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'COMPLETED',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '(${_filteredCompletedTasks.length})',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  _showCompletedTasks
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_showCompletedTasks)
+                          ..._filteredCompletedTasks.map(_buildTaskCard),
+                      ],
+                    ],
                   ],
                 ),
               ),
