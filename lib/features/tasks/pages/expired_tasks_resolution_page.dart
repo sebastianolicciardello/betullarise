@@ -196,8 +196,8 @@ class _ExpiredTasksResolutionPageState
       text: task.penalty.toString(),
     );
 
-    // Default new deadline (tomorrow)
-    DateTime newDeadline = DateTime.now().add(const Duration(days: 1));
+    // Default new deadline today
+    DateTime newDeadline = DateTime.now();
 
     // Show dialog with form
     final result = await showDialog<Map<String, dynamic>>(

@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        '${pointsProvider.totalPoints}',
+                        '${(pointsProvider.totalPoints * 100).floor() / 100.0}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
