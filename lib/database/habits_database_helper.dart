@@ -126,17 +126,12 @@ class HabitsDatabaseHelper {
 
   // Make sure the habit table exists when we open the database
   Future _onOpen(Database db) async {
-    final tablesTest = await db.rawQuery("PRAGMA table_info($tableHabits)");
-    developer.log("Columns in table: $tablesTest");
-
-    // Check if the points table exists
+    // Verifica in modo corretto l'esistenza della tabella
     final tables = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='$tablesTest'",
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
       [tableHabits],
     );
-
     if (tables.isEmpty) {
-      // The table doesn't exist, create it
       await _onCreate(db, _databaseVersion);
     }
   }
