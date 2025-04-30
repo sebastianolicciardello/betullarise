@@ -7,6 +7,10 @@ class PointsProvider with ChangeNotifier {
   double _totalPoints = 0;
   double _taskPoints = 0;
   double _habitPoints = 0;
+  final PointsDatabaseHelper _databaseHelper;
+
+  PointsProvider({PointsDatabaseHelper? databaseHelper})
+    : _databaseHelper = databaseHelper ?? PointsDatabaseHelper.instance;
 
   double get totalPoints => _totalPoints;
   double get taskPoints => _taskPoints;
@@ -15,13 +19,9 @@ class PointsProvider with ChangeNotifier {
   // Load all points from the database
   Future<void> loadAllPoints() async {
     try {
-      _totalPoints = await PointsDatabaseHelper.instance.getTotalPoints();
-      _taskPoints = await PointsDatabaseHelper.instance.getTotalPointsByType(
-        'task',
-      );
-      _habitPoints = await PointsDatabaseHelper.instance.getTotalPointsByType(
-        'habit',
-      );
+      _totalPoints = await _databaseHelper.getTotalPoints();
+      _taskPoints = await _databaseHelper.getTotalPointsByType('task');
+      _habitPoints = await _databaseHelper.getTotalPointsByType('habit');
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading points: ${e.toString()}');
@@ -32,7 +32,7 @@ class PointsProvider with ChangeNotifier {
   Future<void> savePoints(Point point) async {
     try {
       // Insert or update the point in the database
-      await PointsDatabaseHelper.instance.insertPoint(point);
+      await _databaseHelper.insertPoint(point);
 
       // Update in-memory values
       await loadAllPoints();
@@ -44,7 +44,7 @@ class PointsProvider with ChangeNotifier {
   // Remove points for a specific reference and type
   Future<void> removePoints(int referenceId, String type) async {
     try {
-      await PointsDatabaseHelper.instance.deletePoint(referenceId, type);
+      await _databaseHelper.deletePoint(referenceId, type);
       await loadAllPoints();
     } catch (e) {
       debugPrint('Error removing points: ${e.toString()}');
@@ -54,7 +54,7 @@ class PointsProvider with ChangeNotifier {
   // Remove points for a specific point
   Future<void> removePointsByEntity(Point point) async {
     try {
-      await PointsDatabaseHelper.instance.deletePointUndo(
+      await _databaseHelper.deletePointUndo(
         point.referenceId!,
         point.type,
         point.insertTime,
