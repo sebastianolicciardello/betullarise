@@ -42,7 +42,6 @@ dependencies:
   permission_handler: ^12.0.0+1
   file_picker: ^10.1.2
   archive: ^4.0.6
-  mockito: ^5.4.6
   plugin_platform_interface: ^2.1.8
   path_provider_platform_interface: ^2.1.2
   
@@ -51,6 +50,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.3
+  mockito: ^5.4.6
+  build_runner: ^2.4.8
+  file: ^7.0.0 # Per simulare il file system nei test
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
