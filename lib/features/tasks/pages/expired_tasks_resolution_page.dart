@@ -66,13 +66,15 @@ class _ExpiredTasksResolutionPageState
           _isProcessing = false;
         });
 
-        // Show snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Task completed! +${task.score} points'),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        if (mounted) {
+          // Show snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Task completed! +${task.score} points'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
 
         // Check if all tasks are handled
         _checkIfAllTasksHandled();
@@ -116,12 +118,14 @@ class _ExpiredTasksResolutionPageState
         ).savePoints(point);
 
         // Show snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Penalty applied: -${task.penalty} points'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Penalty applied: -${task.penalty} points'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
 
         // Show dialog to ask whether to reschedule or delete
         await _showRescheduleOrDeleteDialog(task);
