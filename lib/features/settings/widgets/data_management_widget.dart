@@ -34,10 +34,7 @@ class DataManagementWidget extends StatelessWidget {
             }
           },
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 24,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
             minimumSize: const Size(double.infinity, 0),
           ),
         ),
@@ -71,10 +68,7 @@ class DataManagementWidget extends StatelessWidget {
             }
           },
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 24,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
             minimumSize: const Size(double.infinity, 0),
           ),
         ),
