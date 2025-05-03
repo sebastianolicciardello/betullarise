@@ -33,7 +33,7 @@ class SettingsPage extends StatelessWidget {
                 } else if (snap.hasData) {
                   final info = snap.data!;
                   return Text(
-                    'Version ${info.version}',
+                    'Version ${info.version} (${info.buildNumber})',
                     style: const TextStyle(fontSize: 16),
                   );
                 }
