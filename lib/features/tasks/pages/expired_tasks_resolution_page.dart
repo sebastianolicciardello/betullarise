@@ -52,7 +52,13 @@ class _ExpiredTasksResolutionPageState
 
       // Add points for completion
       if (mounted) {
-        Provider.of<PointsProvider>(context, listen: false).savePoints(point);
+        // Anche se non strettamente necessario perché le operazioni successive
+        // sono indipendenti, aggiungiamo l'await per coerenza e per assicurarci
+        // che i punti vengano salvati prima di qualsiasi altra operazione
+        await Provider.of<PointsProvider>(
+          context,
+          listen: false,
+        ).savePoints(point);
 
         // Remove task from list
         setState(() {
@@ -100,7 +106,14 @@ class _ExpiredTasksResolutionPageState
 
       // Add the penalty to points database as negative points
       if (mounted) {
-        Provider.of<PointsProvider>(context, listen: false).savePoints(point);
+        // L'await qui è necessario perché dopo il salvataggio dei punti mostreremo
+        // un dialog per rischedulare o eliminare il task. Dobbiamo essere sicuri che
+        // i punti negativi siano stati salvati prima di queste operazioni per
+        // mantenere la consistenza dei dati.
+        await Provider.of<PointsProvider>(
+          context,
+          listen: false,
+        ).savePoints(point);
 
         // Show snackbar
         ScaffoldMessenger.of(context).showSnackBar(
