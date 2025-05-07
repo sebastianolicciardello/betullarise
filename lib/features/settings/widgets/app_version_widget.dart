@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppVersionWidget extends StatelessWidget {
-  const AppVersionWidget({super.key});
+  final Future<PackageInfo> Function()? getPackageInfoOverride;
+
+  const AppVersionWidget({super.key, this.getPackageInfoOverride});
 
   Future<PackageInfo> _getPackageInfo() async {
+    if (getPackageInfoOverride != null) {
+      return getPackageInfoOverride!();
+    }
     return await PackageInfo.fromPlatform();
   }
 
