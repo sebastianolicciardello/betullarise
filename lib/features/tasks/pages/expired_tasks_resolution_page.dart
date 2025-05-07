@@ -26,6 +26,10 @@ class _ExpiredTasksResolutionPageState
   void initState() {
     super.initState();
     _remainingTasks = List.from(widget.tasks);
+    // Load points when the page is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
+    });
   }
 
   void _markAsCompleted(Task task) async {
@@ -52,9 +56,6 @@ class _ExpiredTasksResolutionPageState
 
       // Add points for completion
       if (mounted) {
-        // Anche se non strettamente necessario perché le operazioni successive
-        // sono indipendenti, aggiungiamo l'await per coerenza e per assicurarci
-        // che i punti vengano salvati prima di qualsiasi altra operazione
         await Provider.of<PointsProvider>(
           context,
           listen: false,
@@ -108,10 +109,6 @@ class _ExpiredTasksResolutionPageState
 
       // Add the penalty to points database as negative points
       if (mounted) {
-        // L'await qui è necessario perché dopo il salvataggio dei punti mostreremo
-        // un dialog per rischedulare o eliminare il task. Dobbiamo essere sicuri che
-        // i punti negativi siano stati salvati prima di queste operazioni per
-        // mantenere la consistenza dei dati.
         await Provider.of<PointsProvider>(
           context,
           listen: false,
@@ -403,135 +400,173 @@ class _ExpiredTasksResolutionPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expired Tasks'),
-        automaticallyImplyLeading: false, // Disable back button
-      ),
-      body:
-          _isProcessing
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
+    return PopScope(
+      canPop: false, // Prevent going back
+      child: Consumer<PointsProvider>(
+        builder: (context, pointsProvider, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'You have ${_remainingTasks.length} expired tasks that need attention.',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      'Please indicate for each task whether you completed it or need to accept the penalty.',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _remainingTasks.length,
-                      itemBuilder: (context, index) {
-                        final task = _remainingTasks[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                  GestureDetector(
+                    onTap: null, // No action needed here
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.card_giftcard,
+                          size: 21,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${(pointsProvider.totalPoints * 100).floor() / 100.0}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                pointsProvider.totalPoints >= 0
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Colors.red,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(color: Colors.red, width: 2),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  task.title,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  task.description,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Deadline: ${_formatDate(task.deadline)}',
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Score: ${task.score.toStringAsFixed(1)}',
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Penalty: ${task.penalty.toStringAsFixed(1)}',
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () => _acceptPenalty(task),
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          backgroundColor: Colors.red,
-                                        ),
-                                        child: Text(
-                                          'Accept Penalty (-${task.penalty})',
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () => _markAsCompleted(task),
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          backgroundColor: Colors.green,
-                                        ),
-                                        child: Text(
-                                          'Mark Completed (+${task.score})',
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
+              automaticallyImplyLeading: false, // Disable back button
+            ),
+            body:
+                _isProcessing
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'You have ${_remainingTasks.length} expired tasks that need attention.',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            'Please indicate for each task whether you completed it or need to accept the penalty.',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: _remainingTasks.length,
+                            itemBuilder: (context, index) {
+                              final task = _remainingTasks[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(color: Colors.red, width: 2),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        task.title,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        task.description,
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Deadline: ${_formatDate(task.deadline)}',
+                                                style: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Score: ${task.score.toStringAsFixed(1)}',
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Penalty: ${task.penalty.toStringAsFixed(1)}',
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => _acceptPenalty(task),
+                                              style: ElevatedButton.styleFrom(
+                                                foregroundColor: Colors.white,
+                                                backgroundColor: Colors.red,
+                                              ),
+                                              child: Text(
+                                                'Accept Penalty (-${task.penalty})',
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => _markAsCompleted(task),
+                                              style: ElevatedButton.styleFrom(
+                                                foregroundColor: Colors.white,
+                                                backgroundColor: Colors.green,
+                                              ),
+                                              child: Text(
+                                                'Mark Completed (+${task.score})',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+          );
+        },
+      ),
     );
   }
 }
