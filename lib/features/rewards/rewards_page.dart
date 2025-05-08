@@ -5,6 +5,7 @@ import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -15,6 +16,7 @@ class RewardsPage extends StatefulWidget {
 
 class _RewardsPageState extends State<RewardsPage> {
   final RewardsDatabaseHelper _dbHelper = RewardsDatabaseHelper.instance;
+  final DialogService _dialogService = DialogService();
   List<Reward> _rewards = [];
   List<Reward> _filteredRewards = [];
   bool _isLoading = true;
@@ -79,127 +81,59 @@ class _RewardsPageState extends State<RewardsPage> {
     });
   }
 
-  void _showEditPointsDialog() {
-    final TextEditingController pointsController = TextEditingController(
-      text: _currentPoints.toStringAsFixed(1),
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Modify Points'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Current points: ${_currentPoints.toStringAsFixed(1)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: pointsController,
-                decoration: const InputDecoration(
-                  labelText: 'New Points Value',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                final newPointsText = pointsController.text.trim();
-                final newPoints = double.tryParse(newPointsText);
-
-                if (newPoints == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid number'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-
-                // Close the first dialog
-                Navigator.pop(context);
-
-                // Show confirmation dialog
-                _showConfirmPointsChangeDialog(newPoints);
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              ),
-              child: const Text('Next'),
-            ),
-          ],
-        );
+  Future<void> _showEditPointsDialog() async {
+    final String? result = await _dialogService.showInputDialog(
+      context,
+      'Modify Points',
+      message: 'Current points: ${_currentPoints.toStringAsFixed(1)}',
+      initialValue: _currentPoints.toStringAsFixed(1),
+      labelText: 'New Points Value',
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a value';
+        }
+        final newPoints = double.tryParse(value);
+        if (newPoints == null) {
+          return 'Please enter a valid number';
+        }
+        return null;
       },
+      confirmText: 'Next',
     );
+
+    if (result != null) {
+      final newPoints = double.tryParse(result);
+      if (newPoints != null && context.mounted) {
+        _showConfirmPointsChangeDialog(newPoints);
+      }
+    }
   }
 
-  void _showConfirmPointsChangeDialog(double newPoints) {
+  Future<void> _showConfirmPointsChangeDialog(double newPoints) async {
     final double difference = newPoints - _currentPoints;
     final String changeText =
         difference >= 0
             ? '+${difference.toStringAsFixed(1)}'
             : difference.toStringAsFixed(1);
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Points Change'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Current points: ${_currentPoints.toStringAsFixed(1)}'),
-              Text(
-                'New points: ${newPoints.toStringAsFixed(1)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Change: $changeText points',
-                style: TextStyle(
-                  color:
-                      difference >= 0
-                          ? Theme.of(context).primaryColor
-                          : Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Are you sure you want to change the points?'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _updatePointsValue(difference);
-                Navigator.pop(context);
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
+    final message =
+        'Current points: ${_currentPoints.toStringAsFixed(1)}\n'
+        'New points: ${newPoints.toStringAsFixed(1)}\n\n'
+        'Change: $changeText points\n\n'
+        'Are you sure you want to change the points?';
+
+    final bool? confirmed = await _dialogService.showConfirmDialog(
+      context,
+      'Confirm Points Change',
+      message,
+      confirmText: 'Confirm',
+      confirmColor: Theme.of(context).colorScheme.primary,
     );
+
+    if (confirmed == true && context.mounted) {
+      _updatePointsValue(difference);
+    }
   }
 
   void _updatePointsValue(double pointsDifference) {
@@ -396,8 +330,7 @@ class _RewardsPageState extends State<RewardsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color:
-              canAfford ? Theme.of(context).colorScheme.primary : Colors.grey,
+          color: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
           width: 2,
         ),
       ),
@@ -461,10 +394,7 @@ class _RewardsPageState extends State<RewardsPage> {
                                 ? Theme.of(context).colorScheme.primary
                                 : Colors.red,
                       ),
-                      backgroundColor:
-                          canAfford
-                              ? Theme.of(context).colorScheme.surface
-                              : Colors.grey,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                     ),
                     child: const Text('Redeem'),
                   ),
@@ -477,141 +407,77 @@ class _RewardsPageState extends State<RewardsPage> {
     );
   }
 
-  void _showRedeemRewardDialog(Reward reward) {
+  Future<void> _showRedeemRewardDialog(Reward reward) async {
     if (reward.type == 'single') {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          final bool canAfford = _currentPoints >= reward.points;
-          return AlertDialog(
-            title: Text('Redeem "${reward.title}"?'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'This will deduct ${reward.points.toStringAsFixed(1)} points from your balance.',
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Current balance: ${_currentPoints.toStringAsFixed(1)} points',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'New balance: ${(_currentPoints - reward.points).toStringAsFixed(1)} points',
-                  style: TextStyle(
-                    color:
-                        canAfford
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  _redeemPoints(reward.id!, reward.points);
-                  Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-                child: const Text('Confirm Redeem'),
-              ),
-            ],
-          );
-        },
+      final bool canAfford = _currentPoints >= reward.points;
+      final message =
+          'This will deduct ${reward.points.toStringAsFixed(1)} points from your balance.\n\n'
+          'Current balance: ${_currentPoints.toStringAsFixed(1)} points\n'
+          'New balance: ${(_currentPoints - reward.points).toStringAsFixed(1)} points'
+          '${!canAfford ? '\n\nWarning: This will put your points balance in negative.' : ''}';
+
+      final bool? confirmed = await _dialogService.showConfirmDialog(
+        context,
+        'Redeem "${reward.title}"?',
+        message,
+        confirmText: 'Confirm Redeem',
+        confirmColor:
+            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
       );
+
+      if (confirmed == true) {
+        _redeemPoints(reward.id!, reward.points);
+      }
     } else if (reward.type == 'multipler') {
       _showMultiplerRedemptionDialog(reward);
     }
   }
 
-  void _showMultiplerRedemptionDialog(Reward reward) {
-    final TextEditingController multiplerController = TextEditingController(
-      text: '1',
-    );
+  Future<void> _showMultiplerRedemptionDialog(Reward reward) async {
+    if (!mounted) return;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final double multiplier =
-                double.tryParse(multiplerController.text) ?? 1;
-            final double totalPoints = multiplier * reward.points;
-            final bool canAfford = _currentPoints >= totalPoints;
-
-            return AlertDialog(
-              title: Text('Redeem "${reward.title}"'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: multiplerController,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantity',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Cost: ${totalPoints.toStringAsFixed(1)} points',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color:
-                          canAfford
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Current balance: ${_currentPoints.toStringAsFixed(1)} points',
-                  ),
-                  Text(
-                    'New balance: ${(_currentPoints - totalPoints).toStringAsFixed(1)} points',
-                    style: TextStyle(
-                      color:
-                          canAfford
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _redeemPoints(reward.id!, totalPoints);
-                    Navigator.pop(context);
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor:
-                        canAfford
-                            ? Theme.of(context).colorScheme.surface
-                            : Colors.grey,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  child: const Text('Confirm Redeem'),
-                ),
-              ],
-            );
-          },
-        );
+    final String? result = await _dialogService.showInputDialog(
+      context,
+      'Redeem "${reward.title}"',
+      labelText: 'Quantity',
+      initialValue: '1',
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a quantity';
+        }
+        final quantity = double.tryParse(value);
+        if (quantity == null || quantity <= 0) {
+          return 'Please enter a valid quantity';
+        }
+        return null;
       },
     );
+
+    if (result != null && mounted) {
+      final quantity = double.tryParse(result) ?? 1;
+      final totalPoints = quantity * reward.points;
+      final bool canAfford = _currentPoints >= totalPoints;
+
+      final message =
+          'Cost: ${totalPoints.toStringAsFixed(1)} points\n\n'
+          'Current balance: ${_currentPoints.toStringAsFixed(1)} points\n'
+          'New balance: ${(_currentPoints - totalPoints).toStringAsFixed(1)} points'
+          '${!canAfford ? '\n\nWarning: This will put your points balance in negative.' : ''}';
+
+      final bool? confirmed = await _dialogService.showConfirmDialog(
+        context,
+        'Confirm Redemption',
+        message,
+        confirmText: 'Confirm Redeem',
+        confirmColor:
+            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
+      );
+
+      if (confirmed == true) {
+        _redeemPoints(reward.id!, totalPoints);
+      }
+    }
   }
 
   void _redeemPoints(int rewardId, double points) {
