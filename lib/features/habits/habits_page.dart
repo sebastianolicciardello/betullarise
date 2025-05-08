@@ -5,6 +5,7 @@ import 'package:betullarise/model/habit.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class HabitsPage extends StatefulWidget {
   const HabitsPage({super.key});
@@ -15,6 +16,7 @@ class HabitsPage extends StatefulWidget {
 
 class _HabitsPageState extends State<HabitsPage> {
   final HabitsDatabaseHelper _dbHelper = HabitsDatabaseHelper.instance;
+  final DialogService _dialogService = DialogService();
   List<Habit> _habits = [];
   List<Habit> _filteredHabits = [];
   bool _isLoading = true;
@@ -287,131 +289,168 @@ class _HabitsPageState extends State<HabitsPage> {
     final bool hasScore = habit.score > 0;
     final bool hasPenalty = habit.penalty > 0;
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        if (habit.type.startsWith('single')) {
-          return AlertDialog(
-            title: Text('Complete "${habit.title}"?'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('What would you like to do?'),
-                const SizedBox(height: 8),
-                if (hasScore)
-                  Text(
-                    'Completing will add ${habit.score.toStringAsFixed(1)} points',
-                  ),
-                if (hasPenalty)
-                  Text(
-                    'Failing will subtract ${habit.penalty.toStringAsFixed(1)} points',
-                  ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              if (hasScore)
-                TextButton(
-                  onPressed: () {
-                    _addPoints(habit.id!, habit.score);
-                    Navigator.pop(context);
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.green),
-                  child: Text('Complete (+${habit.score})'),
-                ),
-              if (hasPenalty)
-                TextButton(
-                  onPressed: () {
-                    _addPoints(habit.id!, -habit.penalty);
-                    Navigator.pop(context);
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: Text('Failed (-${habit.penalty})'),
-                ),
-            ],
-          );
-        } else if (habit.type.startsWith('multipler')) {
-          return _buildMultiplerCompletionDialog(habit);
-        } else {
-          return AlertDialog(
-            title: Text(habit.title),
-            content: const Text('Unsupported habit type'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          );
-        }
-      },
-    );
+    if (habit.type.startsWith('single')) {
+      if (hasScore && hasPenalty) {
+        _showSingleHabitChoiceDialog(habit);
+      } else if (hasScore) {
+        _addPoints(habit.id!, habit.score);
+      } else if (hasPenalty) {
+        _addPoints(habit.id!, -habit.penalty);
+      }
+    } else if (habit.type.startsWith('multipler')) {
+      _showMultiplerRedemptionDialog(habit);
+    } else {
+      _dialogService.showResultDialog(
+        context,
+        habit.title,
+        'Unsupported habit type',
+      );
+    }
   }
 
-  Widget _buildMultiplerCompletionDialog(Habit habit) {
-    final TextEditingController multiplerController = TextEditingController(
-      text: '1',
-    );
-    final bool hasScore = habit.score > 0;
-    final bool hasPenalty = habit.penalty > 0;
+  Future<void> _showSingleHabitChoiceDialog(Habit habit) async {
+    final message =
+        'What would you like to do?\n\n'
+        'Completing will add ${habit.score.toStringAsFixed(1)} points\n'
+        'Failing will subtract ${habit.penalty.toStringAsFixed(1)} points';
 
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final double multiplier =
-            double.tryParse(multiplerController.text) ?? 1;
-        final double totalScore = multiplier * habit.score;
-        final double totalPenalty = multiplier * habit.penalty;
+    final List<Widget> choices = [
+      ListTile(
+        title: Text(
+          'Complete (+${habit.score})',
+          style: const TextStyle(color: Colors.green),
+        ),
+        onTap: () => Navigator.of(context).pop('complete'),
+      ),
+      ListTile(
+        title: Text(
+          'Failed (-${habit.penalty})',
+          style: const TextStyle(color: Colors.red),
+        ),
+        onTap: () => Navigator.of(context).pop('fail'),
+      ),
+    ];
 
+    final String? choice = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(habit.title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: multiplerController,
-                decoration: const InputDecoration(
-                  labelText: 'Multiplier',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 16),
-              if (hasScore) Text('Score: ${totalScore.toStringAsFixed(1)}'),
-              if (hasPenalty)
-                Text('Penalty: ${totalPenalty.toStringAsFixed(1)}'),
-            ],
+          title: Text('Complete "${habit.title}"?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(message),
+                const SizedBox(height: 16),
+                ...choices,
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
-            if (hasScore)
-              TextButton(
-                onPressed: () {
-                  _addPoints(habit.id!, totalScore);
-                  Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.green),
-                child: const Text('Complete'),
-              ),
-            if (hasPenalty)
-              TextButton(
-                onPressed: () {
-                  _addPoints(habit.id!, -totalPenalty);
-                  Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Failed'),
-              ),
           ],
         );
       },
     );
+
+    if (choice == 'complete') {
+      _addPoints(habit.id!, habit.score);
+    } else if (choice == 'fail') {
+      _addPoints(habit.id!, -habit.penalty);
+    }
+  }
+
+  Future<void> _showMultiplerRedemptionDialog(Habit habit) async {
+    final String? result = await _dialogService.showInputDialog(
+      context,
+      'Complete "${habit.title}"',
+      message: 'Enter the multiplier value',
+      initialValue: '1',
+      labelText: 'Multiplier',
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a value';
+        }
+        final multiplier = double.tryParse(value);
+        if (multiplier == null || multiplier <= 0) {
+          return 'Please enter a valid positive number';
+        }
+        return null;
+      },
+    );
+
+    if (result != null && mounted) {
+      final multiplier = double.tryParse(result) ?? 1;
+      final totalScore = multiplier * habit.score;
+      final totalPenalty = multiplier * habit.penalty;
+      final bool hasScore = habit.score > 0;
+      final bool hasPenalty = habit.penalty > 0;
+
+      if (hasScore && hasPenalty) {
+        final message =
+            'What would you like to do?\n\n'
+            'Completing will add ${totalScore.toStringAsFixed(1)} points\n'
+            'Failing will subtract ${totalPenalty.toStringAsFixed(1)} points';
+
+        final List<Widget> choices = [
+          ListTile(
+            title: Text(
+              'Complete (+${totalScore.toStringAsFixed(1)})',
+              style: const TextStyle(color: Colors.green),
+            ),
+            onTap: () => Navigator.of(context).pop('complete'),
+          ),
+          ListTile(
+            title: Text(
+              'Failed (-${totalPenalty.toStringAsFixed(1)})',
+              style: const TextStyle(color: Colors.red),
+            ),
+            onTap: () => Navigator.of(context).pop('fail'),
+          ),
+        ];
+
+        final String? choice = await showDialog<String>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Action'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(message),
+                    const SizedBox(height: 16),
+                    ...choices,
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (choice == 'complete') {
+          _addPoints(habit.id!, totalScore);
+        } else if (choice == 'fail') {
+          _addPoints(habit.id!, -totalPenalty);
+        }
+      } else if (hasScore) {
+        _addPoints(habit.id!, totalScore);
+      } else if (hasPenalty) {
+        _addPoints(habit.id!, -totalPenalty);
+      }
+    }
   }
 
   void _addPoints(int habitId, double points) {

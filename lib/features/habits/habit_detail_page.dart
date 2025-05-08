@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:betullarise/model/habit.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class HabitDetailPage extends StatefulWidget {
   final Habit? habit;
@@ -23,6 +24,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   bool _includePenalty = false;
 
   final HabitsDatabaseHelper _dbHelper = HabitsDatabaseHelper.instance;
+  final DialogService _dialogService = DialogService();
   bool _isLoading = false;
 
   @override
@@ -99,6 +101,21 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       return;
     }
 
+    // Se stiamo modificando un'abitudine esistente, chiedi conferma
+    if (widget.habit != null) {
+      final bool? shouldUpdate = await _dialogService.showConfirmDialog(
+        context,
+        'Update Habit',
+        'Are you sure you want to update "${_titleController.text}"?',
+        confirmText: 'Update',
+        cancelText: 'Cancel',
+      );
+
+      if (shouldUpdate != true) {
+        return;
+      }
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -148,27 +165,15 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   }
 
   Future<void> _deleteHabit() async {
-    final bool? shouldDelete = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Habit'),
-            content: Text(
-              'Are you sure you want to delete "${_titleController.text}"?\n\n'
-              'This will NOT affect any points previously earned or lost with this habit.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+    final bool? shouldDelete = await _dialogService.showConfirmDialog(
+      context,
+      'Delete Habit',
+      'Are you sure you want to delete "${_titleController.text}"?\n\n'
+          'This will NOT affect any points previously earned or lost with this habit.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: Colors.red,
+      isDangerous: true,
     );
 
     if (shouldDelete != true || widget.habit?.id == null) {
@@ -325,7 +330,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                 ).colorScheme.onSurface.withValues(alpha: 0.5),
                                 inactiveTrackColor: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.1),
+                                ).colorScheme.onSurface.withAlpha(0x1A),
                               ),
                               const SizedBox(width: 8),
                               const Expanded(
@@ -396,10 +401,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     Theme.of(context).colorScheme.primary,
                                 inactiveThumbColor: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                                ).colorScheme.onSurface.withAlpha(0x80),
                                 inactiveTrackColor: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.1),
+                                ).colorScheme.onSurface.withAlpha(0x1A),
                               ),
                               const SizedBox(width: 8),
                               const Expanded(

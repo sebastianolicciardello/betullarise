@@ -421,8 +421,7 @@ class _RewardsPageState extends State<RewardsPage> {
         'Redeem "${reward.title}"?',
         message,
         confirmText: 'Confirm Redeem',
-        confirmColor:
-            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
+        confirmColor: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
       );
 
       if (confirmed == true) {
@@ -440,6 +439,7 @@ class _RewardsPageState extends State<RewardsPage> {
       context,
       'Redeem "${reward.title}"',
       labelText: 'Quantity',
+      message: 'Enter the quantity you want to redeem',
       initialValue: '1',
       keyboardType: TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
@@ -470,8 +470,7 @@ class _RewardsPageState extends State<RewardsPage> {
         'Confirm Redemption',
         message,
         confirmText: 'Confirm Redeem',
-        confirmColor:
-            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
+        confirmColor: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
       );
 
       if (confirmed == true) {

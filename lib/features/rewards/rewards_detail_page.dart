@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class RewardDetailPage extends StatefulWidget {
   final Reward? reward;
@@ -19,6 +20,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
 
   String _selectedType = 'single'; // Default type
   final RewardsDatabaseHelper _dbHelper = RewardsDatabaseHelper.instance;
+  final DialogService _dialogService = DialogService();
   bool _isLoading = false;
 
   @override
@@ -48,6 +50,21 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   Future<void> _saveReward() async {
     if (!_formKey.currentState!.validate()) {
       return;
+    }
+
+    // Se stiamo modificando una ricompensa esistente, chiedi conferma
+    if (widget.reward != null) {
+      final bool? shouldUpdate = await _dialogService.showConfirmDialog(
+        context,
+        'Update Reward',
+        'Are you sure you want to update "${_titleController.text}"?',
+        confirmText: 'Update',
+        cancelText: 'Cancel',
+      );
+
+      if (shouldUpdate != true) {
+        return;
+      }
     }
 
     setState(() {
@@ -95,27 +112,15 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   }
 
   Future<void> _deleteReward() async {
-    final bool? shouldDelete = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Reward'),
-            content: Text(
-              'Are you sure you want to delete "${_titleController.text}"?\n\n'
-              'This will NOT affect any points previously redeemed with this reward.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+    final bool? shouldDelete = await _dialogService.showConfirmDialog(
+      context,
+      'Delete Reward',
+      'Are you sure you want to delete "${_titleController.text}"?\n\n'
+      'This will NOT affect any points previously redeemed with this reward.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: Colors.red,
+      isDangerous: true,
     );
 
     if (shouldDelete != true || widget.reward?.id == null) {
