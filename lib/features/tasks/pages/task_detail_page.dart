@@ -5,6 +5,7 @@ import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/database/points_database_helper.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
@@ -21,6 +22,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   final _descriptionController = TextEditingController();
   final _penaltyController = TextEditingController();
   final _scoreController = TextEditingController();
+  final _dialogService = DialogService();
 
   DateTime _deadline = DateTime.now().add(const Duration(days: 1));
 
@@ -118,28 +120,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     // Se stiamo rischedulando un task completato, mostra una conferma
     if (isReschedulingCompletedTask) {
-      final bool? shouldReschedule = await showDialog<bool>(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Reschedule Completed Task'),
-              content: Text(
-                'Rescheduling this task will reset its completion status and you will lose the ${widget.task!.score} points earned.\n\n'
-                'The task will be rescheduled with the deadline: ${DateFormat('dd/MM/yyyy').format(_deadline)}.\n\n'
-                'Do you want to continue?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.orange),
-                  child: const Text('Reschedule'),
-                ),
-              ],
-            ),
+      final bool? shouldReschedule = await _dialogService.showConfirmDialog(
+        context,
+        'Reschedule Completed Task',
+        'Rescheduling this task will reset its completion status and you will lose the ${widget.task!.score} points earned.\n\n'
+        'The task will be rescheduled with the deadline: ${DateFormat('dd/MM/yyyy').format(_deadline)}.\n\n'
+        'Do you want to continue?',
+        confirmText: 'Reschedule',
+        cancelText: 'Cancel',
+        isDangerous: true,
       );
 
       if (shouldReschedule != true) {
@@ -216,26 +205,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Future<void> _deleteTask() async {
     // Mostra dialog di conferma
-    final bool? shouldDelete = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Task'),
-            content: Text(
-              'Are you sure you want to delete "${_titleController.text}"?\n\n${widget.task?.completionTime != 0 ? 'If you delete this task, you will NOT lose the ${widget.task!.score} points earned from completing it.' : ''}',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+    final bool? shouldDelete = await _dialogService.showConfirmDialog(
+      context,
+      'Delete Task',
+      'Are you sure you want to delete "${_titleController.text}"?\n\n${widget.task?.completionTime != 0 ? 'If you delete this task, you will NOT lose the ${widget.task!.score} points earned from completing it.' : ''}',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDangerous: true,
     );
 
     if (shouldDelete != true || widget.task?.id == null) {
@@ -272,27 +248,14 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Future<void> _cancelTask() async {
     // Show confirmation dialog
-    final bool? shouldCancel = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Cancel Task'),
-            content: Text(
-              'Are you sure you want to cancel "${_titleController.text}"?\n\n'
-              'This will remove the task and revoke the ${widget.task!.score} points earned from completing it.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Keep Task'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Cancel Task'),
-              ),
-            ],
-          ),
+    final bool? shouldCancel = await _dialogService.showConfirmDialog(
+      context,
+      'Cancel Task',
+      'Are you sure you want to cancel "${_titleController.text}"?\n\n'
+      'This will remove the task and revoke the ${widget.task!.score} points earned from completing it.',
+      confirmText: 'Cancel Task',
+      cancelText: 'Keep Task',
+      isDangerous: true,
     );
 
     if (shouldCancel != true || widget.task?.id == null) {

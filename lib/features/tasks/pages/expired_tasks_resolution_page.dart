@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
+import 'package:betullarise/services/ui/dialog_service.dart';
 
 class ExpiredTasksResolutionPage extends StatefulWidget {
   final List<Task> tasks;
@@ -19,6 +20,7 @@ class ExpiredTasksResolutionPage extends StatefulWidget {
 class _ExpiredTasksResolutionPageState
     extends State<ExpiredTasksResolutionPage> {
   final TasksDatabaseHelper _dbHelper = TasksDatabaseHelper.instance;
+  final _dialogService = DialogService();
   List<Task> _remainingTasks = [];
   bool _isProcessing = false;
 
@@ -141,29 +143,17 @@ class _ExpiredTasksResolutionPageState
   }
 
   Future<void> _showRescheduleOrDeleteDialog(Task task) async {
-    final result = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Task Not Completed'),
-            content: Text('What would you like to do with "${task.title}"?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'delete'),
-                child: const Text('Delete Task'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'reschedule'),
-                child: const Text('Reschedule Task'),
-              ),
-            ],
-          ),
+    final result = await _dialogService.showConfirmDialog(
+      context,
+      'Task Not Completed',
+      'What would you like to do with "${task.title}"?',
+      confirmText: 'Reschedule Task',
+      cancelText: 'Delete Task',
     );
 
-    if (result == 'delete') {
+    if (result == false) {
       await _deleteTask(task);
-    } else if (result == 'reschedule') {
+    } else if (result == true) {
       await _showRescheduleDialog(task);
     }
   }
