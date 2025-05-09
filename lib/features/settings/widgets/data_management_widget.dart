@@ -3,13 +3,17 @@ import 'package:betullarise/services/database_export_import_service.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 
 class DataManagementWidget extends StatelessWidget {
-  const DataManagementWidget({super.key});
+  final DatabaseExportImportService exportImportService;
+  final DialogService dialogService;
+
+  const DataManagementWidget({
+    super.key,
+    required this.exportImportService,
+    required this.dialogService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final exportImportService = DatabaseExportImportService();
-    final dialogService = DialogService();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
