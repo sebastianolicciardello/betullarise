@@ -3,12 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/features/settings/widgets/theme_selector_widget.dart';
+import '../../../widget_test_setup.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('ThemeSelectorWidget', () {
     late ThemeNotifier themeNotifier;
 
-    setUp(() {
+    setUp(() async {
+      await setUpWidgetTest();
       themeNotifier = ThemeNotifier();
     });
 
@@ -29,7 +33,9 @@ void main() {
       expect(find.text('Dark'), findsOneWidget);
     });
 
-    testWidgets('updates theme when option is selected', (WidgetTester tester) async {
+    testWidgets('updates theme when option is selected', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ChangeNotifierProvider<ThemeNotifier>.value(
