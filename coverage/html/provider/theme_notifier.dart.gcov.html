@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-05-09 17:19:08</td>
+            <td class="headerValue">2025-05-10 08:42:22</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -74,27 +74,27 @@
 <span id="L12"><span class="lineNum">      12</span>              : </span>
 <span id="L13"><span class="lineNum">      13</span> <span class="tlaGNC">           3 :   Future&lt;void&gt; _loadThemeMode() async {</span></span>
 <span id="L14"><span class="lineNum">      14</span> <span class="tlaGNC">           3 :     SharedPreferences prefs = await SharedPreferences.getInstance();</span></span>
-<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           1 :     String? themeString = prefs.getString('themeMode');</span></span>
-<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           1 :     if (themeString == 'light') {</span></span>
+<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           2 :     String? themeString = prefs.getString('themeMode');</span></span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           2 :     if (themeString == 'light') {</span></span>
 <span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           1 :       _themeMode = ThemeMode.light;</span></span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           1 :     } else if (themeString == 'dark') {</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           2 :     } else if (themeString == 'dark') {</span></span>
 <span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           1 :       _themeMode = ThemeMode.dark;</span></span>
 <span id="L20"><span class="lineNum">      20</span>              :     } else {</span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :       _themeMode = ThemeMode.system;</span></span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           2 :       _themeMode = ThemeMode.system;</span></span>
 <span id="L22"><span class="lineNum">      22</span>              :     }</span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :     notifyListeners();</span></span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           2 :     notifyListeners();</span></span>
 <span id="L24"><span class="lineNum">      24</span>              :   }</span>
 <span id="L25"><span class="lineNum">      25</span>              : </span>
 <span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           2 :   Future&lt;void&gt; setThemeMode(ThemeMode mode) async {</span></span>
 <span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           2 :     _themeMode = mode;</span></span>
 <span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           2 :     notifyListeners();</span></span>
 <span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           2 :     SharedPreferences prefs = await SharedPreferences.getInstance();</span></span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :     if (mode == ThemeMode.light) {</span></span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           1 :       prefs.setString('themeMode', 'light');</span></span>
-<span id="L32"><span class="lineNum">      32</span> <span class="tlaGNC">           1 :     } else if (mode == ThemeMode.dark) {</span></span>
-<span id="L33"><span class="lineNum">      33</span> <span class="tlaGNC">           1 :       prefs.setString('themeMode', 'dark');</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           2 :     if (mode == ThemeMode.light) {</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           2 :       prefs.setString('themeMode', 'light');</span></span>
+<span id="L32"><span class="lineNum">      32</span> <span class="tlaGNC">           2 :     } else if (mode == ThemeMode.dark) {</span></span>
+<span id="L33"><span class="lineNum">      33</span> <span class="tlaGNC">           2 :       prefs.setString('themeMode', 'dark');</span></span>
 <span id="L34"><span class="lineNum">      34</span>              :     } else {</span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           1 :       prefs.setString('themeMode', 'system');</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           2 :       prefs.setString('themeMode', 'system');</span></span>
 <span id="L36"><span class="lineNum">      36</span>              :     }</span>
 <span id="L37"><span class="lineNum">      37</span>              :   }</span>
 <span id="L38"><span class="lineNum">      38</span>              : }</span>
