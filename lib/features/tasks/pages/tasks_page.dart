@@ -268,6 +268,9 @@ class _TasksPageState extends State<TasksPage> {
       final now = DateTime.now();
       final deadline = DateTime.fromMillisecondsSinceEpoch(task.deadline);
       overdueDays = now.difference(deadline).inDays;
+      if (now.isAfter(deadline)) {
+        overdueDays += 1;
+      }
       if (overdueDays > 0) {
         effectivePoints = task.score - (task.penalty * overdueDays);
       }
