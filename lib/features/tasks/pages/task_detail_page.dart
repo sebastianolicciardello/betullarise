@@ -9,8 +9,17 @@ import 'package:betullarise/services/ui/dialog_service.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
+  final TasksDatabaseHelper? dbHelper;
+  final PointsDatabaseHelper? pointsDbHelper;
+  final DialogService? dialogService;
 
-  const TaskDetailPage({super.key, this.task});
+  const TaskDetailPage({
+    super.key,
+    this.task,
+    this.dbHelper,
+    this.pointsDbHelper,
+    this.dialogService,
+  });
 
   @override
   State<TaskDetailPage> createState() => _TaskDetailPageState();
@@ -22,16 +31,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   final _descriptionController = TextEditingController();
   final _penaltyController = TextEditingController();
   final _scoreController = TextEditingController();
-  final _dialogService = DialogService();
+  // final _dialogService = DialogService();
 
   DateTime _deadline = DateTime.now().add(const Duration(days: 1));
 
-  final TasksDatabaseHelper _dbHelper = TasksDatabaseHelper.instance;
+  late final TasksDatabaseHelper _dbHelper;
   bool _isLoading = false;
+  late final PointsDatabaseHelper _pointsDbHelper;
+  late final DialogService _dialogService;
 
   @override
   void initState() {
     super.initState();
+    _dbHelper = widget.dbHelper ?? TasksDatabaseHelper.instance;
+    _pointsDbHelper = widget.pointsDbHelper ?? PointsDatabaseHelper.instance;
+    _dialogService = widget.dialogService ?? DialogService();
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description;
@@ -124,8 +138,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         context,
         'Reschedule Completed Task',
         'Rescheduling this task will reset its completion status and you will lose the ${widget.task!.score} points earned.\n\n'
-        'The task will be rescheduled with the deadline: ${DateFormat('dd/MM/yyyy').format(_deadline)}.\n\n'
-        'Do you want to continue?',
+            'The task will be rescheduled with the deadline: ${DateFormat('dd/MM/yyyy').format(_deadline)}.\n\n'
+            'Do you want to continue?',
         confirmText: 'Reschedule',
         cancelText: 'Cancel',
         isDangerous: true,
@@ -144,7 +158,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       // Se stiamo rischedulando un task completato, sottraiamo i punti prima di aggiornare il task
       if (isReschedulingCompletedTask && widget.task?.id != null) {
         // 1. Ottieni i punti associati a questo task
-        final pointsDbHelper = PointsDatabaseHelper.instance;
+        final pointsDbHelper = _pointsDbHelper;
         final point = await pointsDbHelper
             .queryPointByReferenceIdOnlyPositiveTasks(widget.task!.id!);
 
@@ -252,7 +266,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       context,
       'Cancel Task',
       'Are you sure you want to cancel "${_titleController.text}"?\n\n'
-      'This will remove the task and revoke the ${widget.task!.score} points earned from completing it.',
+          'This will remove the task and revoke the ${widget.task!.score} points earned from completing it.',
       confirmText: 'Cancel Task',
       cancelText: 'Keep Task',
       isDangerous: true,
@@ -268,7 +282,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
     try {
       // 1. Get the point record for this task
-      final pointsDbHelper = PointsDatabaseHelper.instance;
+      final pointsDbHelper = _pointsDbHelper;
       final point = await pointsDbHelper
           .queryPointByReferenceIdOnlyPositiveTasks(widget.task!.id!);
 

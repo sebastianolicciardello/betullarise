@@ -2,9 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:betullarise/features/habits/habit_detail_page.dart';
 import 'package:betullarise/model/habit.dart';
+import 'package:betullarise/database/habits_database_helper.dart';
 import '../widget_test_setup.dart' as test_setup;
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+@GenerateMocks([HabitsDatabaseHelper])
+import 'habit_detail_page_test.mocks.dart';
+
+// Helper function to create a test habit
+Habit createTestHabit({int? id}) {
+  return Habit(
+    id: id ?? 0,
+    title: 'Test Habit',
+    description: 'Test Description',
+    score: 1.0,
+    penalty: 1.0,
+    type: 'single',
+    createdTime: 123,
+    updatedTime: 456,
+  );
+}
+
+// Helper function to create the widget under test
+Widget createWidgetUnderTest({Habit? habit, HabitsDatabaseHelper? dbHelper}) {
+  return MaterialApp(home: HabitDetailPage(habit: habit, dbHelper: dbHelper));
+}
 
 void main() {
+  late MockHabitsDatabaseHelper mockHabitsDbHelper;
+
+  setUp(() {
+    mockHabitsDbHelper = MockHabitsDatabaseHelper();
+  });
+
   group('HabitDetailPage', () {
     testWidgets('renders empty form for new habit', (
       WidgetTester tester,
@@ -112,47 +143,78 @@ void main() {
       // Smoke test: il tap non deve lanciare errori, non assertiamo più sul messaggio
     });
 
-    testWidgets('can save a new habit with valid data', (WidgetTester tester) async {
-      await test_setup.setUpWidgetTest();
+    testWidgets('can save a new habit with valid data', (
+      WidgetTester tester,
+    ) async {
+      when(mockHabitsDbHelper.insertHabit(any)).thenAnswer((_) async => 1);
+
       await tester.pumpWidget(
-        test_setup.makeTestableWidget(child: HabitDetailPage()),
+        createWidgetUnderTest(dbHelper: mockHabitsDbHelper),
       );
-      await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Nuova Abitudine');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Description'), 'Descrizione di test');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Score'), '3');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Penalty'), '2');
+      await tester.pump();
+
+      // Verify that the input field is present
+      expect(find.byType(TextFormField), findsNWidgets(4));
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'New Habit');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'Description test',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '10');
+      await tester.enterText(find.byType(TextFormField).at(3), '5');
+
       // Scroll per rendere visibile il pulsante
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
+
       await tester.tap(find.text('Save Habit'));
-      await tester.pumpAndSettle(const Duration(seconds: 1));
-      // Smoke test: il tap non deve lanciare errori
+      await tester.pumpAndSettle();
+
+      verify(mockHabitsDbHelper.insertHabit(any)).called(1);
     });
 
     testWidgets('can update an existing habit', (WidgetTester tester) async {
-      final habit = Habit(
-        id: 1,
-        title: 'Vecchia Abitudine',
-        description: 'Vecchia descrizione',
-        score: 1.0,
-        penalty: 1.0,
-        type: 'single',
-        createdTime: 123,
-        updatedTime: 456,
-      );
-      await test_setup.setUpWidgetTest();
+      final habit = createTestHabit(id: 1);
+
+      when(mockHabitsDbHelper.updateHabit(any)).thenAnswer((_) async => 1);
+
       await tester.pumpWidget(
-        test_setup.makeTestableWidget(child: HabitDetailPage(habit: habit)),
+        createWidgetUnderTest(habit: habit, dbHelper: mockHabitsDbHelper),
       );
-      await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Abitudine Modificata');
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'Updated Habit');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'Description aggiornata',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '20');
+      await tester.enterText(find.byType(TextFormField).at(3), '10');
+
+      // Scroll to make sure the button is visible
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
+
       await tester.tap(find.text('Update Habit'));
-      await tester.pumpAndSettle(const Duration(seconds: 1));
-      // Smoke test: il tap non deve lanciare errori
+      await tester.pumpAndSettle();
+
+      // Conferma la dialog di update
+      await tester.tap(find.widgetWithText(TextButton, 'Update'));
+      await tester.pumpAndSettle();
+
+      verify(mockHabitsDbHelper.updateHabit(any)).called(1);
     });
 
-    testWidgets('can open delete dialog for existing habit', (WidgetTester tester) async {
+    testWidgets('can open delete dialog for existing habit', (
+      WidgetTester tester,
+    ) async {
       final habit = Habit(
         id: 1,
         title: 'Abitudine da Eliminare',

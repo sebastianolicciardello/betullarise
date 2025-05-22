@@ -5,8 +5,9 @@ import 'package:betullarise/services/ui/dialog_service.dart';
 
 class HabitDetailPage extends StatefulWidget {
   final Habit? habit;
+  final HabitsDatabaseHelper? dbHelper;
 
-  const HabitDetailPage({super.key, this.habit});
+  const HabitDetailPage({super.key, this.habit, this.dbHelper});
 
   @override
   State<HabitDetailPage> createState() => _HabitDetailPageState();
@@ -23,13 +24,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   bool _includeScore = true;
   bool _includePenalty = false;
 
-  final HabitsDatabaseHelper _dbHelper = HabitsDatabaseHelper.instance;
+  late final HabitsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _dbHelper = widget.dbHelper ?? HabitsDatabaseHelper.instance;
     if (widget.habit != null) {
       _titleController.text = widget.habit!.title;
       _descriptionController.text = widget.habit!.description;
