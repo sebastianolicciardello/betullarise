@@ -5,7 +5,11 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'dart:developer' as developer;
 
-class RewardsDatabaseHelper {
+abstract class IRewardsDatabaseHelper {
+  Future<List<Reward>> getAllRewards();
+}
+
+class RewardsDatabaseHelper implements IRewardsDatabaseHelper {
   static const _databaseName = 'betullarise.db';
   static const _databaseVersion = 1;
   static const tableRewards = 'rewards';
@@ -189,6 +193,7 @@ class RewardsDatabaseHelper {
   }
 
   // Get all rewards
+  @override
   Future<List<Reward>> getAllRewards() async {
     Database db = await instance.database;
 

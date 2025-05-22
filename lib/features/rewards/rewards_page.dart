@@ -8,14 +8,15 @@ import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 
 class RewardsPage extends StatefulWidget {
-  const RewardsPage({super.key});
+  final IRewardsDatabaseHelper? dbHelper;
+  const RewardsPage({super.key, this.dbHelper});
 
   @override
   State<RewardsPage> createState() => _RewardsPageState();
 }
 
 class _RewardsPageState extends State<RewardsPage> {
-  final RewardsDatabaseHelper _dbHelper = RewardsDatabaseHelper.instance;
+  late final IRewardsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
   List<Reward> _rewards = [];
   List<Reward> _filteredRewards = [];
@@ -27,6 +28,7 @@ class _RewardsPageState extends State<RewardsPage> {
   @override
   void initState() {
     super.initState();
+    _dbHelper = widget.dbHelper ?? RewardsDatabaseHelper.instance;
     _searchController.addListener(_onSearchChanged);
     _loadRewards();
   }
