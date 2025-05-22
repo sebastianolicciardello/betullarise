@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:betullarise/features/tasks/handlers/expired_tasks_handler.dart';
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
@@ -101,8 +100,6 @@ class _HomePageState extends State<HomePage> {
     // Carica i punti totali tramite il provider quando la pagina viene inizializzata
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
-      // Check for expired tasks when the app starts
-      ExpiredTasksHandler.handleExpiredTasks(context);
     });
   }
 

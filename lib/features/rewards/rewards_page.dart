@@ -377,7 +377,7 @@ class _RewardsPageState extends State<RewardsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Cost: ${reward.points.toStringAsFixed(1)} points',
+                    'Cost: ${reward.points.toStringAsFixed(2)} points',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: canAfford ? Colors.green : Colors.red,
@@ -421,7 +421,8 @@ class _RewardsPageState extends State<RewardsPage> {
         'Redeem "${reward.title}"?',
         message,
         confirmText: 'Confirm Redeem',
-        confirmColor: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
+        confirmColor:
+            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
       );
 
       if (confirmed == true) {
@@ -470,7 +471,8 @@ class _RewardsPageState extends State<RewardsPage> {
         'Confirm Redemption',
         message,
         confirmText: 'Confirm Redeem',
-        confirmColor: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
+        confirmColor:
+            canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
       );
 
       if (confirmed == true) {

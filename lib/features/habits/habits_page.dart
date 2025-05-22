@@ -243,9 +243,9 @@ class _HabitsPageState extends State<HabitsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (habit.score > 0)
-                        Text('Score: +${habit.score.toStringAsFixed(1)}'),
+                        Text('Score: +${habit.score.toStringAsFixed(2)}'),
                       if (habit.penalty > 0)
-                        Text('Penalty: -${habit.penalty.toStringAsFixed(1)}'),
+                        Text('Penalty: -${habit.penalty.toStringAsFixed(2)}'),
                     ],
                   ),
                   IconButton(
@@ -340,11 +340,7 @@ class _HabitsPageState extends State<HabitsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(message),
-                const SizedBox(height: 16),
-                ...choices,
-              ],
+              children: [Text(message), const SizedBox(height: 16), ...choices],
             ),
           ),
           actions: [

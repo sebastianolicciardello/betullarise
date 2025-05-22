@@ -1,5 +1,4 @@
 import 'package:betullarise/database/points_database_helper.dart';
-import 'package:betullarise/features/tasks/handlers/expired_tasks_handler.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -106,11 +105,6 @@ class _TasksPageState extends State<TasksPage> {
       _filteredCompletedTasks = List.from(completed);
       _isLoading = false;
     });
-
-    // After loading tasks, check if there are any expired ones
-    if (mounted) {
-      ExpiredTasksHandler.handleExpiredTasks(context);
-    }
   }
 
   String _formatDate(int timestamp) {
@@ -267,6 +261,18 @@ class _TasksPageState extends State<TasksPage> {
             .copyWith(hour: 0, minute: 0, second: 0, millisecond: 0)
             .millisecondsSinceEpoch;
 
+    // Calculate overdue days and effective points (can be negative)
+    int overdueDays = 0;
+    double effectivePoints = task.score;
+    if (!isCompleted && isOverdue) {
+      final now = DateTime.now();
+      final deadline = DateTime.fromMillisecondsSinceEpoch(task.deadline);
+      overdueDays = now.difference(deadline).inDays;
+      if (overdueDays > 0) {
+        effectivePoints = task.score - (task.penalty * overdueDays);
+      }
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
@@ -346,16 +352,38 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text('Score: +${task.score.toStringAsFixed(1)}'),
+                      Text('Score: +${task.score.toStringAsFixed(2)}'),
                       const SizedBox(height: 4),
-                      Text('Penalty: -${task.penalty.toStringAsFixed(1)}'),
+                      Text('Penalty: -${task.penalty.toStringAsFixed(2)}'),
+                      if (!isCompleted && isOverdue) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Effective Points: ${effectivePoints.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color:
+                                effectivePoints >= 0
+                                    ? Colors.orange
+                                    : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Penalty for overdue: -${(task.penalty * overdueDays).toStringAsFixed(2)} ($overdueDays days late)',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   if (!isCompleted)
                     IconButton(
                       icon: const Icon(Icons.circle_outlined),
                       onPressed: () async {
-                        // First update the task to mark it as completed
+                        // If the task is overdue, assign (subtract) the effectivePoints
+                        double pointsToAssign =
+                            isOverdue ? effectivePoints : task.score;
                         await _dbHelper.updateTask(
                           task.copyWith(
                             completionTime:
@@ -370,8 +398,7 @@ class _TasksPageState extends State<TasksPage> {
                           Point(
                             referenceId: task.id!,
                             type: 'task',
-                            points:
-                                task.score, // Using the task's score as points value
+                            points: pointsToAssign, // can be negative
                             insertTime: DateTime.now().millisecondsSinceEpoch,
                           ),
                         );
@@ -380,7 +407,7 @@ class _TasksPageState extends State<TasksPage> {
                         final point = Point(
                           referenceId: task.id!,
                           type: 'task',
-                          points: task.score,
+                          points: pointsToAssign,
                           insertTime: DateTime.now().millisecondsSinceEpoch,
                         );
 
@@ -400,7 +427,9 @@ class _TasksPageState extends State<TasksPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Task completed! +${task.score} points',
+                                pointsToAssign >= 0
+                                    ? 'Task completed! +${pointsToAssign.toStringAsFixed(1)} points'
+                                    : 'Task completed! ${pointsToAssign.toStringAsFixed(1)} points',
                               ),
                               duration: const Duration(
                                 seconds: 4,
@@ -435,7 +464,9 @@ class _TasksPageState extends State<TasksPage> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Task completion undone. -${task.score} points',
+                                          pointsToAssign >= 0
+                                              ? 'Task completion undone. -${pointsToAssign.toStringAsFixed(1)} points'
+                                              : 'Task completion undone. +${(-pointsToAssign).toStringAsFixed(1)} points',
                                         ),
                                         duration: const Duration(seconds: 2),
                                       ),
