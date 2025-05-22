@@ -8,14 +8,15 @@ import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 
 class HabitsPage extends StatefulWidget {
-  const HabitsPage({super.key});
+  final HabitsDatabaseHelper? dbHelper;
+  const HabitsPage({super.key, this.dbHelper});
 
   @override
   State<HabitsPage> createState() => _HabitsPageState();
 }
 
 class _HabitsPageState extends State<HabitsPage> {
-  final HabitsDatabaseHelper _dbHelper = HabitsDatabaseHelper.instance;
+  late final HabitsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
   List<Habit> _habits = [];
   List<Habit> _filteredHabits = [];
@@ -26,6 +27,7 @@ class _HabitsPageState extends State<HabitsPage> {
   @override
   void initState() {
     super.initState();
+    _dbHelper = widget.dbHelper ?? HabitsDatabaseHelper.instance;
     _searchController.addListener(_onSearchChanged);
     _loadHabits();
   }
