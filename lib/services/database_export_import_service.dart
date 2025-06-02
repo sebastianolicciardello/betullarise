@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 import 'dart:developer' as developer;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 /// Utility class containing pure functions for JSON conversion
 class DatabaseExportImportUtils {
@@ -162,16 +163,35 @@ class DatabaseExportImportService {
     return false;
   }
 
-  /// Requests storage permission on Android
+  /// Requests appropriate storage permissions based on Android version
   Future<bool> _requestStoragePermission(BuildContext context) async {
     if (Platform.isAndroid) {
-      var status = await Permission.manageExternalStorage.request();
-      if (!status.isGranted && context.mounted) {
-        _showSnackBar(context, 'Storage permission denied');
-        return false;
+      if (await _isAndroid13OrHigher()) {
+        // For Android 13+ (API 33+), request media permissions
+        final status = await Permission.photos.request();
+        if (!status.isGranted && context.mounted) {
+          _showSnackBar(context, 'Storage permission denied');
+          return false;
+        }
+      } else {
+        // For Android 12 and below, request legacy storage permission
+        final status = await Permission.storage.request();
+        if (!status.isGranted && context.mounted) {
+          _showSnackBar(context, 'Storage permission denied');
+          return false;
+        }
       }
     }
     return true;
+  }
+
+  /// Checks if the device is running Android 13 or higher
+  Future<bool> _isAndroid13OrHigher() async {
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      return androidInfo.version.sdkInt >= 33;
+    }
+    return false;
   }
 
   /// Gets the database path based on platform
@@ -192,11 +212,17 @@ class DatabaseExportImportService {
     if (Platform.isIOS || Platform.isMacOS) {
       directory = await getApplicationDocumentsDirectory();
     } else if (Platform.isAndroid) {
-      directory = Directory('/storage/emulated/0/Download');
-      if (!await directory.exists()) {
-        directory =
-            await getExternalStorageDirectory() ??
-            await getApplicationDocumentsDirectory();
+      if (await _isAndroid13OrHigher()) {
+        // Use app-specific directory for Android 13+
+        directory = await getApplicationDocumentsDirectory();
+      } else {
+        // Use Downloads directory for older Android versions
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory =
+              await getExternalStorageDirectory() ??
+              await getApplicationDocumentsDirectory();
+        }
       }
     } else {
       directory = await getApplicationDocumentsDirectory();
@@ -311,9 +337,9 @@ class DatabaseExportImportService {
           return null;
         }
       } catch (e) {
-        // If saveFile is not supported (older Android), fall back to default location
+        // If saveFile is not supported, use app-specific directory
         developer.log(
-          'SaveFile not supported, using default location',
+          'SaveFile not supported, using app-specific directory',
           name: 'EXPORT',
         );
         final defaultDir = await _getDefaultExportPath();
