@@ -11,6 +11,7 @@ import 'dart:developer' as developer;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:platform/platform.dart';
 
 /// Configuration for the export/import service
 class ExportImportConfig {
@@ -36,37 +37,64 @@ abstract class PlatformHandler {
   Future<bool> isAndroid13OrHigher();
 }
 
+/// Interface for requesting permissions (for testability)
+abstract class PermissionRequester {
+  Future<PermissionStatus> requestPhotos();
+  Future<PermissionStatus> requestVideos();
+  Future<PermissionStatus> requestAudio();
+  Future<PermissionStatus> requestStorage();
+}
+
+/// Default implementation using permission_handler
+class DefaultPermissionRequester implements PermissionRequester {
+  @override
+  Future<PermissionStatus> requestPhotos() => Permission.photos.request();
+  @override
+  Future<PermissionStatus> requestVideos() => Permission.videos.request();
+  @override
+  Future<PermissionStatus> requestAudio() => Permission.audio.request();
+  @override
+  Future<PermissionStatus> requestStorage() => Permission.storage.request();
+}
+
 /// Default implementation of PlatformHandler
 class DefaultPlatformHandler implements PlatformHandler {
   final BuildContext? context;
   final ExportImportConfig config;
-  final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
+  final DeviceInfoPlugin _deviceInfo;
+  final PermissionRequester permissionRequester;
+  final Platform _platform;
 
   DefaultPlatformHandler({
     this.context,
     this.config = const ExportImportConfig(),
-  });
+    PermissionRequester? permissionRequester,
+    DeviceInfoPlugin? deviceInfo,
+    Platform? platform,
+  }) : permissionRequester =
+           permissionRequester ?? DefaultPermissionRequester(),
+       _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
+       _platform = platform ?? const LocalPlatform();
 
   @override
   Future<bool> requestStoragePermission() async {
-    if (Platform.isAndroid) {
+    if (_platform.isAndroid) {
       final androidInfo = await _deviceInfo.androidInfo;
       final sdkInt = androidInfo.version.sdkInt;
 
       if (sdkInt >= 34) {
         // Android 14+ (API 34+)
-        final photos = await Permission.photos.request();
-        final videos = await Permission.videos.request();
-        final audio = await Permission.audio.request();
-
+        final photos = await permissionRequester.requestPhotos();
+        final videos = await permissionRequester.requestVideos();
+        final audio = await permissionRequester.requestAudio();
         return photos.isGranted && videos.isGranted && audio.isGranted;
       } else if (sdkInt >= 33) {
         // Android 13 (API 33)
-        final photos = await Permission.photos.request();
+        final photos = await permissionRequester.requestPhotos();
         return photos.isGranted;
       } else {
         // Android 12 and below
-        final storage = await Permission.storage.request();
+        final storage = await permissionRequester.requestStorage();
         return storage.isGranted;
       }
     }
@@ -75,7 +103,7 @@ class DefaultPlatformHandler implements PlatformHandler {
 
   @override
   Future<String> getDatabasePath(String databaseName) async {
-    if (Platform.isMacOS) {
+    if (_platform.isMacOS) {
       final documentsDirectory = await getApplicationDocumentsDirectory();
       return path.join(documentsDirectory.path, databaseName);
     } else {
@@ -88,9 +116,9 @@ class DefaultPlatformHandler implements PlatformHandler {
   Future<String> getDefaultExportPath() async {
     Directory directory;
 
-    if (Platform.isIOS || Platform.isMacOS) {
+    if (_platform.isIOS || _platform.isMacOS) {
       directory = await getApplicationDocumentsDirectory();
-    } else if (Platform.isAndroid) {
+    } else if (_platform.isAndroid) {
       if (await isAndroid13OrHigher()) {
         // Use app-specific directory for Android 13+
         directory = await getApplicationDocumentsDirectory();
@@ -158,7 +186,7 @@ class DefaultPlatformHandler implements PlatformHandler {
 
   @override
   Future<bool> isAndroid13OrHigher() async {
-    if (Platform.isAndroid) {
+    if (_platform.isAndroid) {
       final androidInfo = await _deviceInfo.androidInfo;
       return androidInfo.version.sdkInt >= 33;
     }

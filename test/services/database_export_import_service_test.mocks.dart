@@ -3,18 +3,15 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
-import 'dart:typed_data' as _i7;
+import 'dart:async' as _i4;
+import 'dart:typed_data' as _i6;
 
-import 'package:file_picker/src/file_picker.dart' as _i5;
-import 'package:file_picker/src/file_picker_result.dart' as _i6;
+import 'package:archive/archive.dart' as _i2;
+import 'package:betullarise/services/database_export_import_service.dart'
+    as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i9;
-import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart'
-    as _i8;
-import 'package:shared_preferences/src/shared_preferences_legacy.dart' as _i4;
-import 'package:sqflite_common/sql.dart' as _i10;
-import 'package:sqflite_common/sqlite_api.dart' as _i2;
+import 'package:mockito/src/dummies.dart' as _i5;
+import 'package:shared_preferences/shared_preferences.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -30,30 +27,100 @@ import 'package:sqflite_common/sqlite_api.dart' as _i2;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeDatabase_0 extends _i1.SmartFake implements _i2.Database {
-  _FakeDatabase_0(Object parent, Invocation parentInvocation)
+class _FakeArchiveFile_0 extends _i1.SmartFake implements _i2.ArchiveFile {
+  _FakeArchiveFile_0(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeFuture_1<T1> extends _i1.SmartFake implements _i3.Future<T1> {
-  _FakeFuture_1(Object parent, Invocation parentInvocation)
+class _FakeIterator_1<E> extends _i1.SmartFake implements Iterator<E> {
+  _FakeIterator_1(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeQueryCursor_2 extends _i1.SmartFake implements _i2.QueryCursor {
-  _FakeQueryCursor_2(Object parent, Invocation parentInvocation)
+class _FakeDateTime_2 extends _i1.SmartFake implements DateTime {
+  _FakeDateTime_2(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeBatch_3 extends _i1.SmartFake implements _i2.Batch {
-  _FakeBatch_3(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+/// A class which mocks [PlatformHandler].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockPlatformHandler extends _i1.Mock implements _i3.PlatformHandler {
+  MockPlatformHandler() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<bool> requestStoragePermission() =>
+      (super.noSuchMethod(
+            Invocation.method(#requestStoragePermission, []),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
+  _i4.Future<String> getDatabasePath(String? databaseName) =>
+      (super.noSuchMethod(
+            Invocation.method(#getDatabasePath, [databaseName]),
+            returnValue: _i4.Future<String>.value(
+              _i5.dummyValue<String>(
+                this,
+                Invocation.method(#getDatabasePath, [databaseName]),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
+
+  @override
+  _i4.Future<String> getDefaultExportPath() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDefaultExportPath, []),
+            returnValue: _i4.Future<String>.value(
+              _i5.dummyValue<String>(
+                this,
+                Invocation.method(#getDefaultExportPath, []),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
+
+  @override
+  _i4.Future<String?> chooseExportDirectory() =>
+      (super.noSuchMethod(
+            Invocation.method(#chooseExportDirectory, []),
+            returnValue: _i4.Future<String?>.value(),
+          )
+          as _i4.Future<String?>);
+
+  @override
+  _i4.Future<String?> saveFile(_i6.Uint8List? data, String? filename) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveFile, [data, filename]),
+            returnValue: _i4.Future<String?>.value(),
+          )
+          as _i4.Future<String?>);
+
+  @override
+  _i4.Future<_i6.Uint8List?> chooseImportFile() =>
+      (super.noSuchMethod(
+            Invocation.method(#chooseImportFile, []),
+            returnValue: _i4.Future<_i6.Uint8List?>.value(),
+          )
+          as _i4.Future<_i6.Uint8List?>);
+
+  @override
+  _i4.Future<bool> isAndroid13OrHigher() =>
+      (super.noSuchMethod(
+            Invocation.method(#isAndroid13OrHigher, []),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 }
 
 /// A class which mocks [SharedPreferences].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSharedPreferences extends _i1.Mock implements _i4.SharedPreferences {
+class MockSharedPreferences extends _i1.Mock implements _i7.SharedPreferences {
   MockSharedPreferences() {
     _i1.throwOnMissingStub(this);
   }
@@ -100,564 +167,652 @@ class MockSharedPreferences extends _i1.Mock implements _i4.SharedPreferences {
           as List<String>?);
 
   @override
-  _i3.Future<bool> setBool(String? key, bool? value) =>
+  _i4.Future<bool> setBool(String? key, bool? value) =>
       (super.noSuchMethod(
             Invocation.method(#setBool, [key, value]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> setInt(String? key, int? value) =>
+  _i4.Future<bool> setInt(String? key, int? value) =>
       (super.noSuchMethod(
             Invocation.method(#setInt, [key, value]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> setDouble(String? key, double? value) =>
+  _i4.Future<bool> setDouble(String? key, double? value) =>
       (super.noSuchMethod(
             Invocation.method(#setDouble, [key, value]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> setString(String? key, String? value) =>
+  _i4.Future<bool> setString(String? key, String? value) =>
       (super.noSuchMethod(
             Invocation.method(#setString, [key, value]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> setStringList(String? key, List<String>? value) =>
+  _i4.Future<bool> setStringList(String? key, List<String>? value) =>
       (super.noSuchMethod(
             Invocation.method(#setStringList, [key, value]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> remove(String? key) =>
+  _i4.Future<bool> remove(String? key) =>
       (super.noSuchMethod(
             Invocation.method(#remove, [key]),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> commit() =>
+  _i4.Future<bool> commit() =>
       (super.noSuchMethod(
             Invocation.method(#commit, []),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> clear() =>
+  _i4.Future<bool> clear() =>
       (super.noSuchMethod(
             Invocation.method(#clear, []),
-            returnValue: _i3.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i3.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i3.Future<void> reload() =>
+  _i4.Future<void> reload() =>
       (super.noSuchMethod(
             Invocation.method(#reload, []),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i3.Future<void>);
+          as _i4.Future<void>);
 }
 
-/// A class which mocks [FilePicker].
+/// A class which mocks [Archive].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFilePicker extends _i1.Mock implements _i5.FilePicker {
-  MockFilePicker() {
+class MockArchive extends _i1.Mock implements _i2.Archive {
+  MockArchive() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i6.FilePickerResult?> pickFiles({
-    String? dialogTitle,
-    String? initialDirectory,
-    _i5.FileType? type = _i5.FileType.any,
-    List<String>? allowedExtensions,
-    dynamic Function(_i5.FilePickerStatus)? onFileLoading,
-    bool? allowCompression = false,
-    int? compressionQuality = 0,
-    bool? allowMultiple = false,
-    bool? withData = false,
-    bool? withReadStream = false,
-    bool? lockParentWindow = false,
-    bool? readSequential = false,
-  }) =>
+  List<_i2.ArchiveFile> get files =>
       (super.noSuchMethod(
-            Invocation.method(#pickFiles, [], {
-              #dialogTitle: dialogTitle,
-              #initialDirectory: initialDirectory,
-              #type: type,
-              #allowedExtensions: allowedExtensions,
-              #onFileLoading: onFileLoading,
-              #allowCompression: allowCompression,
-              #compressionQuality: compressionQuality,
-              #allowMultiple: allowMultiple,
-              #withData: withData,
-              #withReadStream: withReadStream,
-              #lockParentWindow: lockParentWindow,
-              #readSequential: readSequential,
-            }),
-            returnValue: _i3.Future<_i6.FilePickerResult?>.value(),
+            Invocation.getter(#files),
+            returnValue: <_i2.ArchiveFile>[],
           )
-          as _i3.Future<_i6.FilePickerResult?>);
+          as List<_i2.ArchiveFile>);
 
   @override
-  _i3.Future<List<String>?> pickFileAndDirectoryPaths({
-    String? initialDirectory,
-    _i5.FileType? type = _i5.FileType.any,
-    List<String>? allowedExtensions,
-  }) =>
+  int get length =>
+      (super.noSuchMethod(Invocation.getter(#length), returnValue: 0) as int);
+
+  @override
+  _i2.ArchiveFile get first =>
       (super.noSuchMethod(
-            Invocation.method(#pickFileAndDirectoryPaths, [], {
-              #initialDirectory: initialDirectory,
-              #type: type,
-              #allowedExtensions: allowedExtensions,
-            }),
-            returnValue: _i3.Future<List<String>?>.value(),
+            Invocation.getter(#first),
+            returnValue: _FakeArchiveFile_0(this, Invocation.getter(#first)),
           )
-          as _i3.Future<List<String>?>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<bool?> clearTemporaryFiles() =>
+  _i2.ArchiveFile get last =>
       (super.noSuchMethod(
-            Invocation.method(#clearTemporaryFiles, []),
-            returnValue: _i3.Future<bool?>.value(),
+            Invocation.getter(#last),
+            returnValue: _FakeArchiveFile_0(this, Invocation.getter(#last)),
           )
-          as _i3.Future<bool?>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<String?> getDirectoryPath({
-    String? dialogTitle,
-    bool? lockParentWindow = false,
-    String? initialDirectory,
-  }) =>
+  bool get isEmpty =>
+      (super.noSuchMethod(Invocation.getter(#isEmpty), returnValue: false)
+          as bool);
+
+  @override
+  bool get isNotEmpty =>
+      (super.noSuchMethod(Invocation.getter(#isNotEmpty), returnValue: false)
+          as bool);
+
+  @override
+  Iterator<_i2.ArchiveFile> get iterator =>
       (super.noSuchMethod(
-            Invocation.method(#getDirectoryPath, [], {
-              #dialogTitle: dialogTitle,
-              #lockParentWindow: lockParentWindow,
-              #initialDirectory: initialDirectory,
-            }),
-            returnValue: _i3.Future<String?>.value(),
+            Invocation.getter(#iterator),
+            returnValue: _FakeIterator_1<_i2.ArchiveFile>(
+              this,
+              Invocation.getter(#iterator),
+            ),
           )
-          as _i3.Future<String?>);
+          as Iterator<_i2.ArchiveFile>);
 
   @override
-  _i3.Future<String?> saveFile({
-    String? dialogTitle,
-    String? fileName,
-    String? initialDirectory,
-    _i5.FileType? type = _i5.FileType.any,
-    List<String>? allowedExtensions,
-    _i7.Uint8List? bytes,
-    bool? lockParentWindow = false,
-  }) =>
+  set comment(String? _comment) => super.noSuchMethod(
+    Invocation.setter(#comment, _comment),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i2.ArchiveFile get single =>
       (super.noSuchMethod(
-            Invocation.method(#saveFile, [], {
-              #dialogTitle: dialogTitle,
-              #fileName: fileName,
-              #initialDirectory: initialDirectory,
-              #type: type,
-              #allowedExtensions: allowedExtensions,
-              #bytes: bytes,
-              #lockParentWindow: lockParentWindow,
-            }),
-            returnValue: _i3.Future<String?>.value(),
+            Invocation.getter(#single),
+            returnValue: _FakeArchiveFile_0(this, Invocation.getter(#single)),
           )
-          as _i3.Future<String?>);
-}
-
-/// A class which mocks [Permission].
-///
-/// See the documentation for Mockito's code generation for more information.
-// ignore: duplicate_ignore
-// ignore: must_be_immutable
-class MockPermission extends _i1.Mock implements _i8.Permission {
-  MockPermission() {
-    _i1.throwOnMissingStub(this);
-  }
+          as _i2.ArchiveFile);
 
   @override
-  int get value =>
-      (super.noSuchMethod(Invocation.getter(#value), returnValue: 0) as int);
-}
-
-/// A class which mocks [Database].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockDatabase extends _i1.Mock implements _i2.Database {
-  MockDatabase() {
-    _i1.throwOnMissingStub(this);
-  }
+  void add(_i2.ArchiveFile? file) => super.noSuchMethod(
+    Invocation.method(#add, [file]),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  String get path =>
+  void modifyAtIndex(int? index, _i2.ArchiveFile? file) => super.noSuchMethod(
+    Invocation.method(#modifyAtIndex, [index, file]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void addFile(_i2.ArchiveFile? file) => super.noSuchMethod(
+    Invocation.method(#addFile, [file]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void removeFile(_i2.ArchiveFile? file) => super.noSuchMethod(
+    Invocation.method(#removeFile, [file]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void removeAt(int? index) => super.noSuchMethod(
+    Invocation.method(#removeAt, [index]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i4.Future<void> clear() =>
       (super.noSuchMethod(
-            Invocation.getter(#path),
-            returnValue: _i9.dummyValue<String>(this, Invocation.getter(#path)),
+            Invocation.method(#clear, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  void clearSync() => super.noSuchMethod(
+    Invocation.method(#clearSync, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i2.ArchiveFile operator [](int? index) =>
+      (super.noSuchMethod(
+            Invocation.method(#[], [index]),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#[], [index]),
+            ),
+          )
+          as _i2.ArchiveFile);
+
+  @override
+  void operator []=(int? index, _i2.ArchiveFile? file) => super.noSuchMethod(
+    Invocation.method(#[]=, [index, file]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i2.ArchiveFile? find(String? name) =>
+      (super.noSuchMethod(Invocation.method(#find, [name]))
+          as _i2.ArchiveFile?);
+
+  @override
+  _i2.ArchiveFile? findFile(String? name) =>
+      (super.noSuchMethod(Invocation.method(#findFile, [name]))
+          as _i2.ArchiveFile?);
+
+  @override
+  int numberOfFiles() =>
+      (super.noSuchMethod(Invocation.method(#numberOfFiles, []), returnValue: 0)
+          as int);
+
+  @override
+  String fileName(int? index) =>
+      (super.noSuchMethod(
+            Invocation.method(#fileName, [index]),
+            returnValue: _i5.dummyValue<String>(
+              this,
+              Invocation.method(#fileName, [index]),
+            ),
           )
           as String);
 
   @override
-  bool get isOpen =>
-      (super.noSuchMethod(Invocation.getter(#isOpen), returnValue: false)
+  int fileSize(int? index) =>
+      (super.noSuchMethod(Invocation.method(#fileSize, [index]), returnValue: 0)
+          as int);
+
+  @override
+  _i6.Uint8List fileData(int? index) =>
+      (super.noSuchMethod(
+            Invocation.method(#fileData, [index]),
+            returnValue: _i6.Uint8List(0),
+          )
+          as _i6.Uint8List);
+
+  @override
+  Iterable<R> cast<R>() =>
+      (super.noSuchMethod(Invocation.method(#cast, []), returnValue: <R>[])
+          as Iterable<R>);
+
+  @override
+  Iterable<_i2.ArchiveFile> followedBy(Iterable<_i2.ArchiveFile>? other) =>
+      (super.noSuchMethod(
+            Invocation.method(#followedBy, [other]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  Iterable<T> map<T>(T Function(_i2.ArchiveFile)? toElement) =>
+      (super.noSuchMethod(
+            Invocation.method(#map, [toElement]),
+            returnValue: <T>[],
+          )
+          as Iterable<T>);
+
+  @override
+  Iterable<_i2.ArchiveFile> where(bool Function(_i2.ArchiveFile)? test) =>
+      (super.noSuchMethod(
+            Invocation.method(#where, [test]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  Iterable<T> whereType<T>() =>
+      (super.noSuchMethod(Invocation.method(#whereType, []), returnValue: <T>[])
+          as Iterable<T>);
+
+  @override
+  Iterable<T> expand<T>(Iterable<T> Function(_i2.ArchiveFile)? toElements) =>
+      (super.noSuchMethod(
+            Invocation.method(#expand, [toElements]),
+            returnValue: <T>[],
+          )
+          as Iterable<T>);
+
+  @override
+  bool contains(Object? element) =>
+      (super.noSuchMethod(
+            Invocation.method(#contains, [element]),
+            returnValue: false,
+          )
           as bool);
 
   @override
-  _i2.Database get database =>
-      (super.noSuchMethod(
-            Invocation.getter(#database),
-            returnValue: _FakeDatabase_0(this, Invocation.getter(#database)),
-          )
-          as _i2.Database);
+  void forEach(void Function(_i2.ArchiveFile)? action) => super.noSuchMethod(
+    Invocation.method(#forEach, [action]),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i3.Future<void> close() =>
-      (super.noSuchMethod(
-            Invocation.method(#close, []),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
-          )
-          as _i3.Future<void>);
-
-  @override
-  _i3.Future<T> transaction<T>(
-    _i3.Future<T> Function(_i2.Transaction)? action, {
-    bool? exclusive,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#transaction, [action], {#exclusive: exclusive}),
-            returnValue:
-                _i9.ifNotNull(
-                  _i9.dummyValueOrNull<T>(
-                    this,
-                    Invocation.method(
-                      #transaction,
-                      [action],
-                      {#exclusive: exclusive},
-                    ),
-                  ),
-                  (T v) => _i3.Future<T>.value(v),
-                ) ??
-                _FakeFuture_1<T>(
-                  this,
-                  Invocation.method(
-                    #transaction,
-                    [action],
-                    {#exclusive: exclusive},
-                  ),
-                ),
-          )
-          as _i3.Future<T>);
-
-  @override
-  _i3.Future<T> readTransaction<T>(
-    _i3.Future<T> Function(_i2.Transaction)? action,
+  _i2.ArchiveFile reduce(
+    _i2.ArchiveFile Function(_i2.ArchiveFile, _i2.ArchiveFile)? combine,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#readTransaction, [action]),
-            returnValue:
-                _i9.ifNotNull(
-                  _i9.dummyValueOrNull<T>(
-                    this,
-                    Invocation.method(#readTransaction, [action]),
-                  ),
-                  (T v) => _i3.Future<T>.value(v),
-                ) ??
-                _FakeFuture_1<T>(
-                  this,
-                  Invocation.method(#readTransaction, [action]),
-                ),
+            Invocation.method(#reduce, [combine]),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#reduce, [combine]),
+            ),
           )
-          as _i3.Future<T>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<T> devInvokeMethod<T>(String? method, [Object? arguments]) =>
+  T fold<T>(T? initialValue, T Function(T, _i2.ArchiveFile)? combine) =>
       (super.noSuchMethod(
-            Invocation.method(#devInvokeMethod, [method, arguments]),
-            returnValue:
-                _i9.ifNotNull(
-                  _i9.dummyValueOrNull<T>(
-                    this,
-                    Invocation.method(#devInvokeMethod, [method, arguments]),
-                  ),
-                  (T v) => _i3.Future<T>.value(v),
-                ) ??
-                _FakeFuture_1<T>(
-                  this,
-                  Invocation.method(#devInvokeMethod, [method, arguments]),
-                ),
+            Invocation.method(#fold, [initialValue, combine]),
+            returnValue: _i5.dummyValue<T>(
+              this,
+              Invocation.method(#fold, [initialValue, combine]),
+            ),
           )
-          as _i3.Future<T>);
+          as T);
 
   @override
-  _i3.Future<T> devInvokeSqlMethod<T>(
-    String? method,
-    String? sql, [
-    List<Object?>? arguments,
-  ]) =>
+  bool every(bool Function(_i2.ArchiveFile)? test) =>
+      (super.noSuchMethod(Invocation.method(#every, [test]), returnValue: false)
+          as bool);
+
+  @override
+  String join([String? separator = '']) =>
       (super.noSuchMethod(
-            Invocation.method(#devInvokeSqlMethod, [method, sql, arguments]),
-            returnValue:
-                _i9.ifNotNull(
-                  _i9.dummyValueOrNull<T>(
-                    this,
-                    Invocation.method(#devInvokeSqlMethod, [
-                      method,
-                      sql,
-                      arguments,
-                    ]),
-                  ),
-                  (T v) => _i3.Future<T>.value(v),
-                ) ??
-                _FakeFuture_1<T>(
-                  this,
-                  Invocation.method(#devInvokeSqlMethod, [
-                    method,
-                    sql,
-                    arguments,
-                  ]),
-                ),
+            Invocation.method(#join, [separator]),
+            returnValue: _i5.dummyValue<String>(
+              this,
+              Invocation.method(#join, [separator]),
+            ),
           )
-          as _i3.Future<T>);
+          as String);
 
   @override
-  _i3.Future<void> execute(String? sql, [List<Object?>? arguments]) =>
+  bool any(bool Function(_i2.ArchiveFile)? test) =>
+      (super.noSuchMethod(Invocation.method(#any, [test]), returnValue: false)
+          as bool);
+
+  @override
+  List<_i2.ArchiveFile> toList({bool? growable = true}) =>
       (super.noSuchMethod(
-            Invocation.method(#execute, [sql, arguments]),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
+            Invocation.method(#toList, [], {#growable: growable}),
+            returnValue: <_i2.ArchiveFile>[],
           )
-          as _i3.Future<void>);
+          as List<_i2.ArchiveFile>);
 
   @override
-  _i3.Future<int> rawInsert(String? sql, [List<Object?>? arguments]) =>
+  Set<_i2.ArchiveFile> toSet() =>
       (super.noSuchMethod(
-            Invocation.method(#rawInsert, [sql, arguments]),
-            returnValue: _i3.Future<int>.value(0),
+            Invocation.method(#toSet, []),
+            returnValue: <_i2.ArchiveFile>{},
           )
-          as _i3.Future<int>);
+          as Set<_i2.ArchiveFile>);
 
   @override
-  _i3.Future<int> insert(
-    String? table,
-    Map<String, Object?>? values, {
-    String? nullColumnHack,
-    _i10.ConflictAlgorithm? conflictAlgorithm,
+  Iterable<_i2.ArchiveFile> take(int? count) =>
+      (super.noSuchMethod(
+            Invocation.method(#take, [count]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  Iterable<_i2.ArchiveFile> takeWhile(bool Function(_i2.ArchiveFile)? test) =>
+      (super.noSuchMethod(
+            Invocation.method(#takeWhile, [test]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  Iterable<_i2.ArchiveFile> skip(int? count) =>
+      (super.noSuchMethod(
+            Invocation.method(#skip, [count]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  Iterable<_i2.ArchiveFile> skipWhile(bool Function(_i2.ArchiveFile)? test) =>
+      (super.noSuchMethod(
+            Invocation.method(#skipWhile, [test]),
+            returnValue: <_i2.ArchiveFile>[],
+          )
+          as Iterable<_i2.ArchiveFile>);
+
+  @override
+  _i2.ArchiveFile firstWhere(
+    bool Function(_i2.ArchiveFile)? test, {
+    _i2.ArchiveFile Function()? orElse,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(
-              #insert,
-              [table, values],
-              {
-                #nullColumnHack: nullColumnHack,
-                #conflictAlgorithm: conflictAlgorithm,
-              },
+            Invocation.method(#firstWhere, [test], {#orElse: orElse}),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#firstWhere, [test], {#orElse: orElse}),
             ),
-            returnValue: _i3.Future<int>.value(0),
           )
-          as _i3.Future<int>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<List<Map<String, Object?>>> query(
-    String? table, {
-    bool? distinct,
-    List<String>? columns,
-    String? where,
-    List<Object?>? whereArgs,
-    String? groupBy,
-    String? having,
-    String? orderBy,
-    int? limit,
-    int? offset,
+  _i2.ArchiveFile lastWhere(
+    bool Function(_i2.ArchiveFile)? test, {
+    _i2.ArchiveFile Function()? orElse,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(
-              #query,
-              [table],
-              {
-                #distinct: distinct,
-                #columns: columns,
-                #where: where,
-                #whereArgs: whereArgs,
-                #groupBy: groupBy,
-                #having: having,
-                #orderBy: orderBy,
-                #limit: limit,
-                #offset: offset,
-              },
-            ),
-            returnValue: _i3.Future<List<Map<String, Object?>>>.value(
-              <Map<String, Object?>>[],
+            Invocation.method(#lastWhere, [test], {#orElse: orElse}),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#lastWhere, [test], {#orElse: orElse}),
             ),
           )
-          as _i3.Future<List<Map<String, Object?>>>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<List<Map<String, Object?>>> rawQuery(
-    String? sql, [
-    List<Object?>? arguments,
-  ]) =>
-      (super.noSuchMethod(
-            Invocation.method(#rawQuery, [sql, arguments]),
-            returnValue: _i3.Future<List<Map<String, Object?>>>.value(
-              <Map<String, Object?>>[],
-            ),
-          )
-          as _i3.Future<List<Map<String, Object?>>>);
-
-  @override
-  _i3.Future<_i2.QueryCursor> rawQueryCursor(
-    String? sql,
-    List<Object?>? arguments, {
-    int? bufferSize,
+  _i2.ArchiveFile singleWhere(
+    bool Function(_i2.ArchiveFile)? test, {
+    _i2.ArchiveFile Function()? orElse,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(
-              #rawQueryCursor,
-              [sql, arguments],
-              {#bufferSize: bufferSize},
-            ),
-            returnValue: _i3.Future<_i2.QueryCursor>.value(
-              _FakeQueryCursor_2(
-                this,
-                Invocation.method(
-                  #rawQueryCursor,
-                  [sql, arguments],
-                  {#bufferSize: bufferSize},
-                ),
-              ),
+            Invocation.method(#singleWhere, [test], {#orElse: orElse}),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#singleWhere, [test], {#orElse: orElse}),
             ),
           )
-          as _i3.Future<_i2.QueryCursor>);
+          as _i2.ArchiveFile);
 
   @override
-  _i3.Future<_i2.QueryCursor> queryCursor(
-    String? table, {
-    bool? distinct,
-    List<String>? columns,
-    String? where,
-    List<Object?>? whereArgs,
-    String? groupBy,
-    String? having,
-    String? orderBy,
-    int? limit,
-    int? offset,
-    int? bufferSize,
-  }) =>
+  _i2.ArchiveFile elementAt(int? index) =>
       (super.noSuchMethod(
-            Invocation.method(
-              #queryCursor,
-              [table],
-              {
-                #distinct: distinct,
-                #columns: columns,
-                #where: where,
-                #whereArgs: whereArgs,
-                #groupBy: groupBy,
-                #having: having,
-                #orderBy: orderBy,
-                #limit: limit,
-                #offset: offset,
-                #bufferSize: bufferSize,
-              },
-            ),
-            returnValue: _i3.Future<_i2.QueryCursor>.value(
-              _FakeQueryCursor_2(
-                this,
-                Invocation.method(
-                  #queryCursor,
-                  [table],
-                  {
-                    #distinct: distinct,
-                    #columns: columns,
-                    #where: where,
-                    #whereArgs: whereArgs,
-                    #groupBy: groupBy,
-                    #having: having,
-                    #orderBy: orderBy,
-                    #limit: limit,
-                    #offset: offset,
-                    #bufferSize: bufferSize,
-                  },
-                ),
-              ),
+            Invocation.method(#elementAt, [index]),
+            returnValue: _FakeArchiveFile_0(
+              this,
+              Invocation.method(#elementAt, [index]),
             ),
           )
-          as _i3.Future<_i2.QueryCursor>);
+          as _i2.ArchiveFile);
+}
+
+/// A class which mocks [ArchiveFile].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockArchiveFile extends _i1.Mock implements _i2.ArchiveFile {
+  MockArchiveFile() {
+    _i1.throwOnMissingStub(this);
+  }
 
   @override
-  _i3.Future<int> rawUpdate(String? sql, [List<Object?>? arguments]) =>
+  String get name =>
       (super.noSuchMethod(
-            Invocation.method(#rawUpdate, [sql, arguments]),
-            returnValue: _i3.Future<int>.value(0),
+            Invocation.getter(#name),
+            returnValue: _i5.dummyValue<String>(this, Invocation.getter(#name)),
           )
-          as _i3.Future<int>);
+          as String);
 
   @override
-  _i3.Future<int> update(
-    String? table,
-    Map<String, Object?>? values, {
-    String? where,
-    List<Object?>? whereArgs,
-    _i10.ConflictAlgorithm? conflictAlgorithm,
-  }) =>
+  int get mode =>
+      (super.noSuchMethod(Invocation.getter(#mode), returnValue: 0) as int);
+
+  @override
+  int get ownerId =>
+      (super.noSuchMethod(Invocation.getter(#ownerId), returnValue: 0) as int);
+
+  @override
+  int get groupId =>
+      (super.noSuchMethod(Invocation.getter(#groupId), returnValue: 0) as int);
+
+  @override
+  int get creationTime =>
+      (super.noSuchMethod(Invocation.getter(#creationTime), returnValue: 0)
+          as int);
+
+  @override
+  int get lastModTime =>
+      (super.noSuchMethod(Invocation.getter(#lastModTime), returnValue: 0)
+          as int);
+
+  @override
+  int get size =>
+      (super.noSuchMethod(Invocation.getter(#size), returnValue: 0) as int);
+
+  @override
+  bool get isFile =>
+      (super.noSuchMethod(Invocation.getter(#isFile), returnValue: false)
+          as bool);
+
+  @override
+  bool get isSymbolicLink =>
       (super.noSuchMethod(
-            Invocation.method(
-              #update,
-              [table, values],
-              {
-                #where: where,
-                #whereArgs: whereArgs,
-                #conflictAlgorithm: conflictAlgorithm,
-              },
+            Invocation.getter(#isSymbolicLink),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  bool get isDirectory =>
+      (super.noSuchMethod(Invocation.getter(#isDirectory), returnValue: false)
+          as bool);
+
+  @override
+  int get unixPermissions =>
+      (super.noSuchMethod(Invocation.getter(#unixPermissions), returnValue: 0)
+          as int);
+
+  @override
+  DateTime get lastModDateTime =>
+      (super.noSuchMethod(
+            Invocation.getter(#lastModDateTime),
+            returnValue: _FakeDateTime_2(
+              this,
+              Invocation.getter(#lastModDateTime),
             ),
-            returnValue: _i3.Future<int>.value(0),
           )
-          as _i3.Future<int>);
+          as DateTime);
 
   @override
-  _i3.Future<int> rawDelete(String? sql, [List<Object?>? arguments]) =>
+  _i6.Uint8List get content =>
       (super.noSuchMethod(
-            Invocation.method(#rawDelete, [sql, arguments]),
-            returnValue: _i3.Future<int>.value(0),
+            Invocation.getter(#content),
+            returnValue: _i6.Uint8List(0),
           )
-          as _i3.Future<int>);
+          as _i6.Uint8List);
 
   @override
-  _i3.Future<int> delete(
-    String? table, {
-    String? where,
-    List<Object?>? whereArgs,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #delete,
-              [table],
-              {#where: where, #whereArgs: whereArgs},
-            ),
-            returnValue: _i3.Future<int>.value(0),
-          )
-          as _i3.Future<int>);
+  bool get isCompressed =>
+      (super.noSuchMethod(Invocation.getter(#isCompressed), returnValue: false)
+          as bool);
 
   @override
-  _i2.Batch batch() =>
+  set name(String? _name) => super.noSuchMethod(
+    Invocation.setter(#name, _name),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set mode(int? _mode) => super.noSuchMethod(
+    Invocation.setter(#mode, _mode),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set ownerId(int? _ownerId) => super.noSuchMethod(
+    Invocation.setter(#ownerId, _ownerId),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set groupId(int? _groupId) => super.noSuchMethod(
+    Invocation.setter(#groupId, _groupId),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set creationTime(int? _creationTime) => super.noSuchMethod(
+    Invocation.setter(#creationTime, _creationTime),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set lastModTime(int? _lastModTime) => super.noSuchMethod(
+    Invocation.setter(#lastModTime, _lastModTime),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set symbolicLink(String? _symbolicLink) => super.noSuchMethod(
+    Invocation.setter(#symbolicLink, _symbolicLink),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set crc32(int? _crc32) => super.noSuchMethod(
+    Invocation.setter(#crc32, _crc32),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set comment(String? _comment) => super.noSuchMethod(
+    Invocation.setter(#comment, _comment),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set compression(_i2.CompressionType? _compression) => super.noSuchMethod(
+    Invocation.setter(#compression, _compression),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set compressionLevel(int? _compressionLevel) => super.noSuchMethod(
+    Invocation.setter(#compressionLevel, _compressionLevel),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set size(int? _size) => super.noSuchMethod(
+    Invocation.setter(#size, _size),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set isFile(bool? _isFile) => super.noSuchMethod(
+    Invocation.setter(#isFile, _isFile),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void writeContent(_i2.OutputStream? output, {bool? freeMemory = true}) =>
+      super.noSuchMethod(
+        Invocation.method(#writeContent, [output], {#freeMemory: freeMemory}),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i4.Future<void> close() =>
       (super.noSuchMethod(
-            Invocation.method(#batch, []),
-            returnValue: _FakeBatch_3(this, Invocation.method(#batch, [])),
+            Invocation.method(#close, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i2.Batch);
+          as _i4.Future<void>);
+
+  @override
+  void closeSync() => super.noSuchMethod(
+    Invocation.method(#closeSync, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void clear() => super.noSuchMethod(
+    Invocation.method(#clear, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void decompress([_i2.OutputStream? output]) => super.noSuchMethod(
+    Invocation.method(#decompress, [output]),
+    returnValueForMissingStub: null,
+  );
 }
