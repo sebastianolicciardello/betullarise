@@ -25,7 +25,7 @@ class DataManagementWidget extends StatelessWidget {
           onPressed: () async {
             dialogService.showLoadingDialog(context, 'Exporting data...');
 
-            final exportPath = await exportImportService.exportData(context);
+            final exportPath = await exportImportService.exportData();
 
             if (context.mounted) {
               Navigator.of(context).pop();
@@ -35,6 +35,12 @@ class DataManagementWidget extends StatelessWidget {
                   context,
                   'Data Exported',
                   'Your data has been exported to:\n$exportPath',
+                );
+              } else {
+                dialogService.showResultDialog(
+                  context,
+                  'Export Failed',
+                  'Failed to export data. Please try again.',
                 );
               }
             }
@@ -58,7 +64,7 @@ class DataManagementWidget extends StatelessWidget {
             if (confirmResult == true && context.mounted) {
               dialogService.showLoadingDialog(context, 'Importing data...');
 
-              final success = await exportImportService.importData(context);
+              final success = await exportImportService.importData();
 
               if (context.mounted) {
                 Navigator.of(context).pop();
@@ -68,6 +74,12 @@ class DataManagementWidget extends StatelessWidget {
                     context,
                     'Data Imported',
                     'Your data has been imported successfully. Please restart the app for changes to take effect.',
+                  );
+                } else {
+                  dialogService.showResultDialog(
+                    context,
+                    'Import Failed',
+                    'Failed to import data. Please make sure the backup file is valid.',
                   );
                 }
               }

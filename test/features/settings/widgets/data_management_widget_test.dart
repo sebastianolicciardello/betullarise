@@ -47,7 +47,7 @@ void main() {
     // Arrange
     const exportPath = '/path/to/export.zip';
     when(
-      mockExportImportService.exportData(any),
+      mockExportImportService.exportData(),
     ).thenAnswer((_) async => exportPath);
 
     await tester.pumpWidget(
@@ -74,7 +74,7 @@ void main() {
     await tester.pump();
 
     // Verify export was called
-    verify(mockExportImportService.exportData(any)).called(1);
+    verify(mockExportImportService.exportData()).called(1);
 
     // Verify success dialog is shown with correct path
     verify(
@@ -90,7 +90,7 @@ void main() {
     WidgetTester tester,
   ) async {
     // Arrange
-    when(mockExportImportService.exportData(any)).thenAnswer((_) async => null);
+    when(mockExportImportService.exportData()).thenAnswer((_) async => null);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -116,10 +116,16 @@ void main() {
     await tester.pump();
 
     // Verify export was called
-    verify(mockExportImportService.exportData(any)).called(1);
+    verify(mockExportImportService.exportData()).called(1);
 
-    // Verify success dialog is NOT shown
-    verifyNever(mockDialogService.showResultDialog(any, 'Data Exported', any));
+    // Verify failure dialog is shown
+    verify(
+      mockDialogService.showResultDialog(
+        any,
+        'Export Failed',
+        'Failed to export data. Please try again.',
+      ),
+    ).called(1);
   });
 
   testWidgets('Import flow should work correctly when user confirms', (
@@ -129,7 +135,7 @@ void main() {
     when(
       mockDialogService.showConfirmDialog(any, 'Import Data', any),
     ).thenAnswer((_) async => true);
-    when(mockExportImportService.importData(any)).thenAnswer((_) async => true);
+    when(mockExportImportService.importData()).thenAnswer((_) async => true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -167,7 +173,7 @@ void main() {
     await tester.pump();
 
     // Verify import was called
-    verify(mockExportImportService.importData(any)).called(1);
+    verify(mockExportImportService.importData()).called(1);
 
     // Verify success dialog is shown
     verify(
@@ -213,7 +219,7 @@ void main() {
 
     // Verify that no other dialogs are shown and import is not called
     verifyNever(mockDialogService.showLoadingDialog(any, any));
-    verifyNever(mockExportImportService.importData(any));
+    verifyNever(mockExportImportService.importData());
     verifyNever(mockDialogService.showResultDialog(any, any, any));
   });
 
@@ -224,9 +230,7 @@ void main() {
     when(
       mockDialogService.showConfirmDialog(any, 'Import Data', any),
     ).thenAnswer((_) async => true);
-    when(
-      mockExportImportService.importData(any),
-    ).thenAnswer((_) async => false);
+    when(mockExportImportService.importData()).thenAnswer((_) async => false);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -264,9 +268,15 @@ void main() {
     await tester.pump();
 
     // Verify import was called
-    verify(mockExportImportService.importData(any)).called(1);
+    verify(mockExportImportService.importData()).called(1);
 
-    // Verify success dialog is NOT shown
-    verifyNever(mockDialogService.showResultDialog(any, 'Data Imported', any));
+    // Verify failure dialog is shown
+    verify(
+      mockDialogService.showResultDialog(
+        any,
+        'Import Failed',
+        'Failed to import data. Please make sure the backup file is valid.',
+      ),
+    ).called(1);
   });
 }

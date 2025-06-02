@@ -38,18 +38,18 @@ class _FakeDialogRoute_0<T> extends _i1.SmartFake
 class MockDatabaseExportImportService extends _i1.Mock
     implements _i3.DatabaseExportImportService {
   @override
-  _i4.Future<String?> exportData(_i2.BuildContext? context) =>
+  _i4.Future<String?> exportData() =>
       (super.noSuchMethod(
-            Invocation.method(#exportData, [context]),
+            Invocation.method(#exportData, []),
             returnValue: _i4.Future<String?>.value(),
             returnValueForMissingStub: _i4.Future<String?>.value(),
           )
           as _i4.Future<String?>);
 
   @override
-  _i4.Future<bool> importData(_i2.BuildContext? context) =>
+  _i4.Future<bool> importData() =>
       (super.noSuchMethod(
-            Invocation.method(#importData, [context]),
+            Invocation.method(#importData, []),
             returnValue: _i4.Future<bool>.value(false),
             returnValueForMissingStub: _i4.Future<bool>.value(false),
           )
