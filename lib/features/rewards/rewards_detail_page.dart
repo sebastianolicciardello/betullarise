@@ -13,6 +13,11 @@ class RewardDetailPage extends StatefulWidget {
 }
 
 class _RewardDetailPageState extends State<RewardDetailPage> {
+  // Per il controllo delle modifiche
+  String? _initialTitle;
+  String? _initialDescription;
+  String? _initialPoints;
+  String? _initialType;
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -33,9 +38,20 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
 
       // Determine reward type
       _selectedType = widget.reward!.type;
+
+      // Salva valori iniziali
+      _initialTitle = widget.reward!.title;
+      _initialDescription = widget.reward!.description;
+      _initialPoints = widget.reward!.points.toString();
+      _initialType = widget.reward!.type;
     } else {
       // Set default values for new reward
       _pointsController.text = '1.0';
+
+      _initialTitle = '';
+      _initialDescription = '';
+      _initialPoints = '1.0';
+      _initialType = 'single';
     }
   }
 
@@ -45,6 +61,26 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
     _descriptionController.dispose();
     _pointsController.dispose();
     super.dispose();
+  }
+
+  bool get _isDirty {
+    return _titleController.text != (_initialTitle ?? '') ||
+        _descriptionController.text != (_initialDescription ?? '') ||
+        _pointsController.text != (_initialPoints ?? '') ||
+        _selectedType != (_initialType ?? 'single');
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!_isDirty) return true;
+    final shouldDiscard = await _dialogService.showConfirmDialog(
+      context,
+      'Discard changes?',
+      'You have unsaved changes. Are you sure you want to discard them?',
+      confirmText: 'Discard',
+      cancelText: 'Cancel',
+      isDangerous: true,
+    );
+    return shouldDiscard == true;
   }
 
   Future<void> _saveReward() async {
@@ -116,7 +152,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       context,
       'Delete Reward',
       'Are you sure you want to delete "${_titleController.text}"?\n\n'
-      'This will NOT affect any points previously redeemed with this reward.',
+          'This will NOT affect any points previously redeemed with this reward.',
       confirmText: 'Delete',
       cancelText: 'Cancel',
       confirmColor: Colors.red,
@@ -158,141 +194,162 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   Widget build(BuildContext context) {
     final bool isEditing = widget.reward != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Reward' : 'New Reward'),
-        actions:
-            isEditing
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: _deleteReward,
-                    tooltip: 'Delete Reward',
-                  ),
-                ]
-                : null,
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Title',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a title';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                          alignLabelWithHint: true,
-                        ),
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Reward Type',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Single'),
-                              value: 'single',
-                              groupValue: _selectedType,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value!;
-                                });
-                              },
-                            ),
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          // ignore: use_build_context_synchronously
+          Navigator.of(context).maybePop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final shouldPop = await _onWillPop();
+              if (shouldPop && mounted) {
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).maybePop();
+              }
+            },
+          ),
+          title: Text(isEditing ? 'Edit Reward' : 'New Reward'),
+          actions:
+              isEditing
+                  ? [
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: _deleteReward,
+                      tooltip: 'Delete Reward',
+                    ),
+                  ]
+                  : null,
+        ),
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                            border: OutlineInputBorder(),
                           ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Multipler'),
-                              value: 'multipler',
-                              groupValue: _selectedType,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _pointsController,
-                        decoration: const InputDecoration(
-                          labelText: 'Points Cost',
-                          border: OutlineInputBorder(),
-                          helperText: 'Points required to redeem this reward',
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter points';
-                          }
-                          try {
-                            final points = double.parse(value);
-                            if (points <= 0) {
-                              return 'Points must be greater than 0';
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a title';
                             }
-                          } catch (e) {
-                            return 'Please enter a valid number';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _saveReward,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: Theme.of(context).focusColor,
-                                width: 2,
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            border: OutlineInputBorder(),
+                            alignLabelWithHint: true,
+                          ),
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Reward Type',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<String>(
+                                title: const Text('Single'),
+                                value: 'single',
+                                groupValue: _selectedType,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedType = value!;
+                                  });
+                                },
                               ),
                             ),
+                            Expanded(
+                              child: RadioListTile<String>(
+                                title: const Text('Multipler'),
+                                value: 'multipler',
+                                groupValue: _selectedType,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedType = value!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _pointsController,
+                          decoration: const InputDecoration(
+                            labelText: 'Points Cost',
+                            border: OutlineInputBorder(),
+                            helperText: 'Points required to redeem this reward',
                           ),
-                          child: Text(
-                            isEditing ? 'Update Reward' : 'Save Reward',
-                            style: const TextStyle(fontSize: 16),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter points';
+                            }
+                            try {
+                              final points = double.parse(value);
+                              if (points <= 0) {
+                                return 'Points must be greater than 0';
+                              }
+                            } catch (e) {
+                              return 'Please enter a valid number';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _saveReward,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: Theme.of(context).focusColor,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              isEditing ? 'Update Reward' : 'Save Reward',
+                              style: const TextStyle(fontSize: 16),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 }

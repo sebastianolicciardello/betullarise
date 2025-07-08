@@ -33,6 +33,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   final _scoreController = TextEditingController();
   // final _dialogService = DialogService();
 
+  // Store initial values for dirty check
+  String? _initialTitle;
+  String? _initialDescription;
+  String? _initialPenalty;
+  String? _initialScore;
+  DateTime? _initialDeadline;
+
   DateTime _deadline = DateTime.now().add(const Duration(days: 1));
 
   late final TasksDatabaseHelper _dbHelper;
@@ -52,6 +59,20 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       _penaltyController.text = widget.task!.penalty.toString();
       _scoreController.text = widget.task!.score.toString();
       _deadline = DateTime.fromMillisecondsSinceEpoch(widget.task!.deadline);
+      // Save initial values for dirty check
+      _initialTitle = widget.task!.title;
+      _initialDescription = widget.task!.description;
+      _initialPenalty = widget.task!.penalty.toString();
+      _initialScore = widget.task!.score.toString();
+      _initialDeadline = DateTime.fromMillisecondsSinceEpoch(
+        widget.task!.deadline,
+      );
+    } else {
+      _initialTitle = '';
+      _initialDescription = '';
+      _initialPenalty = '';
+      _initialScore = '';
+      _initialDeadline = _deadline;
     }
   }
 
@@ -62,6 +83,27 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     _penaltyController.dispose();
     _scoreController.dispose();
     super.dispose();
+  }
+
+  bool get _isDirty {
+    return _titleController.text != (_initialTitle ?? '') ||
+        _descriptionController.text != (_initialDescription ?? '') ||
+        _penaltyController.text != (_initialPenalty ?? '') ||
+        _scoreController.text != (_initialScore ?? '') ||
+        _deadline != (_initialDeadline ?? _deadline);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!_isDirty) return true;
+    final shouldDiscard = await _dialogService.showConfirmDialog(
+      context,
+      'Discard changes?',
+      'You have unsaved changes. Are you sure you want to discard them?',
+      confirmText: 'Discard',
+      cancelText: 'Cancel',
+      isDangerous: true,
+    );
+    return shouldDiscard == true;
   }
 
   Future<void> _selectDeadline(BuildContext context) async {
@@ -325,155 +367,152 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     final bool isEditing = widget.task != null;
     final isCompleted = isEditing ? widget.task!.completionTime != 0 : false;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Task' : 'New Task'),
-        actions:
-            isEditing
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: _deleteTask,
-                    tooltip: 'Delete Task',
-                  ),
-                ]
-                : null,
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Title',
-                          border: OutlineInputBorder(),
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          // ignore: use_build_context_synchronously
+          Navigator.of(context).maybePop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final shouldPop = await _onWillPop();
+              if (shouldPop && mounted) {
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).maybePop();
+              }
+            },
+          ),
+          title: Text(isEditing ? 'Edit Task' : 'New Task'),
+          actions:
+              isEditing
+                  ? [
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: _deleteTask,
+                      tooltip: 'Delete Task',
+                    ),
+                  ]
+                  : null,
+        ),
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Write a title';
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Write a title';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                          alignLabelWithHint: true,
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            border: OutlineInputBorder(),
+                            alignLabelWithHint: true,
+                          ),
+                          maxLines: 4,
                         ),
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _scoreController,
-                        decoration: const InputDecoration(
-                          labelText: 'Score',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Insert a score';
-                          }
-                          try {
-                            final penalty = double.parse(value);
-                            if (penalty < 0) {
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _scoreController,
+                          decoration: const InputDecoration(
+                            labelText: 'Score',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Insert a score';
+                            }
+                            try {
+                              final penalty = double.parse(value);
+                              if (penalty < 0) {
+                                return 'Insert a valid score';
+                              }
+                            } catch (e) {
                               return 'Insert a valid score';
                             }
-                          } catch (e) {
-                            return 'Insert a valid score';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _penaltyController,
-                        decoration: const InputDecoration(
-                          labelText: 'Penalty',
-                          border: OutlineInputBorder(),
+                            return null;
+                          },
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Insert a penalty';
-                          }
-                          try {
-                            final penalty = double.parse(value);
-                            if (penalty < 0) {
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _penaltyController,
+                          decoration: const InputDecoration(
+                            labelText: 'Penalty',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Insert a penalty';
+                            }
+                            try {
+                              final penalty = double.parse(value);
+                              if (penalty < 0) {
+                                return 'Insert a valid penalty';
+                              }
+                            } catch (e) {
                               return 'Insert a valid penalty';
                             }
-                          } catch (e) {
-                            return 'Insert a valid penalty';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Deadline',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                            return null;
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ListTile(
-                        leading: const Icon(Icons.calendar_today),
-                        title: Text(DateFormat('dd/MM/yyyy').format(_deadline)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: Theme.of(context).focusColor,
-                            width: 2,
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Deadline',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onTap: () => _selectDeadline(context),
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _saveTask,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: Theme.of(context).focusColor,
-                                width: 2,
-                              ),
+                        const SizedBox(height: 8),
+                        ListTile(
+                          leading: const Icon(Icons.calendar_today),
+                          title: Text(
+                            DateFormat('dd/MM/yyyy').format(_deadline),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: Theme.of(context).focusColor,
+                              width: 2,
                             ),
                           ),
-                          child: Text(
-                            isCompleted
-                                ? 'Reschedule Task'
-                                : (isEditing ? 'Update Task' : 'Save Task'),
-                            style: const TextStyle(fontSize: 16),
-                            textAlign: TextAlign.center,
-                          ),
+                          onTap: () => _selectDeadline(context),
                         ),
-                      ),
-                      if (isCompleted) ...[
                         const SizedBox(height: 32),
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _cancelTask,
+                            onPressed: _saveTask,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -483,17 +522,43 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 ),
                               ),
                             ),
-                            child: const Text(
-                              'Cancel Task',
-                              style: TextStyle(fontSize: 16),
+                            child: Text(
+                              isCompleted
+                                  ? 'Reschedule Task'
+                                  : (isEditing ? 'Update Task' : 'Save Task'),
+                              style: const TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
+                        if (isCompleted) ...[
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: _cancelTask,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                    color: Theme.of(context).focusColor,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel Task',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 }

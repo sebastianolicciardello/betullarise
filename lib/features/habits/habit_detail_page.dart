@@ -14,6 +14,14 @@ class HabitDetailPage extends StatefulWidget {
 }
 
 class _HabitDetailPageState extends State<HabitDetailPage> {
+  // Per il controllo delle modifiche
+  String? _initialTitle;
+  String? _initialDescription;
+  String? _initialPenalty;
+  String? _initialScore;
+  String? _initialType;
+  bool? _initialIncludeScore;
+  bool? _initialIncludePenalty;
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -57,10 +65,27 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           widget.habit!.penalty > 0 ||
           type == 'singleWithPenalty' ||
           type == 'multiplerWithPenalty';
+
+      // Salva valori iniziali
+      _initialTitle = widget.habit!.title;
+      _initialDescription = widget.habit!.description;
+      _initialPenalty = widget.habit!.penalty.toString();
+      _initialScore = widget.habit!.score.toString();
+      _initialType = _selectedType;
+      _initialIncludeScore = _includeScore;
+      _initialIncludePenalty = _includePenalty;
     } else {
       // Set default values for new habit
       _scoreController.text = '1.0';
       _penaltyController.text = '1.0';
+
+      _initialTitle = '';
+      _initialDescription = '';
+      _initialPenalty = '1.0';
+      _initialScore = '1.0';
+      _initialType = _selectedType;
+      _initialIncludeScore = _includeScore;
+      _initialIncludePenalty = _includePenalty;
     }
   }
 
@@ -71,6 +96,29 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     _penaltyController.dispose();
     _scoreController.dispose();
     super.dispose();
+  }
+
+  bool get _isDirty {
+    return _titleController.text != (_initialTitle ?? '') ||
+        _descriptionController.text != (_initialDescription ?? '') ||
+        _penaltyController.text != (_initialPenalty ?? '') ||
+        _scoreController.text != (_initialScore ?? '') ||
+        _selectedType != (_initialType ?? 'single') ||
+        _includeScore != (_initialIncludeScore ?? true) ||
+        _includePenalty != (_initialIncludePenalty ?? false);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!_isDirty) return true;
+    final shouldDiscard = await _dialogService.showConfirmDialog(
+      context,
+      'Discard changes?',
+      'You have unsaved changes. Are you sure you want to discard them?',
+      confirmText: 'Discard',
+      cancelText: 'Cancel',
+      isDangerous: true,
+    );
+    return shouldDiscard == true;
   }
 
   String _determineHabitType() {
@@ -213,272 +261,294 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   Widget build(BuildContext context) {
     final bool isEditing = widget.habit != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Habit' : 'New Habit'),
-        actions:
-            isEditing
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: _deleteHabit,
-                    tooltip: 'Delete Habit',
-                  ),
-                ]
-                : null,
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Title',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a title';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                          alignLabelWithHint: true,
-                        ),
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Habit Type',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Single'),
-                              value: 'single',
-                              groupValue: _selectedType,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value!;
-                                });
-                              },
-                            ),
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          // ignore: use_build_context_synchronously
+          Navigator.of(context).maybePop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final shouldPop = await _onWillPop();
+              if (shouldPop && mounted) {
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).maybePop();
+              }
+            },
+          ),
+          title: Text(isEditing ? 'Edit Habit' : 'New Habit'),
+          actions:
+              isEditing
+                  ? [
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: _deleteHabit,
+                      tooltip: 'Delete Habit',
+                    ),
+                  ]
+                  : null,
+        ),
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                            border: OutlineInputBorder(),
                           ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Multipler'),
-                              value: 'multipler',
-                              groupValue: _selectedType,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedType = value!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Points',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a title';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Compact Score Row
-                      Card(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Switch(
-                                value: _includeScore,
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            border: OutlineInputBorder(),
+                            alignLabelWithHint: true,
+                          ),
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Habit Type',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<String>(
+                                title: const Text('Single'),
+                                value: 'single',
+                                groupValue: _selectedType,
                                 onChanged: (value) {
                                   setState(() {
-                                    _includeScore = value;
-                                    if (!value && !_includePenalty) {
-                                      _includePenalty =
-                                          true; // Ensure at least one is selected
-                                    }
+                                    _selectedType = value!;
                                   });
                                 },
-                                // Theme color
-                                activeColor:
-                                    Theme.of(context).colorScheme.primary,
-                                inactiveThumbColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.5),
-                                inactiveTrackColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withAlpha(0x1A),
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Score',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: TextFormField(
-                                  controller: _scoreController,
-                                  decoration: const InputDecoration(
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  enabled: _includeScore,
-                                  validator: (value) {
-                                    if (!_includeScore) return null;
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    try {
-                                      final score = double.parse(value);
-                                      if (score <= 0) {
-                                        return 'Must be > 0';
-                                      }
-                                    } catch (e) {
-                                      return 'Invalid number';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Compact Penalty Row
-                      Card(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Switch(
-                                value: _includePenalty,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _includePenalty = value;
-                                    if (!value && !_includeScore) {
-                                      _includeScore =
-                                          true; // Ensure at least one is selected
-                                    }
-                                  });
-                                },
-                                // Theme color
-                                activeColor:
-                                    Theme.of(context).colorScheme.primary,
-                                inactiveThumbColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withAlpha(0x80),
-                                inactiveTrackColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withAlpha(0x1A),
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Penalty',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: TextFormField(
-                                  controller: _penaltyController,
-                                  decoration: const InputDecoration(
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  enabled: _includePenalty,
-                                  validator: (value) {
-                                    if (!_includePenalty) return null;
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    try {
-                                      final penalty = double.parse(value);
-                                      if (penalty <= 0) {
-                                        return 'Must be > 0';
-                                      }
-                                    } catch (e) {
-                                      return 'Invalid number';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _saveHabit,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: Theme.of(context).focusColor,
-                                width: 2,
                               ),
                             ),
-                          ),
-                          child: Text(
-                            isEditing ? 'Update Habit' : 'Save Habit',
-                            style: const TextStyle(fontSize: 16),
+                            Expanded(
+                              child: RadioListTile<String>(
+                                title: const Text('Multipler'),
+                                value: 'multipler',
+                                groupValue: _selectedType,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedType = value!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Points',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        // Compact Score Row
+                        Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Switch(
+                                  value: _includeScore,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _includeScore = value;
+                                      if (!value && !_includePenalty) {
+                                        _includePenalty =
+                                            true; // Ensure at least one is selected
+                                      }
+                                    });
+                                  },
+                                  // Theme color
+                                  activeColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  inactiveThumbColor: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.5),
+                                  inactiveTrackColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(0x1A),
+                                ),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Score',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: TextFormField(
+                                    controller: _scoreController,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    enabled: _includeScore,
+                                    validator: (value) {
+                                      if (!_includeScore) return null;
+                                      if (value == null || value.isEmpty) {
+                                        return 'Required';
+                                      }
+                                      try {
+                                        final score = double.parse(value);
+                                        if (score <= 0) {
+                                          return 'Must be > 0';
+                                        }
+                                      } catch (e) {
+                                        return 'Invalid number';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Compact Penalty Row
+                        Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Switch(
+                                  value: _includePenalty,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _includePenalty = value;
+                                      if (!value && !_includeScore) {
+                                        _includeScore =
+                                            true; // Ensure at least one is selected
+                                      }
+                                    });
+                                  },
+                                  // Theme color
+                                  activeColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  inactiveThumbColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(0x80),
+                                  inactiveTrackColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(0x1A),
+                                ),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Penalty',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: TextFormField(
+                                    controller: _penaltyController,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    enabled: _includePenalty,
+                                    validator: (value) {
+                                      if (!_includePenalty) return null;
+                                      if (value == null || value.isEmpty) {
+                                        return 'Required';
+                                      }
+                                      try {
+                                        final penalty = double.parse(value);
+                                        if (penalty <= 0) {
+                                          return 'Must be > 0';
+                                        }
+                                      } catch (e) {
+                                        return 'Invalid number';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _saveHabit,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: Theme.of(context).focusColor,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              isEditing ? 'Update Habit' : 'Save Habit',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 }
