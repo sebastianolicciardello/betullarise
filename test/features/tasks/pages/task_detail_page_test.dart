@@ -423,4 +423,49 @@ void main() {
       );
     });
   });
+
+  group('TaskDetailPage - Unsaved Changes Handling', () {
+    testWidgets('shows discard changes dialog when editing and pressing back', (
+      WidgetTester tester,
+    ) async {
+      // Use the real DialogService to show the actual dialog
+      final realDialogService = DialogService();
+      Widget createWidgetWithRealDialogService() {
+        return MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<PointsProvider>.value(
+                value: mockPointsProvider,
+              ),
+              Provider<DialogService>.value(value: realDialogService),
+            ],
+            child: TaskDetailPage(
+              dbHelper: mockTasksDbHelper,
+              pointsDbHelper: mockPointsDbHelper,
+              dialogService: realDialogService,
+            ),
+          ),
+        );
+      }
+
+      await tester.pumpWidget(createWidgetWithRealDialogService());
+      await tester.pumpAndSettle();
+      // Modifica un campo
+      await tester.enterText(find.byType(TextFormField).first, 'Changed title');
+      await tester.pumpAndSettle();
+      // Premi il tasto back nell'app bar
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      // Verifica che il dialog sia visibile
+      expect(find.text('Discard changes?'), findsOneWidget);
+      expect(
+        find.text(
+          'You have unsaved changes. Are you sure you want to discard them?',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Discard'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+    });
+  });
 }

@@ -56,5 +56,21 @@ void main() {
       await tester.pump();
       expect(find.text('Please enter a valid number'), findsOneWidget);
     });
+
+    testWidgets('shows discard changes dialog when editing and pressing back', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: RewardDetailPage()));
+      // Modifica un campo
+      await tester.enterText(find.byType(TextFormField).first, 'Changed title');
+      await tester.pumpAndSettle();
+      // Premi il tasto back nell'app bar
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      // Verifica che compaia il dialog di conferma
+      expect(find.textContaining('discard'), findsOneWidget);
+      expect(find.text('Discard'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+    });
   });
 }

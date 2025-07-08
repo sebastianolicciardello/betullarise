@@ -236,5 +236,24 @@ void main() {
       expect(find.text('Delete'), findsWidgets);
       expect(find.text('Cancel'), findsWidgets);
     });
+
+    testWidgets('shows discard changes dialog when editing and pressing back', (
+      WidgetTester tester,
+    ) async {
+      await test_setup.setUpWidgetTest();
+      await tester.pumpWidget(
+        test_setup.makeTestableWidget(child: HabitDetailPage()),
+      );
+      // Modifica un campo
+      await tester.enterText(find.byType(TextFormField).first, 'Changed title');
+      await tester.pumpAndSettle();
+      // Premi il tasto back nell'app bar
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      // Verifica che compaia il dialog di conferma
+      expect(find.textContaining('discard'), findsOneWidget);
+      expect(find.text('Discard'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+    });
   });
 }
