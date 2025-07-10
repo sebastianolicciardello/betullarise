@@ -6,6 +6,7 @@ import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'dart:ui' as ui;
 
 class RewardsPage extends StatefulWidget {
   final IRewardsDatabaseHelper? dbHelper;
@@ -326,6 +327,10 @@ class _RewardsPageState extends State<RewardsPage> {
     }
 
     final bool canAfford = _currentPoints >= reward.points;
+    final bool hasDescription = reward.description.trim().isNotEmpty;
+    const int maxDescriptionLines = 2;
+    const double minCardHeight = 56;
+    const double normalCardHeight = 120;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -348,7 +353,10 @@ class _RewardsPageState extends State<RewardsPage> {
             _loadRewards();
           }
         },
-        child: Padding(
+        child: Container(
+          constraints: BoxConstraints(
+            minHeight: hasDescription ? normalCardHeight : minCardHeight,
+          ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,13 +376,50 @@ class _RewardsPageState extends State<RewardsPage> {
                   const SizedBox(width: 12),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                reward.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
+              if (hasDescription) ...[
+                const SizedBox(height: 8),
+                Builder(
+                  builder: (context) {
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final span = TextSpan(
+                          text: reward.description,
+                          style: const TextStyle(fontSize: 14),
+                        );
+                        final tp = TextPainter(
+                          text: span,
+                          maxLines: maxDescriptionLines,
+                          textDirection: ui.TextDirection.ltr,
+                        )..layout(maxWidth: constraints.maxWidth);
+                        final isOverflowing = tp.didExceedMaxLines;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              reward.description,
+                              maxLines: maxDescriptionLines,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            if (isOverflowing)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2.0),
+                                child: Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+              ] else ...[
+                const SizedBox(height: 8),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

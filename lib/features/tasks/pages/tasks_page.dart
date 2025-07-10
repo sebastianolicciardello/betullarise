@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:betullarise/database/points_database_helper.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
@@ -276,6 +278,11 @@ class _TasksPageState extends State<TasksPage> {
       }
     }
 
+    final bool hasDescription = task.description.trim().isNotEmpty;
+    const int maxDescriptionLines = 2;
+    const double minCardHeight = 56; // più compatto senza descrizione
+    const double normalCardHeight = 120; // normale con descrizione
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
@@ -300,7 +307,10 @@ class _TasksPageState extends State<TasksPage> {
             _loadTasks();
           }
         },
-        child: Padding(
+        child: Container(
+          constraints: BoxConstraints(
+            minHeight: hasDescription ? normalCardHeight : minCardHeight,
+          ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,13 +330,52 @@ class _TasksPageState extends State<TasksPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                task.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
+              if (hasDescription) ...[
+                const SizedBox(height: 8),
+                Builder(
+                  builder: (context) {
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final span = TextSpan(
+                          text: task.description,
+                          style: const TextStyle(fontSize: 14),
+                        );
+                        final tp = TextPainter(
+                          text: span,
+                          maxLines: maxDescriptionLines,
+                          textDirection: ui.TextDirection.ltr,
+                        )..layout(maxWidth: constraints.maxWidth);
+                        final isOverflowing = tp.didExceedMaxLines;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task.description,
+                              maxLines: maxDescriptionLines,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            if (isOverflowing)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2.0),
+                                child: Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+              ] else ...[
+                const SizedBox(
+                  height: 8,
+                ), // spazio tra titolo e dettagli se non c'è descrizione
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -384,7 +433,6 @@ class _TasksPageState extends State<TasksPage> {
                     IconButton(
                       icon: const Icon(Icons.circle_outlined),
                       onPressed: () async {
-                        // If the task is overdue, assign (subtract) the effectivePoints
                         double pointsToAssign =
                             isOverdue ? effectivePoints : task.score;
                         await _dbHelper.updateTask(
@@ -394,38 +442,28 @@ class _TasksPageState extends State<TasksPage> {
                             updatedTime: DateTime.now().millisecondsSinceEpoch,
                           ),
                         );
-
-                        // Then insert a new point with the task's score
                         final pointsDb = PointsDatabaseHelper.instance;
                         await pointsDb.insertPoint(
                           Point(
                             referenceId: task.id!,
                             type: 'task',
-                            points: pointsToAssign, // can be negative
+                            points: pointsToAssign,
                             insertTime: DateTime.now().millisecondsSinceEpoch,
                           ),
                         );
-
-                        // Create point object for the provider
                         final point = Point(
                           referenceId: task.id!,
                           type: 'task',
                           points: pointsToAssign,
                           insertTime: DateTime.now().millisecondsSinceEpoch,
                         );
-
-                        // Aggiorna il provider per riflettere i nuovi punti
                         if (mounted) {
                           Provider.of<PointsProvider>(
                             context,
                             listen: false,
                           ).savePoints(point);
                         }
-
-                        // Reload tasks to update UI
                         _loadTasks();
-
-                        // Show a confirmation snackbar with undo button
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -434,35 +472,25 @@ class _TasksPageState extends State<TasksPage> {
                                     ? 'Task completed! +${pointsToAssign.toStringAsFixed(1)} points'
                                     : 'Task completed! ${pointsToAssign.toStringAsFixed(1)} points',
                               ),
-                              duration: const Duration(
-                                seconds: 4,
-                              ), // Extended duration for undo action
+                              duration: const Duration(seconds: 4),
                               action: SnackBarAction(
                                 label: 'UNDO',
                                 textColor: Colors.red,
                                 onPressed: () async {
-                                  // Revert the task back to incomplete
                                   await _dbHelper.updateTask(
                                     task.copyWith(
-                                      completionTime:
-                                          0, // Reset completion time to 0 (incomplete)
+                                      completionTime: 0,
                                       updatedTime:
                                           DateTime.now().millisecondsSinceEpoch,
                                     ),
                                   );
-
-                                  // Update the provider to reflect the removed points
                                   if (mounted) {
                                     Provider.of<PointsProvider>(
                                       context,
                                       listen: false,
                                     ).removePointsByEntity(point);
                                   }
-
-                                  // Reload tasks to update UI
                                   _loadTasks();
-
-                                  // Show feedback that the action was undone
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

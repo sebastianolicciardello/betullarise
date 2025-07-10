@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
 import 'package:betullarise/features/habits/habit_detail_page.dart';
@@ -190,6 +191,11 @@ class _HabitsPageState extends State<HabitsPage> {
       typeIcon = Icons.question_mark;
     }
 
+    final bool hasDescription = habit.description.trim().isNotEmpty;
+    const int maxDescriptionLines = 2;
+    const double minCardHeight = 56;
+    const double normalCardHeight = 120;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
@@ -211,7 +217,10 @@ class _HabitsPageState extends State<HabitsPage> {
             _loadHabits();
           }
         },
-        child: Padding(
+        child: Container(
+          constraints: BoxConstraints(
+            minHeight: hasDescription ? normalCardHeight : minCardHeight,
+          ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,13 +240,50 @@ class _HabitsPageState extends State<HabitsPage> {
                   const SizedBox(width: 12),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                habit.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
+              if (hasDescription) ...[
+                const SizedBox(height: 8),
+                Builder(
+                  builder: (context) {
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final span = TextSpan(
+                          text: habit.description,
+                          style: const TextStyle(fontSize: 14),
+                        );
+                        final tp = TextPainter(
+                          text: span,
+                          maxLines: maxDescriptionLines,
+                          textDirection: ui.TextDirection.ltr,
+                        )..layout(maxWidth: constraints.maxWidth);
+                        final isOverflowing = tp.didExceedMaxLines;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              habit.description,
+                              maxLines: maxDescriptionLines,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            if (isOverflowing)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2.0),
+                                child: Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+              ] else ...[
+                const SizedBox(height: 8),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
