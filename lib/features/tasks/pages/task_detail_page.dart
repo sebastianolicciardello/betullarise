@@ -159,7 +159,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     final bool isReschedulingCompletedTask =
         widget.task != null && widget.task!.completionTime != 0;
 
-    // Verifica se la data selezionata è valida (non antecedente a oggi)
+    // Check if the selected date is valid (not before today)
     final bool isDeadlineValid = _deadline.isAfter(
       DateTime.now().subtract(const Duration(days: 1)),
     );

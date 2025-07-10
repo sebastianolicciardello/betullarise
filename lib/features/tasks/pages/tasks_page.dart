@@ -280,8 +280,8 @@ class _TasksPageState extends State<TasksPage> {
 
     final bool hasDescription = task.description.trim().isNotEmpty;
     const int maxDescriptionLines = 2;
-    const double minCardHeight = 56; // più compatto senza descrizione
-    const double normalCardHeight = 120; // normale con descrizione
+    const double minCardHeight = 56; // more compact without description
+    const double normalCardHeight = 120; // normal with description
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -374,7 +374,7 @@ class _TasksPageState extends State<TasksPage> {
               ] else ...[
                 const SizedBox(
                   height: 8,
-                ), // spazio tra titolo e dettagli se non c'è descrizione
+                ), // space between title and details if there is no description
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -14,7 +14,7 @@ import 'features/settings/settings_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inizializza sqflite_ffi per macOS
+  // Initialize sqflite_ffi for macOS
   if (Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -104,7 +104,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Carica i punti totali tramite il provider quando la pagina viene inizializzata
+    // Load total points via the provider when the page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
     });
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Usa Consumer per accedere ai punti totali dal provider
+    // Use Consumer to access total points from the provider
     return Consumer<PointsProvider>(
       builder: (context, pointsProvider, child) {
         return Scaffold(
@@ -182,7 +182,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
             automaticallyImplyLeading:
-                false, // Disabilita il pulsante back automatico
+                false, // Disable the automatic back button
           ),
           body: _pages[_currentIndex],
           bottomNavigationBar: BottomNavigationBar(

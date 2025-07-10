@@ -38,7 +38,7 @@ class TasksDatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    // Se il database non è stato ancora inizializzato, crealo
+    // If the database has not been initialized yet, create it
     _database = await _initDatabase();
     return _database!;
   }

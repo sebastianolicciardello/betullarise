@@ -36,7 +36,7 @@ class PointsDatabaseHelper {
     try {
       developer.log("get database chiamato", name: "POINTS");
       if (_database != null) return _database!;
-      // Se il database non è stato ancora inizializzato, crealo
+      // If the database has not been initialized yet, create it
       _database = await _initDatabase();
       return _database!;
     } catch (e, stackTrace) {
