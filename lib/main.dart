@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'features/tasks/pages/tasks_page.dart';
@@ -50,6 +51,12 @@ class MyApp extends StatelessWidget {
           onError: Colors.white,
           surface: Colors.white,
           onSurface: Colors.black,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
         ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(color: Colors.black),
@@ -129,6 +136,12 @@ class _HomePageState extends State<HomePage> {
       builder: (context, pointsProvider, child) {
         return Scaffold(
           appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            elevation: 0,
+            systemOverlayStyle:
+                Theme.of(context).brightness == Brightness.dark
+                    ? SystemUiOverlayStyle.light
+                    : SystemUiOverlayStyle.dark,
             title: Row(
               children: [
                 GestureDetector(

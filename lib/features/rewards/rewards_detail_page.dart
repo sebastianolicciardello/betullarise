@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
@@ -206,6 +207,12 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          systemOverlayStyle:
+              Theme.of(context).brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {

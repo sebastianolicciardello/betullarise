@@ -1,5 +1,6 @@
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
@@ -379,6 +380,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          systemOverlayStyle:
+              Theme.of(context).brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
