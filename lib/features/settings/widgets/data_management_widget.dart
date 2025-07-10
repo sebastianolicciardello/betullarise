@@ -14,12 +14,16 @@ class DataManagementWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Colors.white54
+            : Colors.black26;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Data Management:', style: TextStyle(fontSize: 18)),
         const SizedBox(height: 16),
-        ElevatedButton.icon(
+        OutlinedButton.icon(
           icon: const Icon(Icons.upload),
           label: const Text('Export Data'),
           onPressed: () async {
@@ -45,13 +49,21 @@ class DataManagementWidget extends StatelessWidget {
               }
             }
           },
-          style: ElevatedButton.styleFrom(
+          style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
             minimumSize: const Size(double.infinity, 0),
+            side: BorderSide(color: borderColor, width: 1.5),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
         ),
         const SizedBox(height: 16),
-        ElevatedButton.icon(
+        OutlinedButton.icon(
           icon: const Icon(Icons.download),
           label: const Text('Import Data'),
           onPressed: () async {
@@ -85,9 +97,17 @@ class DataManagementWidget extends StatelessWidget {
               }
             }
           },
-          style: ElevatedButton.styleFrom(
+          style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
             minimumSize: const Size(double.infinity, 0),
+            side: BorderSide(color: borderColor, width: 1.5),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
         ),
       ],

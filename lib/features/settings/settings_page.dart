@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'widgets/app_version_widget.dart';
 import 'widgets/theme_selector_widget.dart';
 import 'widgets/data_management_widget.dart';
@@ -30,7 +31,51 @@ class SettingsPage extends StatelessWidget {
               exportImportService: DatabaseExportImportService(),
               dialogService: DialogService(),
             ),
-          ],
+            const SizedBox(height: 40),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.bug_report),
+              label: const Text('Report a Bug'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
+                ),
+                minimumSize: const Size(double.infinity, 0),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.error,
+                  width: 1.5,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () async {
+                final Uri emailLaunchUri = Uri(
+                  scheme: 'mailto',
+                  path: 's.licciardello.dev@proton.me',
+                  query: Uri.encodeFull(
+                    'subject=Bug Report&body=Describe the bug you encountered:',
+                  ),
+                );
+                // ignore: use_build_context_synchronously
+                if (await canLaunchUrl(emailLaunchUri)) {
+                  await launchUrl(emailLaunchUri);
+                } else {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not open email client.'),
+                    ),
+                  );
+                }
+              },
+            ),
+          ], // chiude Column children
         ),
       ),
     );
