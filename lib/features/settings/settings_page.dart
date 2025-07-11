@@ -75,6 +75,48 @@ class SettingsPage extends StatelessWidget {
                 }
               },
             ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.code),
+              label: const Text('Source Code'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
+                ),
+                minimumSize: const Size(double.infinity, 0),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.5,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              onPressed: () async {
+                final Uri githubUrl = Uri.parse(
+                  'https://github.com/sebastianolicciardello/betullarise',
+                );
+                if (await canLaunchUrl(githubUrl)) {
+                  await launchUrl(
+                    githubUrl,
+                    mode: LaunchMode.externalApplication,
+                  );
+                } else {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Impossibile aprire la pagina GitHub.'),
+                    ),
+                  );
+                }
+              },
+            ),
           ], // chiude Column children
         ),
       ),

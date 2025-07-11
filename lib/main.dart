@@ -188,17 +188,21 @@ class _HomePageState extends State<HomePage> {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: _onItemTapped,
+            selectedFontSize: 14,
+            unselectedFontSize: 12,
+            selectedIconTheme: const IconThemeData(size: 28),
+            unselectedIconTheme: const IconThemeData(size: 22),
             items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.task_alt_rounded),
+                icon: const Icon(Icons.task_alt_rounded),
                 label: 'Tasks',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.loop_rounded),
+                icon: const Icon(Icons.loop_rounded),
                 label: 'Habits',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.card_giftcard_rounded),
+                icon: const Icon(Icons.card_giftcard_rounded),
                 label: 'Rewards',
               ),
             ],
