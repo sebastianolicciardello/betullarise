@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import 'widgets/app_version_widget.dart';
 import 'widgets/theme_selector_widget.dart';
 import 'widgets/data_management_widget.dart';
@@ -66,10 +67,16 @@ class SettingsPage extends StatelessWidget {
                 if (await canLaunchUrl(emailLaunchUri)) {
                   await launchUrl(emailLaunchUri);
                 } else {
+                  // Fallback: copy the email address to clipboard and show a message
+                  await Clipboard.setData(
+                    const ClipboardData(text: 's.licciardello.dev@proton.me'),
+                  );
                   // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Could not open email client.'),
+                      content: Text(
+                        'Email address copied to clipboard. Please paste it in your email client.',
+                      ),
                     ),
                   );
                 }
@@ -102,12 +109,21 @@ class SettingsPage extends StatelessWidget {
                 final Uri githubUrl = Uri.parse(
                   'https://github.com/sebastianolicciardello/betullarise',
                 );
-                if (await canLaunchUrl(githubUrl)) {
-                  await launchUrl(
+                // Try directly launchUrl with try/catch for Android 15 compatibility
+                try {
+                  final launched = await launchUrl(
                     githubUrl,
-                    mode: LaunchMode.externalApplication,
+                    mode: LaunchMode.platformDefault,
                   );
-                } else {
+                  if (!launched) {
+                    // ignore: use_build_context_synchronously
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Impossibile aprire la pagina GitHub.'),
+                      ),
+                    );
+                  }
+                } catch (e) {
                   // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
