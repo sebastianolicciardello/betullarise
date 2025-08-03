@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 class RewardDetailPage extends StatefulWidget {
   final Reward? reward;
@@ -141,9 +142,10 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(
+        SnackbarService.showErrorSnackbar(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+          'Error: ${e.toString()}',
+        );
       }
     }
   }
@@ -184,8 +186,9 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting reward: ${e.toString()}')),
+        SnackbarService.showErrorSnackbar(
+          context,
+          'Error deleting reward: ${e.toString()}',
         );
       }
     }

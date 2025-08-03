@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:betullarise/model/habit.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 class HabitDetailPage extends StatefulWidget {
   final Habit? habit;
@@ -144,10 +145,9 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
 
     // Check if at least score or penalty is enabled
     if (!_includeScore && !_includePenalty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enable at least Score or Penalty'),
-        ),
+      SnackbarService.showWarningSnackbar(
+        context,
+        'Please enable at least Score or Penalty',
       );
       return;
     }
@@ -208,9 +208,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(
+        SnackbarService.showErrorSnackbar(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+          'Error: ${e.toString()}',
+        );
       }
     }
   }
@@ -251,8 +252,9 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting habit: ${e.toString()}')),
+        SnackbarService.showErrorSnackbar(
+          context,
+          'Error deleting habit: ${e.toString()}',
         );
       }
     }

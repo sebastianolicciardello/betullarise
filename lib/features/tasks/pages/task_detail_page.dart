@@ -7,6 +7,7 @@ import 'package:betullarise/database/tasks_database_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/database/points_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
@@ -165,12 +166,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
 
     if (!isDeadlineValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'The deadline must be at least today. Please select a valid date.',
-          ),
-        ),
+      SnackbarService.showWarningSnackbar(
+        context,
+        'The deadline must be at least today. Please select a valid date.',
       );
       return;
     }
@@ -253,9 +251,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(
+        SnackbarService.showErrorSnackbar(
           context,
-        ).showSnackBar(SnackBar(content: Text('Errore: ${e.toString()}')));
+          'Errore: ${e.toString()}',
+        );
       }
     }
   }
@@ -296,8 +295,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting task: ${e.toString()}')),
+        SnackbarService.showErrorSnackbar(
+          context,
+          'Error deleting task: ${e.toString()}',
         );
       }
     }
@@ -356,8 +356,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error canceling task: ${e.toString()}')),
+        SnackbarService.showErrorSnackbar(
+          context,
+          'Error canceling task: ${e.toString()}',
         );
       }
     }

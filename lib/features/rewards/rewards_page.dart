@@ -6,6 +6,7 @@ import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 import 'dart:ui' as ui;
 
 class RewardsPage extends StatefulWidget {
@@ -160,31 +161,25 @@ class _RewardsPageState extends State<RewardsPage> {
             : pointsDifference.toStringAsFixed(1);
 
     // Mostra uno SnackBar con l'azione UNDO per annullare la modifica
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Points updated! $changeText points'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        duration: const Duration(
-          seconds: 4,
-        ), // Durata estesa per poter premere UNDO
-        action: SnackBarAction(
-          label: 'UNDO',
-          textColor: Colors.red,
-          onPressed: () {
-            // Rimuove l'entry dei punti salvata per annullare la modifica
-            pointsProvider.removePointsByEntity(point);
+    SnackbarService.showSnackbar(
+      context,
+      'Points updated! $changeText points',
+      duration: const Duration(seconds: 4),
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      action: SnackBarAction(
+        label: 'UNDO',
+        textColor: Colors.red,
+        onPressed: () {
+          // Rimuove l'entry dei punti salvata per annullare la modifica
+          pointsProvider.removePointsByEntity(point);
 
-            // Mostra conferma dell'annullamento
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Manual point modification undone. ${pointsDifference >= 0 ? '-' : '+'}${pointsDifference.toStringAsFixed(1)} points',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        ),
+          // Mostra conferma dell'annullamento
+          SnackbarService.showSnackbar(
+            context,
+            'Manual point modification undone. ${pointsDifference >= 0 ? '-' : '+'}${pointsDifference.toStringAsFixed(1)} points',
+            duration: const Duration(seconds: 2),
+          );
+        },
       ),
     );
   }
@@ -542,31 +537,25 @@ class _RewardsPageState extends State<RewardsPage> {
     // Save the points
     pointsProvider.savePoints(point);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Reward redeemed! -${points.toStringAsFixed(1)} points'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        duration: const Duration(
-          seconds: 4,
-        ), // Extended duration for undo action
-        action: SnackBarAction(
-          label: 'UNDO',
-          textColor: Colors.red,
-          onPressed: () {
-            // Remove the points entry
-            pointsProvider.removePointsByEntity(point);
+    SnackbarService.showSnackbar(
+      context,
+      'Reward redeemed! -${points.toStringAsFixed(1)} points',
+      duration: const Duration(seconds: 4),
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      action: SnackBarAction(
+        label: 'UNDO',
+        textColor: Colors.red,
+        onPressed: () {
+          // Remove the points entry
+          pointsProvider.removePointsByEntity(point);
 
-            // Show confirmation
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Reward redemption undone. +${points.toStringAsFixed(1)} points',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        ),
+          // Show confirmation
+          SnackbarService.showSnackbar(
+            context,
+            'Reward redemption undone. +${points.toStringAsFixed(1)} points',
+            duration: const Duration(seconds: 2),
+          );
+        },
       ),
     );
   }

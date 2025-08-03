@@ -8,6 +8,7 @@ import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
 import 'package:betullarise/features/tasks/pages/task_detail_page.dart';
 import 'package:provider/provider.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 import '../../../model/point.dart';
 
@@ -465,46 +466,40 @@ class _TasksPageState extends State<TasksPage> {
                         }
                         _loadTasks();
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                pointsToAssign >= 0
-                                    ? 'Task completed! +${pointsToAssign.toStringAsFixed(1)} points'
-                                    : 'Task completed! ${pointsToAssign.toStringAsFixed(1)} points',
-                              ),
-                              duration: const Duration(seconds: 4),
-                              action: SnackBarAction(
-                                label: 'UNDO',
-                                textColor: Colors.red,
-                                onPressed: () async {
-                                  await _dbHelper.updateTask(
-                                    task.copyWith(
-                                      completionTime: 0,
-                                      updatedTime:
-                                          DateTime.now().millisecondsSinceEpoch,
-                                    ),
+                          SnackbarService.showSnackbar(
+                            context,
+                            pointsToAssign >= 0
+                                ? 'Task completed! +${pointsToAssign.toStringAsFixed(1)} points'
+                                : 'Task completed! ${pointsToAssign.toStringAsFixed(1)} points',
+                            duration: const Duration(seconds: 4),
+                            action: SnackBarAction(
+                              label: 'UNDO',
+                              textColor: Colors.red,
+                              onPressed: () async {
+                                await _dbHelper.updateTask(
+                                  task.copyWith(
+                                    completionTime: 0,
+                                    updatedTime:
+                                        DateTime.now().millisecondsSinceEpoch,
+                                  ),
+                                );
+                                if (mounted) {
+                                  Provider.of<PointsProvider>(
+                                    context,
+                                    listen: false,
+                                  ).removePointsByEntity(point);
+                                }
+                                _loadTasks();
+                                if (mounted) {
+                                  SnackbarService.showSnackbar(
+                                    context,
+                                    pointsToAssign >= 0
+                                        ? 'Task completion undone. -${pointsToAssign.toStringAsFixed(1)} points'
+                                        : 'Task completion undone. +${(-pointsToAssign).toStringAsFixed(1)} points',
+                                    duration: const Duration(seconds: 2),
                                   );
-                                  if (mounted) {
-                                    Provider.of<PointsProvider>(
-                                      context,
-                                      listen: false,
-                                    ).removePointsByEntity(point);
-                                  }
-                                  _loadTasks();
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          pointsToAssign >= 0
-                                              ? 'Task completion undone. -${pointsToAssign.toStringAsFixed(1)} points'
-                                              : 'Task completion undone. +${(-pointsToAssign).toStringAsFixed(1)} points',
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+                                }
+                              },
                             ),
                           );
                         }

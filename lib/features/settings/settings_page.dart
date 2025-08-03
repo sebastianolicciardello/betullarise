@@ -6,6 +6,7 @@ import 'widgets/theme_selector_widget.dart';
 import 'widgets/data_management_widget.dart';
 import 'package:betullarise/services/database_export_import_service.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -63,7 +64,6 @@ class SettingsPage extends StatelessWidget {
                     'subject=Bug Report&body=Describe the bug you encountered:',
                   ),
                 );
-                // ignore: use_build_context_synchronously
                 if (await canLaunchUrl(emailLaunchUri)) {
                   await launchUrl(emailLaunchUri);
                 } else {
@@ -71,13 +71,10 @@ class SettingsPage extends StatelessWidget {
                   await Clipboard.setData(
                     const ClipboardData(text: 's.licciardello.dev@proton.me'),
                   );
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Email address copied to clipboard. Please paste it in your email client.',
-                      ),
-                    ),
+                  SnackbarService.showSnackbar(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    'Email address copied to clipboard. Please paste it in your email client.',
                   );
                 }
               },
@@ -116,19 +113,17 @@ class SettingsPage extends StatelessWidget {
                     mode: LaunchMode.platformDefault,
                   );
                   if (!launched) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Impossibile aprire la pagina GitHub.'),
-                      ),
+                    SnackbarService.showErrorSnackbar(
+                      // ignore: use_build_context_synchronously
+                      context,
+                      'Impossibile aprire la pagina GitHub.',
                     );
                   }
                 } catch (e) {
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Impossibile aprire la pagina GitHub.'),
-                    ),
+                  SnackbarService.showErrorSnackbar(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    'Impossibile aprire la pagina GitHub.',
                   );
                 }
               },

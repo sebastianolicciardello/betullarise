@@ -7,6 +7,7 @@ import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
+import 'package:betullarise/services/ui/snackbar_service.dart';
 
 class HabitsPage extends StatefulWidget {
   final HabitsDatabaseHelper? dbHelper;
@@ -511,36 +512,28 @@ class _HabitsPageState extends State<HabitsPage> {
     // Save the points
     pointsProvider.savePoints(point);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          points >= 0
-              ? 'Good job! +${points.toStringAsFixed(1)} points'
-              : 'Better luck next time! ${points.toStringAsFixed(1)} points',
-        ),
-        duration: const Duration(
-          seconds: 4,
-        ), // Extended duration for undo action
-        action: SnackBarAction(
-          label: 'UNDO',
-          textColor: Colors.red,
-          onPressed: () {
-            // Remove the points
-            pointsProvider.removePointsByEntity(point);
+    SnackbarService.showSnackbar(
+      context,
+      points >= 0
+          ? 'Good job! +${points.toStringAsFixed(1)} points'
+          : 'Better luck next time! ${points.toStringAsFixed(1)} points',
+      duration: const Duration(seconds: 4),
+      action: SnackBarAction(
+        label: 'UNDO',
+        textColor: Colors.red,
+        onPressed: () {
+          // Remove the points
+          pointsProvider.removePointsByEntity(point);
 
-            // Show confirmation
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  points >= 0
-                      ? 'Habit completion undone. -${points.toStringAsFixed(1)} points'
-                      : 'Habit failure undone. +${(-points).toStringAsFixed(1)} points',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        ),
+          // Show confirmation
+          SnackbarService.showSnackbar(
+            context,
+            points >= 0
+                ? 'Habit completion undone. -${points.toStringAsFixed(1)} points'
+                : 'Habit failure undone. +${(-points).toStringAsFixed(1)} points',
+            duration: const Duration(seconds: 2),
+          );
+        },
       ),
     );
   }
