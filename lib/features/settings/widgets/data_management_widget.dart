@@ -76,22 +76,37 @@ class DataManagementWidget extends StatelessWidget {
             if (confirmResult == true && context.mounted) {
               dialogService.showLoadingDialog(context, 'Importing data...');
 
-              final success = await exportImportService.importData();
+              try {
+                final success = await exportImportService.importData();
 
-              if (context.mounted) {
-                Navigator.of(context).pop();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
 
-                if (success) {
-                  dialogService.showResultDialog(
-                    context,
-                    'Data Imported',
-                    'Your data has been imported successfully. Please restart the app for changes to take effect.',
-                  );
-                } else {
+                  if (success) {
+                    dialogService.showResultDialog(
+                      context,
+                      'Data Imported',
+                      'Your data has been imported successfully. Please restart the app for changes to take effect.',
+                    );
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+
+                  String errorMessage = 'Failed to import data.';
+                  if (e is InvalidBackupException) {
+                    errorMessage = 'Invalid backup file: ${e.message}';
+                  } else if (e is PermissionException) {
+                    errorMessage = 'Permission error: ${e.message}';
+                  } else {
+                    errorMessage = 'Import failed: ${e.toString()}';
+                  }
+
                   dialogService.showResultDialog(
                     context,
                     'Import Failed',
-                    'Failed to import data. Please make sure the backup file is valid.',
+                    errorMessage,
                   );
                 }
               }

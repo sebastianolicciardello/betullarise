@@ -260,6 +260,13 @@ class DatabaseExportImportService {
         return false;
       }
 
+      // Validate the backup file completely before processing
+      await DatabaseExportImportUtils.validateBackupFile(
+        fileBytes,
+        _config.databaseName,
+        _config.prefsFilename,
+      );
+
       final archive = ZipDecoder().decodeBytes(fileBytes);
 
       // Process database file
@@ -279,10 +286,23 @@ class DatabaseExportImportService {
             _config.prefsFilename,
           );
 
-      return dbSuccess && prefsSuccess;
+      // Both components must be imported successfully
+      if (!dbSuccess || !prefsSuccess) {
+        throw InvalidBackupException(
+          'Failed to import all components. Database: $dbSuccess, Preferences: $prefsSuccess'
+        );
+      }
+
+      return true;
     } on PermissionException catch (e) {
       developer.log(
         'Permission error during import: ${e.message}',
+        name: 'IMPORT_ERROR',
+      );
+      rethrow;
+    } on InvalidBackupException catch (e) {
+      developer.log(
+        'Invalid backup file: ${e.message}',
         name: 'IMPORT_ERROR',
       );
       rethrow;
@@ -291,7 +311,7 @@ class DatabaseExportImportService {
         'Error during import: $e\n$stackTrace',
         name: 'IMPORT_ERROR',
       );
-      return false;
+      throw InvalidBackupException('Corrupted or invalid backup file: $e');
     }
   }
 }
@@ -305,8 +325,106 @@ class PermissionException implements Exception {
   String toString() => message;
 }
 
+/// Custom exception for invalid backup file errors
+class InvalidBackupException implements Exception {
+  final String message;
+  InvalidBackupException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 /// Utility class containing pure functions for JSON conversion
 class DatabaseExportImportUtils {
+  /// Validates a backup file before import
+  static Future<void> validateBackupFile(
+    Uint8List fileBytes,
+    String expectedDatabaseName,
+    String expectedPrefsFilename,
+  ) async {
+    try {
+      // Try to decode the ZIP file
+      Archive archive;
+      try {
+        archive = ZipDecoder().decodeBytes(fileBytes);
+      } catch (e) {
+        throw InvalidBackupException('File is not a valid ZIP archive');
+      }
+
+      // Check if archive is empty
+      if (archive.files.isEmpty) {
+        throw InvalidBackupException('Backup file is empty');
+      }
+
+      // Check for required database file
+      final dbFile = archive.findFile(expectedDatabaseName);
+      if (dbFile == null) {
+        throw InvalidBackupException(
+          'Database file "$expectedDatabaseName" not found in backup'
+        );
+      }
+
+      // Validate database file content
+      if ((dbFile.content as List<int>).isEmpty) {
+        throw InvalidBackupException('Database file is empty or corrupted');
+      }
+
+      // Basic SQLite file validation (check magic header)
+      final dbContent = dbFile.content as List<int>;
+      if (dbContent.length < 16) {
+        throw InvalidBackupException('Database file is too small to be valid');
+      }
+
+      // SQLite files start with "SQLite format 3\0"
+      final sqliteHeader = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00];
+      final fileHeader = dbContent.take(16).toList();
+      bool headerMatches = true;
+      for (int i = 0; i < sqliteHeader.length; i++) {
+        if (fileHeader[i] != sqliteHeader[i]) {
+          headerMatches = false;
+          break;
+        }
+      }
+      
+      if (!headerMatches) {
+        throw InvalidBackupException('Database file is not a valid SQLite database');
+      }
+
+      // Check for required preferences file
+      final prefsFile = archive.findFile(expectedPrefsFilename);
+      if (prefsFile == null) {
+        throw InvalidBackupException(
+          'Preferences file "$expectedPrefsFilename" not found in backup'
+        );
+      }
+
+      // Validate preferences file content
+      if ((prefsFile.content as List<int>).isEmpty) {
+        throw InvalidBackupException('Preferences file is empty');
+      }
+
+      // Validate JSON format of preferences
+      try {
+        final prefsJson = String.fromCharCodes(prefsFile.content as List<int>);
+        final decoded = jsonDecode(prefsJson);
+        
+        // Must be a Map/Object
+        if (decoded is! Map) {
+          throw InvalidBackupException('Preferences file does not contain valid JSON object');
+        }
+      } catch (e) {
+        throw InvalidBackupException('Preferences file contains invalid JSON: $e');
+      }
+
+      developer.log('Backup file validation successful', name: 'IMPORT_VALIDATION');
+    } catch (e) {
+      if (e is InvalidBackupException) {
+        rethrow;
+      }
+      throw InvalidBackupException('Failed to validate backup file: $e');
+    }
+  }
+
   /// Converts SharedPreferences to a Map
   static Map<String, dynamic> prefsToMap(SharedPreferences prefs) {
     return prefs.getKeys().fold<Map<String, dynamic>>({}, (map, key) {
