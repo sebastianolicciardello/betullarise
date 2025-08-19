@@ -29,6 +29,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   final RewardsDatabaseHelper _dbHelper = RewardsDatabaseHelper.instance;
   final DialogService _dialogService = DialogService();
   bool _isLoading = false;
+  bool _isShowingDiscardDialog = false;
 
   @override
   void initState() {
@@ -73,7 +74,10 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   }
 
   Future<bool> _onWillPop() async {
+    if (_isShowingDiscardDialog) return false;
     if (!_isDirty) return true;
+    
+    _isShowingDiscardDialog = true;
     final shouldDiscard = await _dialogService.showConfirmDialog(
       context,
       'Discard changes?',
@@ -82,6 +86,8 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       cancelText: 'Cancel',
       isDangerous: true,
     );
+    _isShowingDiscardDialog = false;
+    
     return shouldDiscard == true;
   }
 
@@ -205,7 +211,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
         final shouldPop = await _onWillPop();
         if (shouldPop && mounted) {
           // ignore: use_build_context_synchronously
-          Navigator.of(context).maybePop();
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
@@ -222,7 +228,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
               final shouldPop = await _onWillPop();
               if (shouldPop && mounted) {
                 // ignore: use_build_context_synchronously
-                Navigator.of(context).maybePop();
+                Navigator.of(context).pop();
               }
             },
           ),

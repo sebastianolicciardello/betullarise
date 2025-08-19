@@ -48,6 +48,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   bool _isLoading = false;
   late final PointsDatabaseHelper _pointsDbHelper;
   late final DialogService _dialogService;
+  bool _isShowingDiscardDialog = false;
 
   @override
   void initState() {
@@ -96,7 +97,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   }
 
   Future<bool> _onWillPop() async {
+    if (_isShowingDiscardDialog) return false;
     if (!_isDirty) return true;
+    
+    _isShowingDiscardDialog = true;
     final shouldDiscard = await _dialogService.showConfirmDialog(
       context,
       'Discard changes?',
@@ -105,6 +109,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       cancelText: 'Cancel',
       isDangerous: true,
     );
+    _isShowingDiscardDialog = false;
+    
     return shouldDiscard == true;
   }
 
@@ -376,7 +382,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         final shouldPop = await _onWillPop();
         if (shouldPop && mounted) {
           // ignore: use_build_context_synchronously
-          Navigator.of(context).maybePop();
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
@@ -393,7 +399,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               final shouldPop = await _onWillPop();
               if (shouldPop && mounted) {
                 // ignore: use_build_context_synchronously
-                Navigator.of(context).maybePop();
+                Navigator.of(context).pop();
               }
             },
           ),

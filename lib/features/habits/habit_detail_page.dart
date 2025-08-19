@@ -37,6 +37,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   late final HabitsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
   bool _isLoading = false;
+  bool _isShowingDiscardDialog = false;
 
   @override
   void initState() {
@@ -111,7 +112,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   }
 
   Future<bool> _onWillPop() async {
+    if (_isShowingDiscardDialog) return false;
     if (!_isDirty) return true;
+    
+    _isShowingDiscardDialog = true;
     final shouldDiscard = await _dialogService.showConfirmDialog(
       context,
       'Discard changes?',
@@ -120,6 +124,8 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       cancelText: 'Cancel',
       isDangerous: true,
     );
+    _isShowingDiscardDialog = false;
+    
     return shouldDiscard == true;
   }
 
@@ -271,7 +277,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         final shouldPop = await _onWillPop();
         if (shouldPop && mounted) {
           // ignore: use_build_context_synchronously
-          Navigator.of(context).maybePop();
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
@@ -288,7 +294,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
               final shouldPop = await _onWillPop();
               if (shouldPop && mounted) {
                 // ignore: use_build_context_synchronously
-                Navigator.of(context).maybePop();
+                Navigator.of(context).pop();
               }
             },
           ),

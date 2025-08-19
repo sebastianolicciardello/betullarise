@@ -31,25 +31,33 @@ class DialogService {
   }) {
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(cancelText),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: isDangerous 
-                    ? Colors.red 
-                    : confirmColor ?? Theme.of(context).colorScheme.primary,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            Navigator.of(context).pop(false);
+          },
+          child: AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(cancelText),
               ),
-              child: Text(confirmText),
-            ),
-          ],
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: isDangerous 
+                      ? Colors.red 
+                      : confirmColor ?? Theme.of(context).colorScheme.primary,
+                ),
+                child: Text(confirmText),
+              ),
+            ],
+          ),
         );
       },
     );
