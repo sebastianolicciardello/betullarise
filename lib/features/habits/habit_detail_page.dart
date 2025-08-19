@@ -265,7 +265,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     final bool isEditing = widget.habit != null;
 
     return PopScope(
-      canPop: !_isDirty,
+      canPop: false, // Always prevent initial pop
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _onWillPop();

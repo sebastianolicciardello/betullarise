@@ -199,7 +199,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
     final bool isEditing = widget.reward != null;
 
     return PopScope(
-      canPop: !_isDirty,
+      canPop: false, // Always prevent initial pop
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _onWillPop();

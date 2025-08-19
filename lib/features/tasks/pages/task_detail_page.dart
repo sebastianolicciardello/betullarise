@@ -370,7 +370,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     final isCompleted = isEditing ? widget.task!.completionTime != 0 : false;
 
     return PopScope(
-      canPop: !_isDirty,
+      canPop: false, // Always prevent initial pop
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _onWillPop();
