@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:betullarise/database/points_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
+import 'package:betullarise/widgets/quick_date_picker.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
@@ -118,45 +119,34 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Future<void> _selectDeadline(BuildContext context) async {
     final now = DateTime.now();
-    final initialDate = _deadline.isBefore(now) ? now : _deadline;
-    final DateTime? pickedDate = await showDatePicker(
+    await showModalBottomSheet<void>(
       context: context,
-      initialDate: initialDate,
-      firstDate: now,
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        final brightness = Theme.of(context).brightness;
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              onPrimary:
-                  brightness == Brightness.dark
-                      ? Colors.black
-                      : Colors.white, // per il tema
-            ),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 24,
           ),
-          child: child!,
+          child: QuickDatePicker(
+            selectedDate: _deadline,
+            onDateSelected: (DateTime selectedDate) {
+              setState(() {
+                _deadline = selectedDate;
+              });
+              Navigator.of(context).pop();
+            },
+            minDate: now,
+            maxDate: DateTime(2100),
+          ),
         );
       },
     );
-
-    if (pickedDate != null) {
-      final pickedTime = const TimeOfDay(
-        hour: 0,
-        minute: 0,
-      ); // per rimuovere la parte oraria
-      if (true) {
-        setState(() {
-          _deadline = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
   }
 
   Future<void> _saveTask() async {
