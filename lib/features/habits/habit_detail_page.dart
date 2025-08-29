@@ -326,6 +326,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             labelText: 'Title',
                             border: OutlineInputBorder(),
                           ),
+                          textCapitalization: TextCapitalization.words,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a title';
@@ -341,6 +342,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             border: OutlineInputBorder(),
                             alignLabelWithHint: true,
                           ),
+                          textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
                         const SizedBox(height: 16),

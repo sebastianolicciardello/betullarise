@@ -431,6 +431,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             labelText: 'Title',
                             border: OutlineInputBorder(),
                           ),
+                          textCapitalization: TextCapitalization.words,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Write a title';
@@ -446,6 +447,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             border: OutlineInputBorder(),
                             alignLabelWithHint: true,
                           ),
+                          textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
                         const SizedBox(height: 16),
