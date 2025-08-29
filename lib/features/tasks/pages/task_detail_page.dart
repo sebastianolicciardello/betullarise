@@ -71,10 +71,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         widget.task!.deadline,
       );
     } else {
+      _scoreController.text = '1.0';
+      _penaltyController.text = '0.0';
       _initialTitle = '';
       _initialDescription = '';
-      _initialPenalty = '';
-      _initialScore = '';
+      _initialPenalty = '0.0';
+      _initialScore = '1.0';
       _initialDeadline = _deadline;
     }
   }
@@ -476,29 +478,45 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _penaltyController,
-                          decoration: const InputDecoration(
-                            labelText: 'Penalty',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Insert a penalty';
-                            }
-                            try {
-                              final penalty = double.parse(value);
-                              if (penalty < 0) {
-                                return 'Insert a valid penalty';
-                              }
-                            } catch (e) {
-                              return 'Insert a valid penalty';
-                            }
-                            return null;
-                          },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _penaltyController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Penalty',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Enter penalty (0 for no penalty)';
+                                  }
+                                  try {
+                                    final penalty = double.parse(value);
+                                    if (penalty < 0) {
+                                      return 'Must be positive (≥ 0)';
+                                    }
+                                  } catch (e) {
+                                    return 'Invalid number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _penaltyController.text = _scoreController.text;
+                                });
+                              },
+                              icon: const Icon(Icons.content_copy),
+                              tooltip: 'Set penalty equal to score',
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 24),
                         const Text(

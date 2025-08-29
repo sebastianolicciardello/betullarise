@@ -80,11 +80,11 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     } else {
       // Set default values for new habit
       _scoreController.text = '1.0';
-      _penaltyController.text = '1.0';
+      _penaltyController.text = '0.0';
 
       _initialTitle = '';
       _initialDescription = '';
-      _initialPenalty = '1.0';
+      _initialPenalty = '0.0';
       _initialScore = '1.0';
       _initialType = _selectedType;
       _initialIncludeScore = _includeScore;
@@ -504,36 +504,59 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                 ),
                                 Expanded(
                                   flex: 3,
-                                  child: TextFormField(
-                                    controller: _penaltyController,
-                                    decoration: const InputDecoration(
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 12,
-                                      ),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                          decimal: true,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _penaltyController,
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
+                                            ),
+                                            border: OutlineInputBorder(),
+                                          ),
+                                          keyboardType:
+                                              const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                          enabled: _includePenalty,
+                                          validator: (value) {
+                                            if (!_includePenalty) return null;
+                                            if (value == null || value.isEmpty) {
+                                              return 'Required';
+                                            }
+                                            try {
+                                              final penalty = double.parse(value);
+                                              if (penalty < 0) {
+                                                return 'Must be positive (≥ 0)';
+                                              }
+                                            } catch (e) {
+                                              return 'Invalid number';
+                                            }
+                                            return null;
+                                          },
                                         ),
-                                    enabled: _includePenalty,
-                                    validator: (value) {
-                                      if (!_includePenalty) return null;
-                                      if (value == null || value.isEmpty) {
-                                        return 'Required';
-                                      }
-                                      try {
-                                        final penalty = double.parse(value);
-                                        if (penalty <= 0) {
-                                          return 'Must be > 0';
-                                        }
-                                      } catch (e) {
-                                        return 'Invalid number';
-                                      }
-                                      return null;
-                                    },
+                                      ),
+                                      const SizedBox(width: 4),
+                                      IconButton(
+                                        onPressed: _includePenalty && _includeScore
+                                            ? () {
+                                                setState(() {
+                                                  _penaltyController.text = _scoreController.text;
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.content_copy, size: 18),
+                                        tooltip: 'Set penalty equal to score',
+                                        padding: const EdgeInsets.all(4),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 32,
+                                          minHeight: 32,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
