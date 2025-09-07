@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 
 class DialogService {
   // Dialog di caricamento
@@ -101,10 +102,18 @@ class DialogService {
   }) {
     final controller = TextEditingController(text: initialValue);
     final formKey = GlobalKey<FormState>();
+    final focusNode = FocusNode();
 
     return showDialog<String>(
       context: context,
       builder: (BuildContext context) {
+        // Auto-focus and open keyboard on Android after dialog is shown
+        if (Platform.isAndroid) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            focusNode.requestFocus();
+          });
+        }
+
         return AlertDialog(
           title: Text(title),
           content: Form(
@@ -118,24 +127,30 @@ class DialogService {
                 ],
                 TextFormField(
                   controller: controller,
+                  focusNode: focusNode,
                   decoration: InputDecoration(
                     labelText: labelText,
                     border: const OutlineInputBorder(),
                   ),
                   keyboardType: keyboardType,
                   validator: validator,
+                  autofocus: Platform.isAndroid,
                 ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                focusNode.dispose();
+                Navigator.of(context).pop();
+              },
               child: Text(cancelText),
             ),
             TextButton(
               onPressed: () {
                 if (formKey.currentState?.validate() ?? false) {
+                  focusNode.dispose();
                   Navigator.of(context).pop(controller.text);
                 }
               },
