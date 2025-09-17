@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
@@ -250,7 +251,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                 : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -268,7 +269,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -279,15 +280,15 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16.h),
+                        Text(
                           'Reward Type',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Row(
                           children: [
                             Expanded(
@@ -316,7 +317,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextFormField(
                           controller: _pointsController,
                           decoration: const InputDecoration(
@@ -342,24 +343,24 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32.h),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height: 50.h,
                           child: ElevatedButton(
                             onPressed: _saveReward,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(8.r),
                                 side: BorderSide(
                                   color: Theme.of(context).focusColor,
-                                  width: 2,
+                                  width: 2.w,
                                 ),
                               ),
                             ),
                             child: Text(
                               isEditing ? 'Update Reward' : 'Save Reward',
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 16.sp),
                             ),
                           ),
                         ),

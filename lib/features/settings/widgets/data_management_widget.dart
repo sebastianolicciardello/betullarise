@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:betullarise/services/database_export_import_service.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 
@@ -21,8 +22,8 @@ class DataManagementWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Data Management:', style: TextStyle(fontSize: 18)),
-        const SizedBox(height: 16),
+        Text('Data Management:', style: TextStyle(fontSize: 18.sp)),
+        SizedBox(height: 16.h),
         OutlinedButton.icon(
           icon: const Icon(Icons.upload),
           label: const Text('Export Data'),
@@ -50,19 +51,19 @@ class DataManagementWidget extends StatelessWidget {
             }
           },
           style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 24.w),
             minimumSize: const Size(double.infinity, 0),
-            side: BorderSide(color: borderColor, width: 1.5),
-            textStyle: const TextStyle(
-              fontSize: 16,
+            side: BorderSide(color: borderColor, width: 1.5.w),
+            textStyle: TextStyle(
+              fontSize: 16.sp,
               fontWeight: FontWeight.bold,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(30.r),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         OutlinedButton.icon(
           icon: const Icon(Icons.download),
           label: const Text('Import Data'),
@@ -113,15 +114,15 @@ class DataManagementWidget extends StatelessWidget {
             }
           },
           style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 24.w),
             minimumSize: const Size(double.infinity, 0),
-            side: BorderSide(color: borderColor, width: 1.5),
-            textStyle: const TextStyle(
-              fontSize: 16,
+            side: BorderSide(color: borderColor, width: 1.5.w),
+            textStyle: TextStyle(
+              fontSize: 16.sp,
               fontWeight: FontWeight.bold,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(30.r),
             ),
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
@@ -122,16 +123,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 24,
+            left: 16.w,
+            right: 16.w,
+            top: 24.h,
           ),
           child: QuickDatePicker(
             selectedDate: _deadline,
@@ -413,7 +414,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -431,7 +432,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -442,7 +443,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextFormField(
                           controller: _scoreController,
                           decoration: const InputDecoration(
@@ -467,7 +468,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         Row(
                           children: [
                             Expanded(
@@ -496,7 +497,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8.w),
                             IconButton(
                               onPressed: () {
                                 setState(() {
@@ -508,41 +509,41 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        const Text(
+                        SizedBox(height: 24.h),
+                        Text(
                           'Deadline',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         ListTile(
                           leading: const Icon(Icons.calendar_today),
                           title: Text(
                             DateFormat('dd/MM/yyyy').format(_deadline),
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                             side: BorderSide(
                               color: Theme.of(context).focusColor,
-                              width: 2,
+                              width: 2.w,
                             ),
                           ),
                           onTap: () => _selectDeadline(context),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32.h),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height: 50.h,
                           child: ElevatedButton(
                             onPressed: _saveTask,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(8.r),
                                 side: BorderSide(
                                   color: Theme.of(context).focusColor,
-                                  width: 2,
+                                  width: 2.w,
                                 ),
                               ),
                             ),
@@ -550,30 +551,30 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               isCompleted
                                   ? 'Reschedule Task'
                                   : (isEditing ? 'Update Task' : 'Save Task'),
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 16.sp),
                               textAlign: TextAlign.center,
                             ),
                           ),
                         ),
                         if (isCompleted) ...[
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32.h),
                           SizedBox(
                             width: double.infinity,
-                            height: 50,
+                            height: 50.h,
                             child: ElevatedButton(
                               onPressed: _cancelTask,
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8.r),
                                   side: BorderSide(
                                     color: Theme.of(context).focusColor,
-                                    width: 2,
+                                    width: 2.w,
                                   ),
                                 ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Cancel Task',
-                                style: TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: 16.sp),
                               ),
                             ),
                           ),

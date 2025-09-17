@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:betullarise/database/points_database_helper.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
@@ -124,12 +125,12 @@ class _TasksPageState extends State<TasksPage> {
               : RefreshIndicator(
                 onRefresh: _loadTasks,
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 16, bottom: 80),
+                  padding: EdgeInsets.only(top: 16.h, bottom: 80.h),
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -137,7 +138,7 @@ class _TasksPageState extends State<TasksPage> {
                           hintText: 'Search tasks...',
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                         ),
                       ),
@@ -146,40 +147,40 @@ class _TasksPageState extends State<TasksPage> {
                     if (_filteredIncompleteTasks.isEmpty &&
                         _filteredCompletedTasks.isEmpty &&
                         _searchController.text.isNotEmpty) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             Text(
                               'No tasks found for "${_searchController.text}"',
-                              style: const TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
                       ),
                     ] else if (_incompleteTasks.isEmpty &&
                         _completedTasks.isEmpty) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.task_alt_rounded,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16.h),
+                            Text(
                               'No tasks created',
-                              style: TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
@@ -189,9 +190,9 @@ class _TasksPageState extends State<TasksPage> {
 
                       if (_filteredCompletedTasks.isNotEmpty) ...[
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 8.h,
                           ),
                           child: InkWell(
                             onTap: () {
@@ -201,18 +202,18 @@ class _TasksPageState extends State<TasksPage> {
                             },
                             child: Row(
                               children: [
-                                const Text(
+                                Text(
                                   'COMPLETED',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8.w),
                                 Text(
                                   '(${_filteredCompletedTasks.length})',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 16.sp,
                                     color: Colors.grey[600],
                                   ),
                                 ),
@@ -251,7 +252,7 @@ class _TasksPageState extends State<TasksPage> {
             Theme.of(context).brightness == Brightness.light
                 ? Colors.white
                 : Colors.black,
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add, size: 24.sp),
       ),
     );
   }
@@ -285,9 +286,9 @@ class _TasksPageState extends State<TasksPage> {
     const double normalCardHeight = 120; // normal with description
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(
           color:
               isCompleted
@@ -312,7 +313,7 @@ class _TasksPageState extends State<TasksPage> {
           constraints: BoxConstraints(
             minHeight: hasDescription ? normalCardHeight : minCardHeight,
           ),
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -322,7 +323,7 @@ class _TasksPageState extends State<TasksPage> {
                     child: Text(
                       task.title,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
                         decoration:
                             isCompleted ? TextDecoration.lineThrough : null,
@@ -332,14 +333,14 @@ class _TasksPageState extends State<TasksPage> {
                 ],
               ),
               if (hasDescription) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Builder(
                   builder: (context) {
                     return LayoutBuilder(
                       builder: (context, constraints) {
                         final span = TextSpan(
                           text: task.description,
-                          style: const TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 14.sp),
                         );
                         final tp = TextPainter(
                           text: span,
@@ -354,14 +355,14 @@ class _TasksPageState extends State<TasksPage> {
                               task.description,
                               maxLines: maxDescriptionLines,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 14.sp),
                             ),
                             if (isOverflowing)
                               Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
+                                padding: EdgeInsets.only(top: 2.h),
                                 child: Icon(
                                   Icons.more_horiz,
-                                  size: 18,
+                                  size: 18.sp,
                                   color: Colors.grey,
                                 ),
                               ),
@@ -371,10 +372,10 @@ class _TasksPageState extends State<TasksPage> {
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
               ] else ...[
-                const SizedBox(
-                  height: 8,
+                SizedBox(
+                  height: 8.h,
                 ), // space between title and details if there is no description
               ],
               Row(
@@ -388,7 +389,7 @@ class _TasksPageState extends State<TasksPage> {
                           'Completed: ${_formatDate(task.completionTime)}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
                       ],
                       Text(
                         'Deadline: ${_formatDate(task.deadline)}',
@@ -404,12 +405,12 @@ class _TasksPageState extends State<TasksPage> {
                               isOverdue ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text('Score: +${task.score.toStringAsFixed(2)}'),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Text('Penalty: -${task.penalty.toStringAsFixed(2)}'),
                       if (!isCompleted && isOverdue) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
                         Text(
                           'Effective Points: ${effectivePoints.toStringAsFixed(2)}',
                           style: TextStyle(
@@ -422,8 +423,8 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                         Text(
                           'Penalty for overdue: -${(task.penalty * overdueDays).toStringAsFixed(2)} ($overdueDays days late)',
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: TextStyle(
+                            fontSize: 12.sp,
                             color: Colors.red,
                           ),
                         ),
@@ -432,7 +433,7 @@ class _TasksPageState extends State<TasksPage> {
                   ),
                   if (!isCompleted)
                     IconButton(
-                      icon: const Icon(Icons.circle_outlined),
+                      icon: Icon(Icons.circle_outlined, size: 24.sp),
                       onPressed: () async {
                         double pointsToAssign =
                             isOverdue ? effectivePoints : task.score;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:betullarise/model/habit.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
@@ -316,7 +317,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 : Form(
                   key: _formKey,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -334,7 +335,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -345,15 +346,15 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16.h),
+                        Text(
                           'Habit Type',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Row(
                           children: [
                             Expanded(
@@ -382,20 +383,20 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8.h),
+                        Text(
                           'Points',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         // Compact Score Row
                         Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          margin: EdgeInsets.symmetric(vertical: 8.h),
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: EdgeInsets.all(8.w),
                             child: Row(
                               children: [
                                 Switch(
@@ -420,25 +421,25 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     context,
                                   ).colorScheme.onSurface.withAlpha(0x1A),
                                 ),
-                                const SizedBox(width: 8),
-                                const Expanded(
+                                SizedBox(width: 8.w),
+                                Expanded(
                                   flex: 2,
                                   child: Text(
                                     'Score',
-                                    style: TextStyle(fontSize: 16),
+                                    style: TextStyle(fontSize: 16.sp),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 3,
                                   child: TextFormField(
                                     controller: _scoreController,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       isDense: true,
                                       contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 12,
+                                        horizontal: 12.w,
+                                        vertical: 12.h,
                                       ),
-                                      border: OutlineInputBorder(),
+                                      border: const OutlineInputBorder(),
                                     ),
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
@@ -468,9 +469,9 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                         ),
                         // Compact Penalty Row
                         Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          margin: EdgeInsets.symmetric(vertical: 8.h),
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: EdgeInsets.all(8.w),
                             child: Row(
                               children: [
                                 Switch(
@@ -494,12 +495,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     context,
                                   ).colorScheme.onSurface.withAlpha(0x1A),
                                 ),
-                                const SizedBox(width: 8),
-                                const Expanded(
+                                SizedBox(width: 8.w),
+                                Expanded(
                                   flex: 2,
                                   child: Text(
                                     'Penalty',
-                                    style: TextStyle(fontSize: 16),
+                                    style: TextStyle(fontSize: 16.sp),
                                   ),
                                 ),
                                 Expanded(
@@ -509,13 +510,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                       Expanded(
                                         child: TextFormField(
                                           controller: _penaltyController,
-                                          decoration: const InputDecoration(
+                                          decoration: InputDecoration(
                                             isDense: true,
                                             contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 12,
+                                              horizontal: 12.w,
+                                              vertical: 12.h,
                                             ),
-                                            border: OutlineInputBorder(),
+                                            border: const OutlineInputBorder(),
                                           ),
                                           keyboardType:
                                               const TextInputType.numberWithOptions(
@@ -539,7 +540,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                           },
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
+                                      SizedBox(width: 4.w),
                                       IconButton(
                                         onPressed: _includePenalty && _includeScore
                                             ? () {
@@ -548,12 +549,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                                 });
                                               }
                                             : null,
-                                        icon: const Icon(Icons.content_copy, size: 18),
+                                        icon: Icon(Icons.content_copy, size: 18.sp),
                                         tooltip: 'Set penalty equal to score',
-                                        padding: const EdgeInsets.all(4),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 32,
-                                          minHeight: 32,
+                                        padding: EdgeInsets.all(4.w),
+                                        constraints: BoxConstraints(
+                                          minWidth: 32.w,
+                                          minHeight: 32.h,
                                         ),
                                       ),
                                     ],
@@ -563,24 +564,24 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32.h),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height: 50.h,
                           child: ElevatedButton(
                             onPressed: _saveHabit,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(8.r),
                                 side: BorderSide(
                                   color: Theme.of(context).focusColor,
-                                  width: 2,
+                                  width: 2.w,
                                 ),
                               ),
                             ),
                             child: Text(
                               isEditing ? 'Update Habit' : 'Save Habit',
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 16.sp),
                             ),
                           ),
                         ),

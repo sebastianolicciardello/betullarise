@@ -4,6 +4,7 @@ import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'features/tasks/pages/tasks_page.dart';
@@ -37,8 +38,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme(
@@ -83,8 +89,10 @@ class MyApp extends StatelessWidget {
           bodySmall: TextStyle(color: Colors.white),
         ),
       ),
-      themeMode: themeNotifier.themeMode,
-      home: const HomePage(),
+          themeMode: themeNotifier.themeMode,
+          home: const HomePage(),
+        );
+      },
     );
   }
 }
@@ -153,14 +161,14 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Icon(
                         Icons.card_giftcard,
-                        size: 21,
+                        size: 21.sp,
                         color: ColorScheme.of(context).primary,
                       ),
-                      SizedBox(width: 4),
+                      SizedBox(width: 4.w),
                       Text(
                         '${(pointsProvider.totalPoints * 100).floor() / 100.0}',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
                           color:
                               pointsProvider.totalPoints >= 0
@@ -176,7 +184,7 @@ class _HomePageState extends State<HomePage> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings),
-                iconSize: 21,
+                iconSize: 21.sp,
                 color: ColorScheme.of(context).primary,
                 onPressed: () => _openSettings(context),
               ),
@@ -188,10 +196,10 @@ class _HomePageState extends State<HomePage> {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: _onItemTapped,
-            selectedFontSize: 14,
-            unselectedFontSize: 12,
-            selectedIconTheme: const IconThemeData(size: 28),
-            unselectedIconTheme: const IconThemeData(size: 22),
+            selectedFontSize: 14.sp,
+            unselectedFontSize: 12.sp,
+            selectedIconTheme: IconThemeData(size: 28.sp),
+            unselectedIconTheme: IconThemeData(size: 22.sp),
             items: [
               BottomNavigationBarItem(
                 icon: const Icon(Icons.task_alt_rounded),

@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
 import 'package:betullarise/features/habits/habit_detail_page.dart';
 import 'package:betullarise/model/habit.dart';
@@ -93,13 +94,13 @@ class _HabitsPageState extends State<HabitsPage> {
               : RefreshIndicator(
                 onRefresh: _loadHabits,
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 16, bottom: 80),
+                  padding: EdgeInsets.only(top: 16.h, bottom: 80.h),
                   children: [
                     // Search Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -107,7 +108,7 @@ class _HabitsPageState extends State<HabitsPage> {
                           hintText: 'Search habits...',
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                         ),
                       ),
@@ -115,39 +116,39 @@ class _HabitsPageState extends State<HabitsPage> {
 
                     // Habits List
                     if (_filteredHabits.isEmpty && _isSearching) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             Text(
                               'No habits found for "${_searchController.text}"',
-                              style: const TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
                       ),
                     ] else if (_habits.isEmpty) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.loop_rounded,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16.h),
+                            Text(
                               'No habits created',
-                              style: TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
@@ -176,7 +177,7 @@ class _HabitsPageState extends State<HabitsPage> {
             Theme.of(context).brightness == Brightness.light
                 ? Colors.white
                 : Colors.black,
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add, size: 24.sp),
       ),
     );
   }
@@ -198,9 +199,9 @@ class _HabitsPageState extends State<HabitsPage> {
     const double normalCardHeight = 120;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(
           color: Theme.of(context).colorScheme.primary,
           width: 2,
@@ -222,7 +223,7 @@ class _HabitsPageState extends State<HabitsPage> {
           constraints: BoxConstraints(
             minHeight: hasDescription ? normalCardHeight : minCardHeight,
           ),
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -231,25 +232,25 @@ class _HabitsPageState extends State<HabitsPage> {
                   Expanded(
                     child: Text(
                       habit.title,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  Icon(typeIcon, size: 16),
-                  const SizedBox(width: 12),
+                  Icon(typeIcon, size: 16.sp),
+                  SizedBox(width: 12.w),
                 ],
               ),
               if (hasDescription) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Builder(
                   builder: (context) {
                     return LayoutBuilder(
                       builder: (context, constraints) {
                         final span = TextSpan(
                           text: habit.description,
-                          style: const TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 14.sp),
                         );
                         final tp = TextPainter(
                           text: span,
@@ -264,14 +265,14 @@ class _HabitsPageState extends State<HabitsPage> {
                               habit.description,
                               maxLines: maxDescriptionLines,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 14.sp),
                             ),
                             if (isOverflowing)
                               Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
+                                padding: EdgeInsets.only(top: 2.h),
                                 child: Icon(
                                   Icons.more_horiz,
-                                  size: 18,
+                                  size: 18.sp,
                                   color: Colors.grey,
                                 ),
                               ),
@@ -281,9 +282,9 @@ class _HabitsPageState extends State<HabitsPage> {
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
               ] else ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -298,7 +299,7 @@ class _HabitsPageState extends State<HabitsPage> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.circle_outlined),
+                    icon: Icon(Icons.circle_outlined, size: 24.sp),
                     onPressed: () {
                       _handleHabitCompletion(habit);
                     },
@@ -389,7 +390,7 @@ class _HabitsPageState extends State<HabitsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text(message), const SizedBox(height: 16), ...choices],
+              children: [Text(message), SizedBox(height: 16.h), ...choices],
             ),
           ),
           actions: [
@@ -470,7 +471,7 @@ class _HabitsPageState extends State<HabitsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(message),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     ...choices,
                   ],
                 ),

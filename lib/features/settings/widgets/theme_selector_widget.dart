@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/provider/theme_notifier.dart';
 
@@ -12,7 +13,7 @@ class ThemeSelectorWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select theme:', style: TextStyle(fontSize: 18)),
+        Text('Select theme:', style: TextStyle(fontSize: 18.sp)),
         RadioListTile<ThemeMode>(
           title: const Text('Automatic'),
           value: ThemeMode.system,

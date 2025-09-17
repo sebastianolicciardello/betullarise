@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:io';
 
 class DialogService {
@@ -11,7 +12,7 @@ class DialogService {
           content: Row(
             children: [
               const CircularProgressIndicator(),
-              const SizedBox(width: 20),
+              SizedBox(width: 20.w),
               Text(message),
             ],
           ),
@@ -123,7 +124,7 @@ class DialogService {
               children: [
                 if (message != null) ...[
                   Text(message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                 ],
                 TextFormField(
                   controller: controller,
@@ -184,7 +185,7 @@ class DialogService {
               children: [
                 if (message != null) ...[
                   Text(message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                 ],
                 ...items.map(
                   (item) => ListTile(

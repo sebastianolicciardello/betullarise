@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppVersionWidget extends StatelessWidget {
@@ -26,7 +27,7 @@ class AppVersionWidget extends StatelessWidget {
           final info = snap.data!;
           return Text(
             'Version ${info.version} (${info.buildNumber})',
-            style: const TextStyle(fontSize: 16),
+            style: TextStyle(fontSize: 16.sp),
           );
         }
         return const Text('No data');

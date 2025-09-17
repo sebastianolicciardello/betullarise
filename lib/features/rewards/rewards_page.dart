@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
 import 'package:betullarise/features/rewards/rewards_detail_page.dart';
 import 'package:betullarise/model/reward.dart';
@@ -196,21 +197,21 @@ class _RewardsPageState extends State<RewardsPage> {
               : RefreshIndicator(
                 onRefresh: _loadRewards,
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 16, bottom: 80),
+                  padding: EdgeInsets.only(top: 16.h, bottom: 80.h),
                   children: [
                     // Points Display and Manual Edit Button
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
                             onPressed: _showEditPointsDialog,
-                            icon: const Icon(Icons.edit),
-                            label: const Text('Modify Points'),
+                            icon: Icon(Icons.edit, size: 18.sp),
+                            label: Text('Modify Points', style: TextStyle(fontSize: 14.sp)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Theme.of(context).colorScheme.surface,
@@ -224,9 +225,9 @@ class _RewardsPageState extends State<RewardsPage> {
 
                     // Search Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -234,7 +235,7 @@ class _RewardsPageState extends State<RewardsPage> {
                           hintText: 'Search rewards...',
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                         ),
                       ),
@@ -242,39 +243,39 @@ class _RewardsPageState extends State<RewardsPage> {
 
                     // Rewards List
                     if (_filteredRewards.isEmpty && _isSearching) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             Text(
                               'No rewards found for "${_searchController.text}"',
-                              style: const TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
                       ),
                     ] else if (_rewards.isEmpty) ...[
-                      const SizedBox(height: 64),
+                      SizedBox(height: 64.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.card_giftcard,
-                              size: 64,
+                              size: 64.sp,
                               color: Colors.grey,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16.h),
+                            Text(
                               'No rewards created',
-                              style: TextStyle(fontSize: 18),
+                              style: TextStyle(fontSize: 18.sp),
                             ),
                           ],
                         ),
@@ -305,7 +306,7 @@ class _RewardsPageState extends State<RewardsPage> {
             Theme.of(context).brightness == Brightness.light
                 ? Colors.white
                 : Colors.black,
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add, size: 24.sp),
       ),
     );
   }
@@ -328,9 +329,9 @@ class _RewardsPageState extends State<RewardsPage> {
     const double normalCardHeight = 120;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(
           color: canAfford ? Theme.of(context).colorScheme.primary : Colors.red,
           width: 2,
@@ -352,7 +353,7 @@ class _RewardsPageState extends State<RewardsPage> {
           constraints: BoxConstraints(
             minHeight: hasDescription ? normalCardHeight : minCardHeight,
           ),
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -361,25 +362,25 @@ class _RewardsPageState extends State<RewardsPage> {
                   Expanded(
                     child: Text(
                       reward.title,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  Icon(typeIcon, size: 16),
-                  const SizedBox(width: 12),
+                  Icon(typeIcon, size: 16.sp),
+                  SizedBox(width: 12.w),
                 ],
               ),
               if (hasDescription) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Builder(
                   builder: (context) {
                     return LayoutBuilder(
                       builder: (context, constraints) {
                         final span = TextSpan(
                           text: reward.description,
-                          style: const TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 14.sp),
                         );
                         final tp = TextPainter(
                           text: span,
@@ -394,14 +395,14 @@ class _RewardsPageState extends State<RewardsPage> {
                               reward.description,
                               maxLines: maxDescriptionLines,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 14.sp),
                             ),
                             if (isOverflowing)
                               Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
+                                padding: EdgeInsets.only(top: 2.h),
                                 child: Icon(
                                   Icons.more_horiz,
-                                  size: 18,
+                                  size: 18.sp,
                                   color: Colors.grey,
                                 ),
                               ),
@@ -411,9 +412,9 @@ class _RewardsPageState extends State<RewardsPage> {
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
               ] else ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -438,7 +439,7 @@ class _RewardsPageState extends State<RewardsPage> {
                       ),
                       backgroundColor: Theme.of(context).colorScheme.surface,
                     ),
-                    child: const Text('Redeem'),
+                    child: Text('Redeem', style: TextStyle(fontSize: 14.sp)),
                   ),
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 class QuickDatePicker extends StatelessWidget {
@@ -34,42 +35,42 @@ class QuickDatePicker extends StatelessWidget {
               ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         _QuickDateOption(
           label: 'Today',
           date: today,
           selectedDate: selectedDate,
           onTap: () => onDateSelected(today),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         _QuickDateOption(
           label: 'Tomorrow',
           date: tomorrow,
           selectedDate: selectedDate,
           onTap: () => onDateSelected(tomorrow),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         _QuickDateOption(
           label: 'In 3 days',
           date: plus3Days,
           selectedDate: selectedDate,
           onTap: () => onDateSelected(plus3Days),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         _QuickDateOption(
           label: 'In 7 days',
           date: plus7Days,
           selectedDate: selectedDate,
           onTap: () => onDateSelected(plus7Days),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         const Divider(),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         _CalendarOption(
           selectedDate: selectedDate,
           onTap: () => _showCalendar(context),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24.h),
       ],
     );
   }
@@ -131,9 +132,9 @@ class _QuickDateOption extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(8.r),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected
@@ -141,7 +142,7 @@ class _QuickDateOption extends StatelessWidget {
                 : Theme.of(context).dividerColor,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8.r),
           color: isSelected
               ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : null,
@@ -150,12 +151,12 @@ class _QuickDateOption extends StatelessWidget {
           children: [
             Icon(
               Icons.calendar_today,
-              size: 20,
+              size: 20.sp,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 label,
@@ -196,24 +197,24 @@ class _CalendarOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(8.r),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
         decoration: BoxDecoration(
           border: Border.all(
             color: Theme.of(context).dividerColor,
             width: 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8.r),
         ),
         child: Row(
           children: [
             Icon(
               Icons.date_range,
-              size: 20,
+              size: 20.sp,
               color: Theme.of(context).colorScheme.onSurface,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 'Choose custom date',
@@ -224,7 +225,7 @@ class _CalendarOption extends StatelessWidget {
             ),
             Icon(
               Icons.arrow_forward_ios,
-              size: 16,
+              size: 16.sp,
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ],
