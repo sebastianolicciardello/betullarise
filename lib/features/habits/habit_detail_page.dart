@@ -5,6 +5,7 @@ import 'package:betullarise/model/habit.dart';
 import 'package:betullarise/database/habits_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
+import 'package:betullarise/widgets/info_tooltip.dart';
 
 class HabitDetailPage extends StatefulWidget {
   final Habit? habit;
@@ -347,12 +348,21 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           maxLines: 4,
                         ),
                         SizedBox(height: 14.h),
-                        Text(
-                          'Habit Type',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Habit Type',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            InfoTooltip(
+                              title: 'Habit Types',
+                              message: 'Single: Simple habits that you complete and earn the base score. Perfect for habits like "drink 8 glasses of water" or "take vitamins".\n\nMultipler: Habits with a multiplier based on quantity, duration, or intensity. For example, "Running" - if you set multiplier to 1 you get points for 10 minutes of running, if you set 6 you get points for 60 minutes of running. Great for scalable activities like exercise, reading, or studying.',
+                            ),
+                          ],
                         ),
                         SizedBox(height: 8.h),
                         Row(
@@ -392,12 +402,21 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           ],
                         ),
                         SizedBox(height: 12.h),
-                        Text(
-                          'Points',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Points',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            InfoTooltip(
+                              title: 'About Points',
+                              message: 'Score and Penalty values can be decimal numbers (e.g., 1.5, 2.25). Always enter positive values only - the app handles the math automatically.\n\nScore: Points earned when completing the habit.\nPenalty: Points lost when missing the habit (for habits with penalties enabled).',
+                            ),
+                          ],
                         ),
                         SizedBox(height: 8.h),
                         // Compact Score Row

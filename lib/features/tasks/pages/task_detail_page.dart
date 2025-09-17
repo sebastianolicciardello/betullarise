@@ -10,6 +10,7 @@ import 'package:betullarise/database/points_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
 import 'package:betullarise/widgets/quick_date_picker.dart';
+import 'package:betullarise/widgets/info_tooltip.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task? task;
@@ -444,29 +445,39 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           maxLines: 4,
                         ),
                         SizedBox(height: 14.h),
-                        TextFormField(
-                          controller: _scoreController,
-                          decoration: const InputDecoration(
-                            labelText: 'Score',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Insert a score';
-                            }
-                            try {
-                              final penalty = double.parse(value);
-                              if (penalty < 0) {
-                                return 'Insert a valid score';
-                              }
-                            } catch (e) {
-                              return 'Insert a valid score';
-                            }
-                            return null;
-                          },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _scoreController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Score',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Insert a score';
+                                  }
+                                  try {
+                                    final penalty = double.parse(value);
+                                    if (penalty < 0) {
+                                      return 'Insert a valid score';
+                                    }
+                                  } catch (e) {
+                                    return 'Insert a valid score';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            InfoTooltip(
+                              message: 'Score and Penalty can be decimal numbers (e.g., 1.5, 2.25). Always enter positive values only.\n\nScore: Points earned when completing the task.\nPenalty: Points lost per day when the task is overdue.',
+                            ),
+                          ],
                         ),
                         SizedBox(height: 12.h),
                         Row(

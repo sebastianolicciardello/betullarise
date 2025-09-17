@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
+import 'package:betullarise/provider/tooltip_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,6 +27,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
         ChangeNotifierProvider(create: (_) => PointsProvider()),
+        ChangeNotifierProvider(create: (_) => TooltipProvider()),
       ],
       child: const MyApp(),
     ),

@@ -5,6 +5,7 @@ import 'package:betullarise/model/reward.dart';
 import 'package:betullarise/database/rewards_database_helper.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
+import 'package:betullarise/widgets/info_tooltip.dart';
 
 class RewardDetailPage extends StatefulWidget {
   final Reward? reward;
@@ -281,12 +282,21 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                           maxLines: 4,
                         ),
                         SizedBox(height: 14.h),
-                        Text(
-                          'Reward Type',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Reward Type',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            InfoTooltip(
+                              title: 'Reward Types',
+                              message: 'Single: Simple rewards that cost the base points to redeem. Perfect for rewards like "watch a movie" or "buy a coffee".\n\nMultipler: Rewards with a multiplier based on quantity or value. For example, "Buy snacks" - if you set multiplier to 1 you spend the base points, if you set 3 you spend 3x the points for more expensive snacks. Great for scalable rewards like shopping, entertainment, or treats.',
+                            ),
+                          ],
                         ),
                         SizedBox(height: 8.h),
                         Row(
