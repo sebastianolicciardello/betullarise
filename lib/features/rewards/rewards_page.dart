@@ -197,13 +197,13 @@ class _RewardsPageState extends State<RewardsPage> {
               : RefreshIndicator(
                 onRefresh: _loadRewards,
                 child: ListView(
-                  padding: EdgeInsets.only(top: 16.h, bottom: 80.h),
+                  padding: EdgeInsets.only(top: 12.h, bottom: 80.h),
                   children: [
                     // Points Display and Manual Edit Button
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
-                        vertical: 8.h,
+                        vertical: 4.h,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -227,7 +227,7 @@ class _RewardsPageState extends State<RewardsPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
-                        vertical: 8.h,
+                        vertical: 4.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -243,7 +243,7 @@ class _RewardsPageState extends State<RewardsPage> {
 
                     // Rewards List
                     if (_filteredRewards.isEmpty && _isSearching) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -262,7 +262,7 @@ class _RewardsPageState extends State<RewardsPage> {
                         ),
                       ),
                     ] else if (_rewards.isEmpty) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -329,7 +329,7 @@ class _RewardsPageState extends State<RewardsPage> {
     const double normalCardHeight = 120;
 
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(

@@ -130,7 +130,7 @@ class _TasksPageState extends State<TasksPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
-                        vertical: 8.h,
+                        vertical: 4.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -147,7 +147,7 @@ class _TasksPageState extends State<TasksPage> {
                     if (_filteredIncompleteTasks.isEmpty &&
                         _filteredCompletedTasks.isEmpty &&
                         _searchController.text.isNotEmpty) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -167,7 +167,7 @@ class _TasksPageState extends State<TasksPage> {
                       ),
                     ] else if (_incompleteTasks.isEmpty &&
                         _completedTasks.isEmpty) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -286,7 +286,7 @@ class _TasksPageState extends State<TasksPage> {
     const double normalCardHeight = 120; // normal with description
 
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(

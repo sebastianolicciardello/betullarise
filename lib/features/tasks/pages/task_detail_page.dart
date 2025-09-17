@@ -432,7 +432,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -443,7 +443,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 14.h),
                         TextFormField(
                           controller: _scoreController,
                           decoration: const InputDecoration(
@@ -468,7 +468,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
                         Row(
                           children: [
                             Expanded(
@@ -509,7 +509,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: 16.h),
                         Text(
                           'Deadline',
                           style: TextStyle(
@@ -532,7 +532,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ),
                           onTap: () => _selectDeadline(context),
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: 24.h),
                         SizedBox(
                           width: double.infinity,
                           height: 50.h,
@@ -557,7 +557,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ),
                         ),
                         if (isCompleted) ...[
-                          SizedBox(height: 32.h),
+                          SizedBox(height: 24.h),
                           SizedBox(
                             width: double.infinity,
                             height: 50.h,

@@ -335,7 +335,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -346,7 +346,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 14.h),
                         Text(
                           'Habit Type',
                           style: TextStyle(
@@ -359,7 +359,11 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           children: [
                             Expanded(
                               child: RadioListTile<String>(
-                                title: const Text('Single'),
+                                title: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: const Text('Single'),
+                                ),
                                 value: 'single',
                                 groupValue: _selectedType,
                                 onChanged: (value) {
@@ -371,7 +375,11 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                             Expanded(
                               child: RadioListTile<String>(
-                                title: const Text('Multipler'),
+                                title: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: const Text('Multipler'),
+                                ),
                                 value: 'multipler',
                                 groupValue: _selectedType,
                                 onChanged: (value) {
@@ -383,7 +391,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 12.h),
                         Text(
                           'Points',
                           style: TextStyle(
@@ -564,7 +572,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: 24.h),
                         SizedBox(
                           width: double.infinity,
                           height: 50.h,

@@ -269,7 +269,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
                         TextFormField(
                           controller: _descriptionController,
                           decoration: const InputDecoration(
@@ -280,7 +280,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 4,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 14.h),
                         Text(
                           'Reward Type',
                           style: TextStyle(
@@ -293,7 +293,11 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                           children: [
                             Expanded(
                               child: RadioListTile<String>(
-                                title: const Text('Single'),
+                                title: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: const Text('Single'),
+                                ),
                                 value: 'single',
                                 groupValue: _selectedType,
                                 onChanged: (value) {
@@ -305,7 +309,11 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             ),
                             Expanded(
                               child: RadioListTile<String>(
-                                title: const Text('Multipler'),
+                                title: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: const Text('Multipler'),
+                                ),
                                 value: 'multipler',
                                 groupValue: _selectedType,
                                 onChanged: (value) {
@@ -317,7 +325,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 12.h),
                         TextFormField(
                           controller: _pointsController,
                           decoration: const InputDecoration(
@@ -343,7 +351,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: 24.h),
                         SizedBox(
                           width: double.infinity,
                           height: 50.h,

@@ -27,14 +27,14 @@ class SettingsPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const AppVersionWidget(),
-            SizedBox(height: 40.h),
+            SizedBox(height: 24.h),
             const ThemeSelectorWidget(),
-            SizedBox(height: 40.h),
+            SizedBox(height: 24.h),
             DataManagementWidget(
               exportImportService: DatabaseExportImportService(),
               dialogService: DialogService(),
             ),
-            SizedBox(height: 40.h),
+            SizedBox(height: 24.h),
             OutlinedButton.icon(
               icon: Icon(Icons.bug_report, size: 20.sp),
               label: Text('Report a Bug'),

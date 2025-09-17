@@ -100,7 +100,7 @@ class _HabitsPageState extends State<HabitsPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
-                        vertical: 8.h,
+                        vertical: 4.h,
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -116,7 +116,7 @@ class _HabitsPageState extends State<HabitsPage> {
 
                     // Habits List
                     if (_filteredHabits.isEmpty && _isSearching) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -135,7 +135,7 @@ class _HabitsPageState extends State<HabitsPage> {
                         ),
                       ),
                     ] else if (_habits.isEmpty) ...[
-                      SizedBox(height: 64.h),
+                      SizedBox(height: 40.h),
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -199,7 +199,7 @@ class _HabitsPageState extends State<HabitsPage> {
     const double normalCardHeight = 120;
 
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.r),
         side: BorderSide(
