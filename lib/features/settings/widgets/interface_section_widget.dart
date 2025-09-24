@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../../provider/theme_notifier.dart';
 import '../../../provider/tooltip_provider.dart';
+import '../../../provider/first_day_of_week_provider.dart';
 
 class InterfaceSectionWidget extends StatelessWidget {
   const InterfaceSectionWidget({super.key});
@@ -50,6 +51,34 @@ class InterfaceSectionWidget extends StatelessWidget {
                   onChanged: (ThemeMode? value) {
                     if (value != null) {
                       themeNotifier.setThemeMode(value);
+                    }
+                  },
+                );
+              },
+            ),
+            SizedBox(height: 16.h),
+            // First Day of Week Dropdown
+            Consumer<FirstDayOfWeekProvider>(
+              builder: (context, firstDayProvider, child) {
+                return DropdownButtonFormField<WeekStartDay>(
+                  decoration: const InputDecoration(
+                    labelText: 'First Day of Week',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: firstDayProvider.firstDayOfWeek,
+                  items: const [
+                    DropdownMenuItem(
+                      value: WeekStartDay.monday,
+                      child: Text('Monday'),
+                    ),
+                    DropdownMenuItem(
+                      value: WeekStartDay.sunday,
+                      child: Text('Sunday'),
+                    ),
+                  ],
+                  onChanged: (WeekStartDay? value) {
+                    if (value != null) {
+                      firstDayProvider.setFirstDayOfWeek(value);
                     }
                   },
                 );

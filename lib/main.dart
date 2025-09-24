@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/provider/tooltip_provider.dart';
+import 'package:betullarise/provider/first_day_of_week_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'features/tasks/pages/tasks_page.dart';
@@ -28,6 +30,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
         ChangeNotifierProvider(create: (_) => PointsProvider()),
         ChangeNotifierProvider(create: (_) => TooltipProvider()),
+        ChangeNotifierProvider(create: (_) => FirstDayOfWeekProvider()),
       ],
       child: const MyApp(),
     ),
@@ -47,6 +50,15 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', 'US'), // Sunday first
+            Locale('en', 'GB'), // Monday first
+          ],
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme(

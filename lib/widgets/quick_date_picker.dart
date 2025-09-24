@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../provider/first_day_of_week_provider.dart';
 
 class QuickDatePicker extends StatelessWidget {
   final DateTime? selectedDate;
@@ -80,12 +82,20 @@ class QuickDatePicker extends StatelessWidget {
     final initialDate = selectedDate ?? now.add(const Duration(days: 1));
     final firstDate = minDate ?? now;
     final lastDate = maxDate ?? DateTime(2100);
+    final firstDayProvider = Provider.of<FirstDayOfWeekProvider>(context, listen: false);
+
+    // Create a custom locale based on first day of week setting
+    Locale customLocale = const Locale('en', 'US'); // Default to US (Sunday first)
+    if (firstDayProvider.firstDayOfWeek == WeekStartDay.monday) {
+      customLocale = const Locale('en', 'GB'); // GB uses Monday first
+    }
 
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate.isBefore(firstDate) ? firstDate : initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      locale: customLocale,
       builder: (context, child) {
         final brightness = Theme.of(context).brightness;
         return Theme(

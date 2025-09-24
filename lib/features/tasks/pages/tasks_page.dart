@@ -117,6 +117,96 @@ class _TasksPageState extends State<TasksPage> {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
+  String _getRelativeTimeGroup(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final taskDate = DateTime(date.year, date.month, date.day);
+
+    final difference = taskDate.difference(today).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Tomorrow';
+    } else if (difference == -1) {
+      return 'Yesterday';
+    } else if (difference >= 2 && difference <= 6) {
+      // Show weekday name for next few days
+      return DateFormat('EEEE').format(date);
+    } else if (difference >= -6 && difference <= -2) {
+      // Show "Last [Weekday]" for past few days
+      final weekdayName = DateFormat('EEEE').format(date);
+      return 'Last $weekdayName';
+    } else if (difference >= 7) {
+      // For dates beyond this week, return month-year format
+      return DateFormat('MMMM yyyy').format(date);
+    } else {
+      // For dates more than a week ago
+      return DateFormat('MMMM yyyy').format(date);
+    }
+  }
+
+  Map<String, List<Task>> _groupTasksByDate(List<Task> tasks) {
+    final Map<String, List<Task>> groupedTasks = {};
+
+    for (final task in tasks) {
+      final group = _getRelativeTimeGroup(task.deadline);
+      if (groupedTasks[group] == null) {
+        groupedTasks[group] = [];
+      }
+      groupedTasks[group]!.add(task);
+    }
+
+    // Sort groups chronologically
+    final sortedGroups = <String, List<Task>>{};
+
+    // First add special day groups in order
+    final specialDays = ['Yesterday', 'Today', 'Tomorrow'];
+    for (final day in specialDays) {
+      if (groupedTasks[day] != null) {
+        sortedGroups[day] = groupedTasks[day]!;
+      }
+    }
+
+    // Then add weekday groups and month groups sorted chronologically
+    final remainingGroups = groupedTasks.entries
+        .where((entry) => !specialDays.contains(entry.key))
+        .toList();
+
+    remainingGroups.sort((a, b) {
+      // Sort by the first task's deadline in each group
+      final aDate = a.value.first.deadline;
+      final bDate = b.value.first.deadline;
+      return aDate.compareTo(bDate);
+    });
+
+    for (final group in remainingGroups) {
+      sortedGroups[group.key] = group.value;
+    }
+
+    return sortedGroups;
+  }
+
+  bool _shouldShowDateInCard(String groupKey) {
+    // Show dates in cards only for monthly groups (not for relative days or weekdays)
+    final relativeDays = ['Yesterday', 'Today', 'Tomorrow'];
+    final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Don't show dates for relative days, weekdays, or "Last [Weekday]" groups
+    if (relativeDays.contains(groupKey) || weekdays.contains(groupKey)) {
+      return false;
+    }
+
+    // Check if it's a "Last [Weekday]" group
+    if (groupKey.startsWith('Last ')) {
+      return false;
+    }
+
+    // Show dates for monthly groups
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,7 +277,35 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                       ),
                     ] else ...[
-                      ..._filteredIncompleteTasks.map(_buildTaskCard),
+                      // Group incomplete tasks by date
+                      ...(() {
+                        final groupedTasks = _groupTasksByDate(_filteredIncompleteTasks);
+                        final List<Widget> widgets = [];
+
+                        groupedTasks.forEach((groupKey, tasks) {
+                          // Add group header
+                          widgets.add(
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                              child: Text(
+                                groupKey.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          );
+
+                          // Add tasks for this group
+                          widgets.addAll(
+                            tasks.map((task) => _buildTaskCard(task, _shouldShowDateInCard(groupKey))),
+                          );
+                        });
+
+                        return widgets;
+                      })(),
 
                       if (_filteredCompletedTasks.isNotEmpty) ...[
                         Padding(
@@ -229,7 +347,7 @@ class _TasksPageState extends State<TasksPage> {
                           ),
                         ),
                         if (_showCompletedTasks)
-                          ..._filteredCompletedTasks.map(_buildTaskCard),
+                          ..._filteredCompletedTasks.map((task) => _buildTaskCard(task, true)),
                       ],
                     ],
                   ],
@@ -258,7 +376,7 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildTaskCard(Task task) {
+  Widget _buildTaskCard(Task task, [bool showDateInCard = false]) {
     final isCompleted = task.completionTime != 0;
     final isOverdue =
         task.deadline <
@@ -415,21 +533,22 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                         SizedBox(height: 4.h),
                       ],
-                      Text(
-                        'Deadline: ${_formatDate(task.deadline)}',
-                        style: TextStyle(
-                          color:
-                              isOverdue
-                                  ? Colors.red
-                                  : (Theme.of(context).brightness ==
-                                          Brightness.light
-                                      ? Colors.black
-                                      : Colors.white),
-                          fontWeight:
-                              isOverdue ? FontWeight.bold : FontWeight.normal,
+                      if (showDateInCard)
+                        Text(
+                          'Deadline: ${_formatDate(task.deadline)}',
+                          style: TextStyle(
+                            color:
+                                isOverdue
+                                    ? Colors.red
+                                    : (Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Colors.black
+                                        : Colors.white),
+                            fontWeight:
+                                isOverdue ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4.h),
+                      if (showDateInCard) SizedBox(height: 4.h),
                       Text('Score: +${task.score.toStringAsFixed(2)}'),
                       SizedBox(height: 4.h),
                       Text('Penalty: -${task.penalty.toStringAsFixed(2)}'),
