@@ -1,4 +1,5 @@
 import 'package:betullarise/provider/points_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -143,7 +144,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               });
               Navigator.of(context).pop();
             },
-            minDate: now,
+            minDate: kDebugMode ? DateTime(2020) : now,
             maxDate: DateTime(2100),
           ),
         );
@@ -160,8 +161,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     final bool isReschedulingCompletedTask =
         widget.task != null && widget.task!.completionTime != 0;
 
-    // Check if the selected date is valid (not before today)
-    final bool isDeadlineValid = _deadline.isAfter(
+    // Check if the selected date is valid (not before today, unless in debug mode)
+    final bool isDeadlineValid = kDebugMode || _deadline.isAfter(
       DateTime.now().subtract(const Duration(days: 1)),
     );
 
@@ -521,12 +522,35 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ],
                         ),
                         SizedBox(height: 16.h),
-                        Text(
-                          'Deadline',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Deadline',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (kDebugMode) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                  border: Border.all(color: Colors.orange, width: 1),
+                                ),
+                                child: Text(
+                                  'DEBUG: Past dates allowed',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: Colors.orange.shade800,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         SizedBox(height: 8.h),
                         ListTile(

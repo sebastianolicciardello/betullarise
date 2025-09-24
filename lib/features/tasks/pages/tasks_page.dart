@@ -1,17 +1,12 @@
 import 'dart:ui' as ui;
 
-import 'package:betullarise/database/points_database_helper.dart';
-import 'package:betullarise/provider/points_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:betullarise/model/task.dart';
 import 'package:betullarise/database/tasks_database_helper.dart';
 import 'package:betullarise/features/tasks/pages/task_detail_page.dart';
-import 'package:provider/provider.dart';
-import 'package:betullarise/services/ui/snackbar_service.dart';
-
-import '../../../model/point.dart';
+import 'package:betullarise/services/task_completion_service.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
@@ -161,27 +156,18 @@ class _TasksPageState extends State<TasksPage> {
     // Sort groups chronologically
     final sortedGroups = <String, List<Task>>{};
 
-    // First add special day groups in order
-    final specialDays = ['Yesterday', 'Today', 'Tomorrow'];
-    for (final day in specialDays) {
-      if (groupedTasks[day] != null) {
-        sortedGroups[day] = groupedTasks[day]!;
-      }
-    }
+    // Sort ALL groups by chronological order based on the first task's deadline
+    final allGroups = groupedTasks.entries.toList();
 
-    // Then add weekday groups and month groups sorted chronologically
-    final remainingGroups = groupedTasks.entries
-        .where((entry) => !specialDays.contains(entry.key))
-        .toList();
-
-    remainingGroups.sort((a, b) {
+    allGroups.sort((a, b) {
       // Sort by the first task's deadline in each group
       final aDate = a.value.first.deadline;
       final bDate = b.value.first.deadline;
       return aDate.compareTo(bDate);
     });
 
-    for (final group in remainingGroups) {
+    // Add all groups in chronological order
+    for (final group in allGroups) {
       sortedGroups[group.key] = group.value;
     }
 
@@ -578,75 +564,11 @@ class _TasksPageState extends State<TasksPage> {
                     IconButton(
                       icon: Icon(Icons.circle_outlined, size: 24.sp),
                       onPressed: () async {
-                        double pointsToAssign =
-                            isOverdue ? effectivePoints : task.score;
-                        await _dbHelper.updateTask(
-                          task.copyWith(
-                            completionTime:
-                                DateTime.now().millisecondsSinceEpoch,
-                            updatedTime: DateTime.now().millisecondsSinceEpoch,
-                          ),
+                        await TaskCompletionService.handleTaskCompletion(
+                          context: context,
+                          task: task,
+                          onTaskUpdated: _loadTasks,
                         );
-                        final pointsDb = PointsDatabaseHelper.instance;
-                        await pointsDb.insertPoint(
-                          Point(
-                            referenceId: task.id!,
-                            type: 'task',
-                            points: pointsToAssign,
-                            insertTime: DateTime.now().millisecondsSinceEpoch,
-                          ),
-                        );
-                        final point = Point(
-                          referenceId: task.id!,
-                          type: 'task',
-                          points: pointsToAssign,
-                          insertTime: DateTime.now().millisecondsSinceEpoch,
-                        );
-                        if (mounted) {
-                          Provider.of<PointsProvider>(
-                            context,
-                            listen: false,
-                          ).savePoints(point);
-                        }
-                        _loadTasks();
-                        if (mounted) {
-                          SnackbarService.showSnackbar(
-                            context,
-                            pointsToAssign >= 0
-                                ? 'Task completed! +${pointsToAssign.toStringAsFixed(1)} points'
-                                : 'Task completed! ${pointsToAssign.toStringAsFixed(1)} points',
-                            duration: const Duration(seconds: 4),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              textColor: Colors.red,
-                              onPressed: () async {
-                                await _dbHelper.updateTask(
-                                  task.copyWith(
-                                    completionTime: 0,
-                                    updatedTime:
-                                        DateTime.now().millisecondsSinceEpoch,
-                                  ),
-                                );
-                                if (mounted) {
-                                  Provider.of<PointsProvider>(
-                                    context,
-                                    listen: false,
-                                  ).removePointsByEntity(point);
-                                }
-                                _loadTasks();
-                                if (mounted) {
-                                  SnackbarService.showSnackbar(
-                                    context,
-                                    pointsToAssign >= 0
-                                        ? 'Task completion undone. -${pointsToAssign.toStringAsFixed(1)} points'
-                                        : 'Task completion undone. +${(-pointsToAssign).toStringAsFixed(1)} points',
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                }
-                              },
-                            ),
-                          );
-                        }
                       },
                     ),
                 ],

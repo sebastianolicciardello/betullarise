@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -22,9 +23,79 @@ class QuickDatePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+
+    // Past dates (debug only)
+    final lastMonday = _getLastMonday(today);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final lastMonth = today.subtract(const Duration(days: 30));
+
+    // Future dates
     final tomorrow = today.add(const Duration(days: 1));
     final plus3Days = today.add(const Duration(days: 3));
     final plus7Days = today.add(const Duration(days: 7));
+
+    final List<Widget> options = [];
+
+    // Add debug options first (in chronological order)
+    if (kDebugMode) {
+      options.addAll([
+        _QuickDateOption(
+          label: 'Last Month',
+          date: lastMonth,
+          selectedDate: selectedDate,
+          onTap: () => onDateSelected(lastMonth),
+          isDebug: true,
+        ),
+        SizedBox(height: 8.h),
+        _QuickDateOption(
+          label: 'Last Monday',
+          date: lastMonday,
+          selectedDate: selectedDate,
+          onTap: () => onDateSelected(lastMonday),
+          isDebug: true,
+        ),
+        SizedBox(height: 8.h),
+        _QuickDateOption(
+          label: 'Yesterday',
+          date: yesterday,
+          selectedDate: selectedDate,
+          onTap: () => onDateSelected(yesterday),
+          isDebug: true,
+        ),
+        SizedBox(height: 8.h),
+      ]);
+    }
+
+    // Add regular options in chronological order
+    options.addAll([
+      _QuickDateOption(
+        label: 'Today',
+        date: today,
+        selectedDate: selectedDate,
+        onTap: () => onDateSelected(today),
+      ),
+      SizedBox(height: 8.h),
+      _QuickDateOption(
+        label: 'Tomorrow',
+        date: tomorrow,
+        selectedDate: selectedDate,
+        onTap: () => onDateSelected(tomorrow),
+      ),
+      SizedBox(height: 8.h),
+      _QuickDateOption(
+        label: 'In 3 days',
+        date: plus3Days,
+        selectedDate: selectedDate,
+        onTap: () => onDateSelected(plus3Days),
+      ),
+      SizedBox(height: 8.h),
+      _QuickDateOption(
+        label: 'In 7 days',
+        date: plus7Days,
+        selectedDate: selectedDate,
+        onTap: () => onDateSelected(plus7Days),
+      ),
+    ]);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -38,33 +109,26 @@ class QuickDatePicker extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 16.h),
-        _QuickDateOption(
-          label: 'Today',
-          date: today,
-          selectedDate: selectedDate,
-          onTap: () => onDateSelected(today),
-        ),
-        SizedBox(height: 8.h),
-        _QuickDateOption(
-          label: 'Tomorrow',
-          date: tomorrow,
-          selectedDate: selectedDate,
-          onTap: () => onDateSelected(tomorrow),
-        ),
-        SizedBox(height: 8.h),
-        _QuickDateOption(
-          label: 'In 3 days',
-          date: plus3Days,
-          selectedDate: selectedDate,
-          onTap: () => onDateSelected(plus3Days),
-        ),
-        SizedBox(height: 8.h),
-        _QuickDateOption(
-          label: 'In 7 days',
-          date: plus7Days,
-          selectedDate: selectedDate,
-          onTap: () => onDateSelected(plus7Days),
-        ),
+        if (kDebugMode) ...[
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: Text(
+              'DEBUG: Past dates available for testing',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.orange.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: 12.h),
+        ],
+        ...options,
         SizedBox(height: 16.h),
         const Divider(),
         SizedBox(height: 8.h),
@@ -75,6 +139,18 @@ class QuickDatePicker extends StatelessWidget {
         SizedBox(height: 24.h),
       ],
     );
+  }
+
+  DateTime _getLastMonday(DateTime today) {
+    // Find last Monday (at least 1 week ago)
+    DateTime lastMonday = today.subtract(const Duration(days: 7));
+
+    // Navigate to the Monday of that week
+    while (lastMonday.weekday != DateTime.monday) {
+      lastMonday = lastMonday.subtract(const Duration(days: 1));
+    }
+
+    return lastMonday;
   }
 
   Future<void> _showCalendar(BuildContext context) async {
@@ -125,12 +201,14 @@ class _QuickDateOption extends StatelessWidget {
   final DateTime date;
   final DateTime? selectedDate;
   final VoidCallback onTap;
+  final bool isDebug;
 
   const _QuickDateOption({
     required this.label,
     required this.date,
     this.selectedDate,
     required this.onTap,
+    this.isDebug = false,
   });
 
   @override
@@ -160,22 +238,48 @@ class _QuickDateOption extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Icons.calendar_today,
+              isDebug ? Icons.bug_report : Icons.calendar_today,
               size: 20.sp,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface,
+                  : isDebug
+                      ? Colors.orange.shade700
+                      : Theme.of(context).colorScheme.onSurface,
             ),
             SizedBox(width: 12.w),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
+              child: Row(
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : isDebug
+                              ? Colors.orange.shade700
+                              : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  if (isDebug) ...[
+                    SizedBox(width: 6.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(3.r),
+                      ),
+                      child: Text(
+                        'DEBUG',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: Colors.orange.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Text(
@@ -183,7 +287,9 @@ class _QuickDateOption extends StatelessWidget {
               style: TextStyle(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    : isDebug
+                        ? Colors.orange.shade600
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
               ),
             ),
