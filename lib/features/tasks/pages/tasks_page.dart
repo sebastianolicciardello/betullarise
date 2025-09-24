@@ -29,6 +29,7 @@ class _TasksPageState extends State<TasksPage> {
   bool _isLoading = true;
   bool _showCompletedTasks = false;
   final TextEditingController _searchController = TextEditingController();
+  final Set<int> _expandedCards = <int>{};
 
   @override
   void initState() {
@@ -338,6 +339,7 @@ class _TasksPageState extends State<TasksPage> {
                   builder: (context) {
                     return LayoutBuilder(
                       builder: (context, constraints) {
+                        final isExpanded = _expandedCards.contains(task.id);
                         final span = TextSpan(
                           text: task.description,
                           style: TextStyle(fontSize: 14.sp),
@@ -353,19 +355,41 @@ class _TasksPageState extends State<TasksPage> {
                           children: [
                             Text(
                               task.description,
-                              maxLines: maxDescriptionLines,
-                              overflow: TextOverflow.ellipsis,
+                              maxLines: isExpanded ? null : maxDescriptionLines,
+                              overflow: isExpanded
+                                  ? TextOverflow.visible
+                                  : TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 14.sp),
                             ),
-                            if (isOverflowing)
-                              Padding(
-                                padding: EdgeInsets.only(top: 2.h),
-                                child: Icon(
-                                  Icons.more_horiz,
-                                  size: 18.sp,
-                                  color: Colors.grey,
+                            if (isOverflowing) ...[
+                              SizedBox(height: 4.h),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    if (isExpanded) {
+                                      _expandedCards.remove(task.id);
+                                    } else {
+                                      _expandedCards.add(task.id!);
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(4.r),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 4.w,
+                                    vertical: 2.h,
+                                  ),
+                                  child: Text(
+                                    isExpanded ? '▲ Show less' : '▼ Show more',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
+                            ],
                           ],
                         );
                       },
