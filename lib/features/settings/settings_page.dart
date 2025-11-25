@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'widgets/interface_section_widget.dart';
 import 'widgets/data_management_section_widget.dart';
+import 'widgets/auto_backup_section_widget.dart';
 import 'widgets/info_support_section_widget.dart';
 import 'package:betullarise/services/database_export_import_service.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
@@ -27,6 +28,10 @@ class SettingsPage extends StatelessWidget {
             SizedBox(height: 24.h),
             DataManagementSectionWidget(
               exportImportService: DatabaseExportImportService(),
+              dialogService: DialogService(),
+            ),
+            SizedBox(height: 24.h),
+            AutoBackupSectionWidget(
               dialogService: DialogService(),
             ),
             SizedBox(height: 24.h),

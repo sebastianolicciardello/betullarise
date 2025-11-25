@@ -205,13 +205,11 @@ class DatabaseExportImportService {
   }) : _platformHandler = platformHandler ?? DefaultPlatformHandler(),
        _config = config ?? const ExportImportConfig();
 
-  /// Export database and shared preferences to a zip file
-  Future<String?> exportData() async {
+  /// Export database and shared preferences as bytes
+  /// This method returns the raw ZIP archive bytes without showing a save dialog
+  /// Useful for automated backups
+  Future<Uint8List?> exportDataAsBytes() async {
     try {
-      if (!await _platformHandler.requestStoragePermission()) {
-        throw PermissionException('Storage permission denied');
-      }
-
       final dbPath = await _platformHandler.getDatabasePath(
         _config.databaseName,
       );
@@ -227,10 +225,30 @@ class DatabaseExportImportService {
 
       final zipEncoder = ZipEncoder();
       final zipData = zipEncoder.encode(archive);
-      final zipDataUint8List = Uint8List.fromList(zipData);
+      return Uint8List.fromList(zipData);
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error during export: $e\n$stackTrace',
+        name: 'EXPORT_ERROR',
+      );
+      return null;
+    }
+  }
+
+  /// Export database and shared preferences to a zip file
+  Future<String?> exportData() async {
+    try {
+      if (!await _platformHandler.requestStoragePermission()) {
+        throw PermissionException('Storage permission denied');
+      }
+
+      final archiveBytes = await exportDataAsBytes();
+      if (archiveBytes == null) {
+        return null;
+      }
 
       return await _platformHandler.saveFile(
-        zipDataUint8List,
+        archiveBytes,
         _config.exportFilename,
       );
     } on PermissionException catch (e) {

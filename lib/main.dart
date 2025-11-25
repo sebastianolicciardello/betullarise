@@ -4,6 +4,8 @@ import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/provider/tooltip_provider.dart';
 import 'package:betullarise/provider/first_day_of_week_provider.dart';
+import 'package:betullarise/provider/auto_backup_provider.dart';
+import 'package:betullarise/services/database_export_import_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -31,6 +33,11 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PointsProvider()),
         ChangeNotifierProvider(create: (_) => TooltipProvider()),
         ChangeNotifierProvider(create: (_) => FirstDayOfWeekProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AutoBackupProvider(
+            exportService: DatabaseExportImportService(),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -129,6 +136,10 @@ class _HomePageState extends State<HomePage> {
     // Load total points via the provider when the page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
+
+      // Check and perform auto-backup if needed
+      Provider.of<AutoBackupProvider>(context, listen: false)
+          .checkAndPerformAutoBackup();
     });
   }
 
