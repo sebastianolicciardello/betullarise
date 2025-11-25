@@ -131,8 +131,17 @@ class AutoBackupProvider extends ChangeNotifier {
     }
 
     try {
+      developer.log(
+        'Starting backup to folder: $_backupFolderPath',
+        name: 'AutoBackupProvider',
+      );
+
       final backupFolder = Directory(_backupFolderPath!);
       if (!await backupFolder.exists()) {
+        developer.log(
+          'Creating backup folder: $_backupFolderPath',
+          name: 'AutoBackupProvider',
+        );
         await backupFolder.create(recursive: true);
       }
 
@@ -140,17 +149,32 @@ class AutoBackupProvider extends ChangeNotifier {
       final fileName = 'betullarise_backup_${_formatDateTimeForFilename(timestamp)}.zip';
       final filePath = path.join(_backupFolderPath!, fileName);
 
+      developer.log(
+        'Creating backup archive...',
+        name: 'AutoBackupProvider',
+      );
+
       final archiveBytes = await _exportService.exportDataAsBytes();
       if (archiveBytes == null) {
         developer.log(
-          'Failed to create backup archive',
+          'Failed to create backup archive - exportDataAsBytes returned null',
           name: 'AutoBackupProvider',
         );
         return false;
       }
 
+      developer.log(
+        'Archive created successfully (${archiveBytes.length} bytes), writing to: $filePath',
+        name: 'AutoBackupProvider',
+      );
+
       final file = File(filePath);
       await file.writeAsBytes(archiveBytes);
+
+      developer.log(
+        'Backup file written successfully',
+        name: 'AutoBackupProvider',
+      );
 
       await _setLastBackupDate(timestamp);
       await _cleanupOldBackups();

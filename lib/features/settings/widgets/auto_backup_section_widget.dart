@@ -47,13 +47,20 @@ class AutoBackupSectionWidget extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   title: Text(
                     'Enable Auto-Backup',
-                    style: TextStyle(fontSize: 16.sp),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   subtitle: Text(
                     'Backup on first launch each day',
-                    style: TextStyle(fontSize: 13.sp),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
                   value: autoBackupProvider.isEnabled,
+                  activeColor: Theme.of(context).colorScheme.primary,
                   onChanged: (value) {
                     autoBackupProvider.setEnabled(value);
                   },
@@ -162,22 +169,34 @@ class AutoBackupSectionWidget extends StatelessWidget {
                             'Creating backup...',
                           );
 
-                          final success = await autoBackupProvider.performBackup();
+                          try {
+                            final success = await autoBackupProvider.performBackup();
 
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
 
-                            if (success) {
+                              if (success) {
+                                final backupFiles = await autoBackupProvider.getBackupFiles();
+                                dialogService.showResultDialog(
+                                  context,
+                                  'Backup Complete',
+                                  'Your data has been backed up successfully.\n\nBackup location:\n${autoBackupProvider.backupFolderPath}\n\nTotal backups: ${backupFiles.length}',
+                                );
+                              } else {
+                                dialogService.showResultDialog(
+                                  context,
+                                  'Backup Failed',
+                                  'Failed to create backup. Please check:\n- Folder path is valid\n- You have write permissions\n- Enough disk space available',
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
                               dialogService.showResultDialog(
                                 context,
-                                'Backup Complete',
-                                'Your data has been backed up successfully.',
-                              );
-                            } else {
-                              dialogService.showResultDialog(
-                                context,
-                                'Backup Failed',
-                                'Failed to create backup. Please check the folder path and try again.',
+                                'Backup Error',
+                                'An error occurred: ${e.toString()}',
                               );
                             }
                           }
