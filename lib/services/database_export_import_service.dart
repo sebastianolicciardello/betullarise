@@ -210,12 +210,30 @@ class DatabaseExportImportService {
   /// Useful for automated backups
   Future<Uint8List?> exportDataAsBytes() async {
     try {
+      developer.log(
+        'Starting exportDataAsBytes...',
+        name: 'EXPORT_DEBUG',
+      );
+
       final dbPath = await _platformHandler.getDatabasePath(
         _config.databaseName,
       );
+      developer.log(
+        'Database path obtained: $dbPath',
+        name: 'EXPORT_DEBUG',
+      );
+
       final prefs = await SharedPreferences.getInstance();
       final prefsMap = DatabaseExportImportUtils.prefsToMap(prefs);
+      developer.log(
+        'Preferences loaded: ${prefsMap.length} entries',
+        name: 'EXPORT_DEBUG',
+      );
 
+      developer.log(
+        'Creating archive...',
+        name: 'EXPORT_DEBUG',
+      );
       final archive = await DatabaseExportImportUtils.createArchive(
         _config.databaseName,
         _config.prefsFilename,
@@ -223,13 +241,25 @@ class DatabaseExportImportService {
         prefsMap,
       );
 
+      developer.log(
+        'Encoding archive...',
+        name: 'EXPORT_DEBUG',
+      );
       final zipEncoder = ZipEncoder();
       final zipData = zipEncoder.encode(archive);
-      return Uint8List.fromList(zipData);
+      final bytes = Uint8List.fromList(zipData);
+
+      developer.log(
+        'Export successful: ${bytes.length} bytes',
+        name: 'EXPORT_DEBUG',
+      );
+      return bytes;
     } catch (e, stackTrace) {
       developer.log(
-        'Error during export: $e\n$stackTrace',
+        'Error during export: $e',
         name: 'EXPORT_ERROR',
+        error: e,
+        stackTrace: stackTrace,
       );
       return null;
     }
