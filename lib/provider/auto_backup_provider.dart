@@ -121,12 +121,15 @@ class AutoBackupProvider extends ChangeNotifier {
     return await performBackup();
   }
 
+  String? _lastError;
+  String? get lastError => _lastError;
+
   Future<bool> performBackup() async {
+    _lastError = null;
+
     if (_backupFolderPath == null) {
-      developer.log(
-        'No backup folder configured',
-        name: 'AutoBackupProvider',
-      );
+      _lastError = 'No backup folder configured';
+      developer.log(_lastError!, name: 'AutoBackupProvider');
       return false;
     }
 
@@ -142,7 +145,13 @@ class AutoBackupProvider extends ChangeNotifier {
           'Creating backup folder: $_backupFolderPath',
           name: 'AutoBackupProvider',
         );
-        await backupFolder.create(recursive: true);
+        try {
+          await backupFolder.create(recursive: true);
+        } catch (e) {
+          _lastError = 'Failed to create backup folder: $e\nPath: $_backupFolderPath';
+          developer.log(_lastError!, name: 'AutoBackupProvider');
+          return false;
+        }
       }
 
       final timestamp = DateTime.now();
@@ -156,6 +165,12 @@ class AutoBackupProvider extends ChangeNotifier {
 
       final archiveBytes = await _exportService.exportDataAsBytes();
       if (archiveBytes == null) {
+        _lastError = 'Failed to create backup archive.\n\n'
+            'The export service returned null. This usually means:\n'
+            '- Database file not found or inaccessible\n'
+            '- Insufficient permissions to read database\n'
+            '- Corrupted database file\n\n'
+            'Try using "Export Data" from the Data Management section to see if export works.';
         developer.log(
           'Failed to create backup archive - exportDataAsBytes returned null',
           name: 'AutoBackupProvider',
@@ -168,8 +183,19 @@ class AutoBackupProvider extends ChangeNotifier {
         name: 'AutoBackupProvider',
       );
 
-      final file = File(filePath);
-      await file.writeAsBytes(archiveBytes);
+      try {
+        final file = File(filePath);
+        await file.writeAsBytes(archiveBytes);
+      } catch (e) {
+        _lastError = 'Failed to write backup file: $e\n\n'
+            'Path: $filePath\n\n'
+            'Check:\n'
+            '- Write permissions for the folder\n'
+            '- Available disk space\n'
+            '- Folder path is valid and accessible';
+        developer.log(_lastError!, name: 'AutoBackupProvider');
+        return false;
+      }
 
       developer.log(
         'Backup file written successfully',
@@ -186,6 +212,7 @@ class AutoBackupProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
+      _lastError = 'Unexpected error during backup:\n\n$e\n\nStack trace:\n${stackTrace.toString().split('\n').take(5).join('\n')}';
       developer.log(
         'Error performing backup: $e',
         name: 'AutoBackupProvider',

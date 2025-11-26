@@ -183,10 +183,12 @@ class AutoBackupSectionWidget extends StatelessWidget {
                                   'Your data has been backed up successfully.\n\nBackup location:\n${autoBackupProvider.backupFolderPath}\n\nTotal backups: ${backupFiles.length}',
                                 );
                               } else {
+                                final errorMessage = autoBackupProvider.lastError ??
+                                    'Failed to create backup. Please check:\n- Folder path is valid\n- You have write permissions\n- Enough disk space available';
                                 dialogService.showResultDialog(
                                   context,
                                   'Backup Failed',
-                                  'Failed to create backup. Please check:\n- Folder path is valid\n- You have write permissions\n- Enough disk space available',
+                                  errorMessage,
                                 );
                               }
                             }
