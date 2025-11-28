@@ -43,6 +43,7 @@ abstract class PermissionRequester {
   Future<PermissionStatus> requestVideos();
   Future<PermissionStatus> requestAudio();
   Future<PermissionStatus> requestStorage();
+  Future<PermissionStatus> requestManageExternalStorage();
 }
 
 /// Default implementation using permission_handler
@@ -55,6 +56,9 @@ class DefaultPermissionRequester implements PermissionRequester {
   Future<PermissionStatus> requestAudio() => Permission.audio.request();
   @override
   Future<PermissionStatus> requestStorage() => Permission.storage.request();
+  @override
+  Future<PermissionStatus> requestManageExternalStorage() =>
+      Permission.manageExternalStorage.request();
 }
 
 /// Default implementation of PlatformHandler
@@ -82,18 +86,12 @@ class DefaultPlatformHandler implements PlatformHandler {
       final androidInfo = await _deviceInfo.androidInfo;
       final sdkInt = androidInfo.version.sdkInt;
 
-      if (sdkInt >= 34) {
-        // Android 14+ (API 34+)
-        final photos = await permissionRequester.requestPhotos();
-        final videos = await permissionRequester.requestVideos();
-        final audio = await permissionRequester.requestAudio();
-        return photos.isGranted && videos.isGranted && audio.isGranted;
-      } else if (sdkInt >= 33) {
-        // Android 13 (API 33)
-        final photos = await permissionRequester.requestPhotos();
-        return photos.isGranted;
+      if (sdkInt >= 30) {
+        // Android 11+ (API 30+) - Requires MANAGE_EXTERNAL_STORAGE for File API access to shared storage
+        final status = await permissionRequester.requestManageExternalStorage();
+        return status.isGranted;
       } else {
-        // Android 12 and below
+        // Android 10 and below
         final storage = await permissionRequester.requestStorage();
         return storage.isGranted;
       }
@@ -204,6 +202,11 @@ class DatabaseExportImportService {
     ExportImportConfig? config,
   }) : _platformHandler = platformHandler ?? DefaultPlatformHandler(),
        _config = config ?? const ExportImportConfig();
+
+  /// Request storage permission
+  Future<bool> requestStoragePermission() async {
+    return await _platformHandler.requestStoragePermission();
+  }
 
   /// Export database and shared preferences as bytes
   /// This method returns the raw ZIP archive bytes without showing a save dialog

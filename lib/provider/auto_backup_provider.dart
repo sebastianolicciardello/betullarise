@@ -134,6 +134,12 @@ class AutoBackupProvider extends ChangeNotifier {
     }
 
     try {
+      if (!await _exportService.requestStoragePermission()) {
+        _lastError = 'Storage permission denied. Please grant "All files access" permission to allow backups to custom folders.';
+        developer.log(_lastError!, name: 'AutoBackupProvider');
+        return false;
+      }
+
       developer.log(
         'Starting backup to folder: $_backupFolderPath',
         name: 'AutoBackupProvider',
