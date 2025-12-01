@@ -374,6 +374,16 @@ class MockAndroidDeviceInfo extends _i1.Mock implements _i2.AndroidDeviceInfo {
           as bool);
 
   @override
+  int get freeDiskSize =>
+      (super.noSuchMethod(Invocation.getter(#freeDiskSize), returnValue: 0)
+          as int);
+
+  @override
+  int get totalDiskSize =>
+      (super.noSuchMethod(Invocation.getter(#totalDiskSize), returnValue: 0)
+          as int);
+
+  @override
   List<String> get systemFeatures =>
       (super.noSuchMethod(
             Invocation.getter(#systemFeatures),
@@ -525,6 +535,16 @@ class MockPermissionRequester extends _i1.Mock
   _i10.Future<_i13.PermissionStatus> requestStorage() =>
       (super.noSuchMethod(
             Invocation.method(#requestStorage, []),
+            returnValue: _i10.Future<_i13.PermissionStatus>.value(
+              _i13.PermissionStatus.denied,
+            ),
+          )
+          as _i10.Future<_i13.PermissionStatus>);
+
+  @override
+  _i10.Future<_i13.PermissionStatus> requestManageExternalStorage() =>
+      (super.noSuchMethod(
+            Invocation.method(#requestManageExternalStorage, []),
             returnValue: _i10.Future<_i13.PermissionStatus>.value(
               _i13.PermissionStatus.denied,
             ),

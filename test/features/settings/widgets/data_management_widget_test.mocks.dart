@@ -4,11 +4,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
-import 'dart:ui' as _i6;
+import 'dart:typed_data' as _i5;
+import 'dart:ui' as _i7;
 
 import 'package:betullarise/services/database_export_import_service.dart'
     as _i3;
-import 'package:betullarise/services/ui/dialog_service.dart' as _i5;
+import 'package:betullarise/services/ui/dialog_service.dart' as _i6;
 import 'package:flutter/material.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -38,6 +39,24 @@ class _FakeDialogRoute_0<T> extends _i1.SmartFake
 class MockDatabaseExportImportService extends _i1.Mock
     implements _i3.DatabaseExportImportService {
   @override
+  _i4.Future<bool> requestStoragePermission() =>
+      (super.noSuchMethod(
+            Invocation.method(#requestStoragePermission, []),
+            returnValue: _i4.Future<bool>.value(false),
+            returnValueForMissingStub: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
+
+  @override
+  _i4.Future<_i5.Uint8List?> exportDataAsBytes() =>
+      (super.noSuchMethod(
+            Invocation.method(#exportDataAsBytes, []),
+            returnValue: _i4.Future<_i5.Uint8List?>.value(),
+            returnValueForMissingStub: _i4.Future<_i5.Uint8List?>.value(),
+          )
+          as _i4.Future<_i5.Uint8List?>);
+
+  @override
   _i4.Future<String?> exportData() =>
       (super.noSuchMethod(
             Invocation.method(#exportData, []),
@@ -59,7 +78,7 @@ class MockDatabaseExportImportService extends _i1.Mock
 /// A class which mocks [DialogService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDialogService extends _i1.Mock implements _i5.DialogService {
+class MockDialogService extends _i1.Mock implements _i6.DialogService {
   @override
   _i2.DialogRoute<dynamic> showLoadingDialog(
     _i2.BuildContext? context,
@@ -85,7 +104,7 @@ class MockDialogService extends _i1.Mock implements _i5.DialogService {
     String? message, {
     String? confirmText = 'Continue',
     String? cancelText = 'Cancel',
-    _i6.Color? confirmColor,
+    _i7.Color? confirmColor,
     bool? isDangerous = false,
   }) =>
       (super.noSuchMethod(
