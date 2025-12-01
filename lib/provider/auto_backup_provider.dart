@@ -21,10 +21,15 @@ class AutoBackupProvider extends ChangeNotifier {
   String? get backupFolderPath => _backupFolderPath;
   DateTime? get lastBackupDate => _lastBackupDate;
 
-  AutoBackupProvider({
-    required DatabaseExportImportService exportService,
-  })  : _exportService = exportService {
+  AutoBackupProvider({required DatabaseExportImportService exportService})
+    : _exportService = exportService {
     _loadSettings();
+  }
+
+  /// Wait for settings to be loaded (useful for testing)
+  Future<void> waitForInitialization() async {
+    // Simple wait - in real app this would be handled by proper state management
+    await Future.delayed(Duration(milliseconds: 50));
   }
 
   Future<void> _loadSettings() async {
@@ -75,6 +80,19 @@ class AutoBackupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reset last backup date to force auto-backup on next launch
+  Future<void> resetLastBackupDate() async {
+    _lastBackupDate = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyLastBackupDate);
+    notifyListeners();
+
+    developer.log(
+      'Last backup date reset - auto-backup will run on next launch',
+      name: 'AutoBackupProvider',
+    );
+  }
+
   bool _isFirstLaunchToday() {
     if (_lastBackupDate == null) {
       return true;
@@ -89,6 +107,11 @@ class AutoBackupProvider extends ChangeNotifier {
   }
 
   Future<bool> checkAndPerformAutoBackup() async {
+    developer.log(
+      'checkAndPerformAutoBackup called - enabled: $_isEnabled, folder: $_backupFolderPath, lastBackup: $_lastBackupDate',
+      name: 'AutoBackupProvider',
+    );
+
     if (!_isEnabled) {
       developer.log(
         'Auto-backup is disabled, skipping',
@@ -118,7 +141,44 @@ class AutoBackupProvider extends ChangeNotifier {
       name: 'AutoBackupProvider',
     );
 
-    return await performBackup();
+    // Try to perform backup with retry logic
+    return await _performBackupWithRetry();
+  }
+
+  Future<bool> _performBackupWithRetry() async {
+    const maxRetries = 2;
+    const retryDelay = Duration(seconds: 2);
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      developer.log(
+        'Auto-backup attempt $attempt of $maxRetries',
+        name: 'AutoBackupProvider',
+      );
+
+      final result = await performBackup();
+
+      if (result) {
+        developer.log(
+          'Auto-backup successful on attempt $attempt',
+          name: 'AutoBackupProvider',
+        );
+        return true;
+      }
+
+      if (attempt < maxRetries) {
+        developer.log(
+          'Auto-backup failed on attempt $attempt, retrying in ${retryDelay.inSeconds}s...',
+          name: 'AutoBackupProvider',
+        );
+        await Future.delayed(retryDelay);
+      }
+    }
+
+    developer.log(
+      'Auto-backup failed after $maxRetries attempts',
+      name: 'AutoBackupProvider',
+    );
+    return false;
   }
 
   String? _lastError;
@@ -135,7 +195,8 @@ class AutoBackupProvider extends ChangeNotifier {
 
     try {
       if (!await _exportService.requestStoragePermission()) {
-        _lastError = 'Storage permission denied. Please grant "All files access" permission to allow backups to custom folders.';
+        _lastError =
+            'Storage permission denied. Please grant "All files access" permission to allow backups to custom folders.';
         developer.log(_lastError!, name: 'AutoBackupProvider');
         return false;
       }
@@ -154,24 +215,24 @@ class AutoBackupProvider extends ChangeNotifier {
         try {
           await backupFolder.create(recursive: true);
         } catch (e) {
-          _lastError = 'Failed to create backup folder: $e\nPath: $_backupFolderPath';
+          _lastError =
+              'Failed to create backup folder: $e\nPath: $_backupFolderPath';
           developer.log(_lastError!, name: 'AutoBackupProvider');
           return false;
         }
       }
 
       final timestamp = DateTime.now();
-      final fileName = 'betullarise_backup_${_formatDateTimeForFilename(timestamp)}.zip';
+      final fileName =
+          'betullarise_backup_${_formatDateTimeForFilename(timestamp)}.zip';
       final filePath = path.join(_backupFolderPath!, fileName);
 
-      developer.log(
-        'Creating backup archive...',
-        name: 'AutoBackupProvider',
-      );
+      developer.log('Creating backup archive...', name: 'AutoBackupProvider');
 
       final archiveBytes = await _exportService.exportDataAsBytes();
       if (archiveBytes == null) {
-        _lastError = 'Failed to create backup archive.\n\n'
+        _lastError =
+            'Failed to create backup archive.\n\n'
             'The export service returned null. This usually means:\n'
             '- Database file not found or inaccessible\n'
             '- Insufficient permissions to read database\n'
@@ -193,7 +254,8 @@ class AutoBackupProvider extends ChangeNotifier {
         final file = File(filePath);
         await file.writeAsBytes(archiveBytes);
       } catch (e) {
-        _lastError = 'Failed to write backup file: $e\n\n'
+        _lastError =
+            'Failed to write backup file: $e\n\n'
             'Path: $filePath\n\n'
             'Check:\n'
             '- Write permissions for the folder\n'
@@ -218,7 +280,8 @@ class AutoBackupProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
-      _lastError = 'Unexpected error during backup:\n\n$e\n\nStack trace:\n${stackTrace.toString().split('\n').take(5).join('\n')}';
+      _lastError =
+          'Unexpected error during backup:\n\n$e\n\nStack trace:\n${stackTrace.toString().split('\n').take(5).join('\n')}';
       developer.log(
         'Error performing backup: $e',
         name: 'AutoBackupProvider',
@@ -236,11 +299,12 @@ class AutoBackupProvider extends ChangeNotifier {
       final backupFolder = Directory(_backupFolderPath!);
       if (!await backupFolder.exists()) return;
 
-      final files = await backupFolder
-          .list()
-          .where((entity) => entity is File && entity.path.endsWith('.zip'))
-          .map((entity) => entity as File)
-          .toList();
+      final files =
+          await backupFolder
+              .list()
+              .where((entity) => entity is File && entity.path.endsWith('.zip'))
+              .map((entity) => entity as File)
+              .toList();
 
       if (files.length <= _maxBackupFiles) return;
 
@@ -281,11 +345,12 @@ class AutoBackupProvider extends ChangeNotifier {
       final backupFolder = Directory(_backupFolderPath!);
       if (!await backupFolder.exists()) return [];
 
-      final files = await backupFolder
-          .list()
-          .where((entity) => entity is File && entity.path.endsWith('.zip'))
-          .map((entity) => entity as File)
-          .toList();
+      final files =
+          await backupFolder
+              .list()
+              .where((entity) => entity is File && entity.path.endsWith('.zip'))
+              .map((entity) => entity as File)
+              .toList();
 
       files.sort((a, b) {
         final aStat = a.statSync();

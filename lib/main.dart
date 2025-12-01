@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:betullarise/provider/theme_notifier.dart';
 import 'package:betullarise/provider/points_provider.dart';
 import 'package:betullarise/provider/tooltip_provider.dart';
@@ -34,9 +36,10 @@ void main() async {
         ChangeNotifierProvider(create: (_) => TooltipProvider()),
         ChangeNotifierProvider(create: (_) => FirstDayOfWeekProvider()),
         ChangeNotifierProvider(
-          create: (_) => AutoBackupProvider(
-            exportService: DatabaseExportImportService(),
-          ),
+          create:
+              (_) => AutoBackupProvider(
+                exportService: DatabaseExportImportService(),
+              ),
         ),
       ],
       child: const MyApp(),
@@ -66,50 +69,50 @@ class MyApp extends StatelessWidget {
             Locale('en', 'US'), // Sunday first
             Locale('en', 'GB'), // Monday first
           ],
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme(
-          brightness: Brightness.light,
-          primary: Colors.black,
-          onPrimary: Colors.black,
-          secondary: Colors.black,
-          onSecondary: Colors.black,
-          error: Colors.red,
-          onError: Colors.white,
-          surface: Colors.white,
-          onSurface: Colors.black,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-        ),
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(color: Colors.black),
-          bodyMedium: TextStyle(color: Colors.black),
-          bodySmall: TextStyle(color: Colors.black),
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme(
-          brightness: Brightness.dark,
-          primary: Colors.white,
-          onPrimary: Colors.white,
-          secondary: Colors.white,
-          onSecondary: Colors.white,
-          error: Colors.red,
-          onError: Colors.black,
-          surface: Colors.black,
-          onSurface: Colors.white,
-        ),
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-          bodySmall: TextStyle(color: Colors.white),
-        ),
-      ),
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme(
+              brightness: Brightness.light,
+              primary: Colors.black,
+              onPrimary: Colors.black,
+              secondary: Colors.black,
+              onSecondary: Colors.black,
+              error: Colors.red,
+              onError: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+            ),
+            textTheme: TextTheme(
+              bodyLarge: TextStyle(color: Colors.black),
+              bodyMedium: TextStyle(color: Colors.black),
+              bodySmall: TextStyle(color: Colors.black),
+            ),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme(
+              brightness: Brightness.dark,
+              primary: Colors.white,
+              onPrimary: Colors.white,
+              secondary: Colors.white,
+              onSecondary: Colors.white,
+              error: Colors.red,
+              onError: Colors.black,
+              surface: Colors.black,
+              onSurface: Colors.white,
+            ),
+            textTheme: TextTheme(
+              bodyLarge: TextStyle(color: Colors.white),
+              bodyMedium: TextStyle(color: Colors.white),
+              bodySmall: TextStyle(color: Colors.white),
+            ),
+          ),
           themeMode: themeNotifier.themeMode,
           home: const HomePage(),
         );
@@ -134,12 +137,103 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     // Load total points via the provider when the page is initialized
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<PointsProvider>(context, listen: false).loadAllPoints();
 
       // Check and perform auto-backup if needed
-      Provider.of<AutoBackupProvider>(context, listen: false)
-          .checkAndPerformAutoBackup();
+      final autoBackupProvider = Provider.of<AutoBackupProvider>(
+        context,
+        listen: false,
+      );
+
+      // Wait a bit more to ensure provider is fully initialized
+      await Future.delayed(Duration(milliseconds: 500));
+
+      final backupResult = await autoBackupProvider.checkAndPerformAutoBackup();
+
+      // Always show a message about auto-backup status for debugging
+      if (mounted) {
+        if (backupResult) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Auto-backup completed successfully!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          final error = autoBackupProvider.lastError;
+          if (error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('❌ Auto-backup failed: $error'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 8),
+                action: SnackBarAction(
+                  label: 'Details',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    // Navigate to settings to see more details
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+
+            // Schedule a retry after 10 seconds if backup failed
+            Timer(Duration(seconds: 10), () async {
+              if (mounted &&
+                  autoBackupProvider.isEnabled &&
+                  autoBackupProvider.backupFolderPath != null) {
+                developer.log(
+                  'Retrying auto-backup after delay...',
+                  name: 'HomePage',
+                );
+                final retryResult =
+                    await autoBackupProvider.checkAndPerformAutoBackup();
+                if (mounted && retryResult) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('🔄 Auto-backup retry successful!'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              }
+            });
+          } else {
+            // Backup was skipped (disabled, no folder, or already done today)
+            String reason = '';
+            if (!autoBackupProvider.isEnabled) {
+              reason = 'Auto-backup is disabled';
+            } else if (autoBackupProvider.backupFolderPath == null) {
+              reason = 'No backup folder configured';
+            } else if (autoBackupProvider.lastBackupDate != null) {
+              final now = DateTime.now();
+              final last = autoBackupProvider.lastBackupDate!;
+              if (now.year == last.year &&
+                  now.month == last.month &&
+                  now.day == last.day) {
+                reason = 'Backup already completed today';
+              }
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('ℹ️ Auto-backup skipped: $reason'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      }
     });
   }
 
