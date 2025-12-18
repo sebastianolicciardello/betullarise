@@ -9,6 +9,7 @@ import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
+import 'package:intl/intl.dart';
 
 class HabitsPage extends StatefulWidget {
   final HabitsDatabaseHelper? dbHelper;
@@ -27,6 +28,7 @@ class _HabitsPageState extends State<HabitsPage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final Set<int> _expandedCards = <int>{};
+  final Map<int, int> _habitCompletionKeys = <int, int>{};
 
   @override
   void initState() {
@@ -67,6 +69,22 @@ class _HabitsPageState extends State<HabitsPage> {
       _filteredHabits = filtered;
       _isSearching = true;
     });
+  }
+
+  String _formatDate(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today at ${DateFormat('HH:mm').format(date)}';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday at ${DateFormat('HH:mm').format(date)}';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago at ${DateFormat('HH:mm').format(date)}';
+    } else {
+      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+    }
   }
 
   Future<void> _loadHabits() async {
@@ -200,6 +218,7 @@ class _HabitsPageState extends State<HabitsPage> {
     const double normalCardHeight = 120;
 
     return Card(
+      key: ValueKey('habit_${habit.id}_${_habitCompletionKeys[habit.id] ?? 0}'),
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.r),
@@ -266,9 +285,10 @@ class _HabitsPageState extends State<HabitsPage> {
                             Text(
                               habit.description,
                               maxLines: isExpanded ? null : maxDescriptionLines,
-                              overflow: isExpanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
+                              overflow:
+                                  isExpanded
+                                      ? TextOverflow.visible
+                                      : TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 14.sp),
                             ),
                             if (isOverflowing) ...[
@@ -293,7 +313,10 @@ class _HabitsPageState extends State<HabitsPage> {
                                     isExpanded ? '▲ Show less' : '▼ Show more',
                                     style: TextStyle(
                                       fontSize: 12.sp,
-                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.7),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -313,14 +336,67 @@ class _HabitsPageState extends State<HabitsPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (habit.score > 0)
-                        Text('Score: +${habit.score.toStringAsFixed(2)}'),
-                      if (habit.penalty > 0)
-                        Text('Penalty: -${habit.penalty.toStringAsFixed(2)}'),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (habit.score > 0)
+                          Text('Score: +${habit.score.toStringAsFixed(2)}'),
+                        if (habit.penalty > 0)
+                          Text('Penalty: -${habit.penalty.toStringAsFixed(2)}'),
+                        FutureBuilder<Map<String, dynamic>?>(
+                          future: _dbHelper.getLatestHabitCompletion(habit.id!),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const SizedBox.shrink();
+                            }
+                            if (snapshot.hasData && snapshot.data != null) {
+                              final completion = snapshot.data!;
+                              final completionTime =
+                                  completion['completion_time'] as int;
+                              final points = completion['points'] as double;
+                              final pointsText =
+                                  points >= 0
+                                      ? '+${points.toStringAsFixed(1)}'
+                                      : points.toStringAsFixed(1);
+
+                              final bool isMultipler = habit.type.startsWith(
+                                'multipler',
+                              );
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    'Last: ${_formatDate(completionTime)}',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  if (isMultipler) ...[
+                                    Text(
+                                      'Points: $pointsText',
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color:
+                                            points >= 0
+                                                ? Colors.green[600]
+                                                : Colors.red[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: Icon(Icons.circle_outlined, size: 24.sp),
@@ -493,11 +569,7 @@ class _HabitsPageState extends State<HabitsPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(message),
-                    SizedBox(height: 16.h),
-                    ...choices,
-                  ],
+                  children: [Text(message), SizedBox(height: 16.h), ...choices],
                 ),
               ),
               actions: [
@@ -523,8 +595,16 @@ class _HabitsPageState extends State<HabitsPage> {
     }
   }
 
-  void _addPoints(int habitId, double points) {
+  void _addPoints(int habitId, double points) async {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
+
+    // Record habit completion
+    await _dbHelper.insertHabitCompletion(habitId, points);
+
+    // Update the completion key to force UI refresh
+    setState(() {
+      _habitCompletionKeys[habitId] = (_habitCompletionKeys[habitId] ?? 0) + 1;
+    });
 
     // Create a point object
     final point = Point(

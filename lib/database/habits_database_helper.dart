@@ -21,6 +21,12 @@ class HabitsDatabaseHelper {
   static const columnCreatedTime = 'created_time';
   static const columnUpdatedTime = 'updated_time';
 
+  // Habit completions table
+  static const tableHabitCompletions = 'habit_completions';
+  static const columnHabitId = 'habit_id';
+  static const columnCompletionTime = 'completion_time';
+  static const columnPoints = 'points';
+
   // Singleton instance
   HabitsDatabaseHelper._privateConstructor();
   static final HabitsDatabaseHelper instance =
@@ -121,18 +127,45 @@ class HabitsDatabaseHelper {
         $columnUpdatedTime INTEGER NOT NULL
       )
     ''');
-    developer.log("Table created successfully", name: "HABITS");
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableHabitCompletions (
+        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+        $columnHabitId INTEGER NOT NULL,
+        $columnCompletionTime INTEGER NOT NULL,
+        $columnPoints REAL NOT NULL,
+        FOREIGN KEY ($columnHabitId) REFERENCES $tableHabits ($columnId)
+      )
+    ''');
+    developer.log("Tables created successfully", name: "HABITS");
   }
 
   // Make sure the habit table exists when we open the database
   Future _onOpen(Database db) async {
-    // Verifica in modo corretto l'esistenza della tabella
+    // Verifica in modo corretto l'esistenza della tabella habits
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
       [tableHabits],
     );
     if (tables.isEmpty) {
       await _onCreate(db, _databaseVersion);
+    }
+
+    // Verifica in modo corretto l'esistenza della tabella habit_completions
+    final completionsTables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+      [tableHabitCompletions],
+    );
+    if (completionsTables.isEmpty) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tableHabitCompletions (
+          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+          $columnHabitId INTEGER NOT NULL,
+          $columnCompletionTime INTEGER NOT NULL,
+          $columnPoints REAL NOT NULL,
+          FOREIGN KEY ($columnHabitId) REFERENCES $tableHabits ($columnId)
+        )
+      ''');
     }
   }
 
@@ -213,5 +246,57 @@ class HabitsDatabaseHelper {
       whereArgs: [type],
     );
     return List.generate(maps.length, (i) => Habit.fromMap(maps[i]));
+  }
+
+  // Insert a new habit completion
+  Future<int> insertHabitCompletion(int habitId, double points) async {
+    Database db = await instance.database;
+    final completionTime = DateTime.now().millisecondsSinceEpoch;
+
+    return await db.insert(tableHabitCompletions, {
+      columnHabitId: habitId,
+      columnCompletionTime: completionTime,
+      columnPoints: points,
+    });
+  }
+
+  // Get the latest completion for a specific habit
+  Future<Map<String, dynamic>?> getLatestHabitCompletion(int habitId) async {
+    Database db = await instance.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      tableHabitCompletions,
+      where: '$columnHabitId = ?',
+      whereArgs: [habitId],
+      orderBy: '$columnCompletionTime DESC',
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
+  }
+
+  // Get all completions for a specific habit (for history)
+  Future<List<Map<String, dynamic>>> getHabitCompletionHistory(
+    int habitId,
+  ) async {
+    Database db = await instance.database;
+    return await db.query(
+      tableHabitCompletions,
+      where: '$columnHabitId = ?',
+      whereArgs: [habitId],
+      orderBy: '$columnCompletionTime DESC',
+    );
+  }
+
+  // Delete a habit completion (for undo functionality)
+  Future<int> deleteHabitCompletion(int completionId) async {
+    Database db = await instance.database;
+    return await db.delete(
+      tableHabitCompletions,
+      where: '$columnId = ?',
+      whereArgs: [completionId],
+    );
   }
 }
