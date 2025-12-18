@@ -9,9 +9,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'dart:developer' as developer;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:platform/platform.dart';
+import 'package:sqflite/sqflite.dart';
 
 /// Configuration for the export/import service
 class ExportImportConfig {
@@ -213,18 +213,12 @@ class DatabaseExportImportService {
   /// Useful for automated backups
   Future<Uint8List?> exportDataAsBytes() async {
     try {
-      developer.log(
-        'Starting exportDataAsBytes...',
-        name: 'EXPORT_DEBUG',
-      );
+      developer.log('Starting exportDataAsBytes...', name: 'EXPORT_DEBUG');
 
       final dbPath = await _platformHandler.getDatabasePath(
         _config.databaseName,
       );
-      developer.log(
-        'Database path obtained: $dbPath',
-        name: 'EXPORT_DEBUG',
-      );
+      developer.log('Database path obtained: $dbPath', name: 'EXPORT_DEBUG');
 
       final prefs = await SharedPreferences.getInstance();
       final prefsMap = DatabaseExportImportUtils.prefsToMap(prefs);
@@ -233,10 +227,7 @@ class DatabaseExportImportService {
         name: 'EXPORT_DEBUG',
       );
 
-      developer.log(
-        'Creating archive...',
-        name: 'EXPORT_DEBUG',
-      );
+      developer.log('Creating archive...', name: 'EXPORT_DEBUG');
       final archive = await DatabaseExportImportUtils.createArchive(
         _config.databaseName,
         _config.prefsFilename,
@@ -244,10 +235,7 @@ class DatabaseExportImportService {
         prefsMap,
       );
 
-      developer.log(
-        'Encoding archive...',
-        name: 'EXPORT_DEBUG',
-      );
+      developer.log('Encoding archive...', name: 'EXPORT_DEBUG');
       final zipEncoder = ZipEncoder();
       final zipData = zipEncoder.encode(archive);
       final bytes = Uint8List.fromList(zipData);
@@ -340,7 +328,7 @@ class DatabaseExportImportService {
       // Both components must be imported successfully
       if (!dbSuccess || !prefsSuccess) {
         throw InvalidBackupException(
-          'Failed to import all components. Database: $dbSuccess, Preferences: $prefsSuccess'
+          'Failed to import all components. Database: $dbSuccess, Preferences: $prefsSuccess',
         );
       }
 
@@ -352,10 +340,7 @@ class DatabaseExportImportService {
       );
       rethrow;
     } on InvalidBackupException catch (e) {
-      developer.log(
-        'Invalid backup file: ${e.message}',
-        name: 'IMPORT_ERROR',
-      );
+      developer.log('Invalid backup file: ${e.message}', name: 'IMPORT_ERROR');
       rethrow;
     } catch (e, stackTrace) {
       developer.log(
@@ -411,7 +396,7 @@ class DatabaseExportImportUtils {
       final dbFile = archive.findFile(expectedDatabaseName);
       if (dbFile == null) {
         throw InvalidBackupException(
-          'Database file "$expectedDatabaseName" not found in backup'
+          'Database file "$expectedDatabaseName" not found in backup',
         );
       }
 
@@ -427,7 +412,24 @@ class DatabaseExportImportUtils {
       }
 
       // SQLite files start with "SQLite format 3\0"
-      final sqliteHeader = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00];
+      final sqliteHeader = [
+        0x53,
+        0x51,
+        0x4c,
+        0x69,
+        0x74,
+        0x65,
+        0x20,
+        0x66,
+        0x6f,
+        0x72,
+        0x6d,
+        0x61,
+        0x74,
+        0x20,
+        0x33,
+        0x00,
+      ];
       final fileHeader = dbContent.take(16).toList();
       bool headerMatches = true;
       for (int i = 0; i < sqliteHeader.length; i++) {
@@ -436,16 +438,18 @@ class DatabaseExportImportUtils {
           break;
         }
       }
-      
+
       if (!headerMatches) {
-        throw InvalidBackupException('Database file is not a valid SQLite database');
+        throw InvalidBackupException(
+          'Database file is not a valid SQLite database',
+        );
       }
 
       // Check for required preferences file
       final prefsFile = archive.findFile(expectedPrefsFilename);
       if (prefsFile == null) {
         throw InvalidBackupException(
-          'Preferences file "$expectedPrefsFilename" not found in backup'
+          'Preferences file "$expectedPrefsFilename" not found in backup',
         );
       }
 
@@ -458,16 +462,23 @@ class DatabaseExportImportUtils {
       try {
         final prefsJson = String.fromCharCodes(prefsFile.content as List<int>);
         final decoded = jsonDecode(prefsJson);
-        
+
         // Must be a Map/Object
         if (decoded is! Map) {
-          throw InvalidBackupException('Preferences file does not contain valid JSON object');
+          throw InvalidBackupException(
+            'Preferences file does not contain valid JSON object',
+          );
         }
       } catch (e) {
-        throw InvalidBackupException('Preferences file contains invalid JSON: $e');
+        throw InvalidBackupException(
+          'Preferences file contains invalid JSON: $e',
+        );
       }
 
-      developer.log('Backup file validation successful', name: 'IMPORT_VALIDATION');
+      developer.log(
+        'Backup file validation successful',
+        name: 'IMPORT_VALIDATION',
+      );
     } catch (e) {
       if (e is InvalidBackupException) {
         rethrow;

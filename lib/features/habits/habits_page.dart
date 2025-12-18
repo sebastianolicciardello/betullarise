@@ -286,6 +286,34 @@ class _HabitsPageState extends State<HabitsPage> {
                               return const SizedBox.shrink();
                             },
                           ),
+                        // Show dot indicating if yesterday was completed
+                        if ((habit.type.startsWith('single') &&
+                                habit.showStreak) ||
+                            (habit.type.startsWith('multipler') &&
+                                habit.showStreakMultiplier))
+                          FutureBuilder<bool>(
+                            future:
+                                habit.type.startsWith('single')
+                                    ? _dbHelper.wasCompletedYesterday(habit.id!)
+                                    : _dbHelper.wasGoalReachedYesterday(
+                                      habit.id!,
+                                    ),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                      ConnectionState.waiting ||
+                                  snapshot.data != true) {
+                                return const SizedBox.shrink();
+                              }
+                              return Container(
+                                width: 8.sp,
+                                height: 8.sp,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.green,
+                                ),
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),

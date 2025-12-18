@@ -596,4 +596,36 @@ class HabitsDatabaseHelper {
       whereArgs: [completionId],
     );
   }
+
+  // Check if habit was completed yesterday (for streak indicator)
+  Future<bool> wasCompletedYesterday(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    // Convert to milliseconds since epoch for the query
+    final yesterdayStart = yesterday.millisecondsSinceEpoch;
+    final yesterdayEnd = today.millisecondsSinceEpoch;
+
+    // Check for yesterday's completion
+    final yesterdayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, yesterdayStart, yesterdayEnd],
+      limit: 1,
+    );
+
+    return yesterdayResults.isNotEmpty;
+  }
+
+  // Check if habit goal was reached yesterday (for multiplier streak indicator)
+  Future<bool> wasGoalReachedYesterday(int habitId) async {
+    final habit = await queryHabitById(habitId);
+    if (habit == null || habit.goal == null) return false;
+
+    final yesterdayProgress = await getYesterdaysProgress(habitId);
+    return yesterdayProgress >= habit.goal!;
+  }
 }
