@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 class HabitsDatabaseHelper {
   // Database name and table
   static const _databaseName = 'betullarise.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
   static const tableHabits = 'habits';
 
   // Column definitions
@@ -20,6 +20,7 @@ class HabitsDatabaseHelper {
   static const columnType = 'type';
   static const columnCreatedTime = 'created_time';
   static const columnUpdatedTime = 'updated_time';
+  static const columnShowStreak = 'show_streak';
 
   // Habit completions table
   static const tableHabitCompletions = 'habit_completions';
@@ -74,6 +75,7 @@ class HabitsDatabaseHelper {
               version: _databaseVersion,
               onOpen: _onOpen,
               onCreate: _onCreate,
+              onUpgrade: _onUpgrade,
             ),
           );
         } catch (e, stack) {
@@ -91,6 +93,7 @@ class HabitsDatabaseHelper {
           version: _databaseVersion,
           onOpen: _onOpen,
           onCreate: _onCreate,
+          onUpgrade: _onUpgrade,
         );
       }
     } catch (e, stack) {
@@ -112,6 +115,22 @@ class HabitsDatabaseHelper {
     }
   }
 
+  // Database upgrade method
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    developer.log(
+      "Upgrading database from version $oldVersion to $newVersion",
+      name: "HABITS",
+    );
+
+    if (oldVersion < 2) {
+      // Add show_streak column to habits table
+      await db.execute(
+        'ALTER TABLE $tableHabits ADD COLUMN $columnShowStreak INTEGER NOT NULL DEFAULT 0',
+      );
+      developer.log("Added show_streak column to habits table", name: "HABITS");
+    }
+  }
+
   // Create table in the database
   Future _onCreate(Database db, int version) async {
     developer.log("Creating database tables", name: "HABITS");
@@ -124,7 +143,8 @@ class HabitsDatabaseHelper {
         $columnPenalty REAL NOT NULL,
         $columnType TEXT NOT NULL,
         $columnCreatedTime INTEGER NOT NULL,
-        $columnUpdatedTime INTEGER NOT NULL
+        $columnUpdatedTime INTEGER NOT NULL,
+        $columnShowStreak INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -204,12 +224,47 @@ class HabitsDatabaseHelper {
   // Update an existing habit
   Future<int> updateHabit(Habit habit) async {
     Database db = await instance.database;
+
     return await db.update(
       tableHabits,
       habit.toMap(),
       where: '$columnId = ?',
       whereArgs: [habit.id],
     );
+  }
+
+  // Check if habit has streak (completed yesterday and today)
+  Future<bool> hasStreak(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final yesterdayStart = yesterday.millisecondsSinceEpoch;
+    final yesterdayEnd = todayStart;
+
+    // Check for today's completion
+    final todayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+      limit: 1,
+    );
+
+    // Check for yesterday's completion
+    final yesterdayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, yesterdayStart, yesterdayEnd],
+      limit: 1,
+    );
+
+    return todayResults.isNotEmpty && yesterdayResults.isNotEmpty;
   }
 
   // Delete a habit by id

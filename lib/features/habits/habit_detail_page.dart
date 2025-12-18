@@ -35,6 +35,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   String _selectedType = 'single'; // Default type
   bool _includeScore = true;
   bool _includePenalty = false;
+  bool _showStreak = false;
 
   late final HabitsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
@@ -79,6 +80,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       _initialType = _selectedType;
       _initialIncludeScore = _includeScore;
       _initialIncludePenalty = _includePenalty;
+      _showStreak = widget.habit!.showStreak;
     } else {
       // Set default values for new habit
       _scoreController.text = '1.0';
@@ -91,6 +93,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       _initialType = _selectedType;
       _initialIncludeScore = _includeScore;
       _initialIncludePenalty = _includePenalty;
+      _showStreak = false;
     }
   }
 
@@ -110,13 +113,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         _scoreController.text != (_initialScore ?? '') ||
         _selectedType != (_initialType ?? 'single') ||
         _includeScore != (_initialIncludeScore ?? true) ||
-        _includePenalty != (_initialIncludePenalty ?? false);
+        _includePenalty != (_initialIncludePenalty ?? false) ||
+        _showStreak != (widget.habit?.showStreak ?? false);
   }
 
   Future<bool> _onWillPop() async {
     if (_isShowingDiscardDialog) return false;
     if (!_isDirty) return true;
-    
+
     _isShowingDiscardDialog = true;
     final shouldDiscard = await _dialogService.showConfirmDialog(
       context,
@@ -127,7 +131,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       isDangerous: true,
     );
     _isShowingDiscardDialog = false;
-    
+
     return shouldDiscard == true;
   }
 
@@ -193,6 +197,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         score: score,
         penalty: penalty,
         type: _determineHabitType(),
+        showStreak: _showStreak,
         createdTime: widget.habit?.createdTime ?? now,
         updatedTime: now,
       );
@@ -216,10 +221,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       });
 
       if (mounted) {
-        SnackbarService.showErrorSnackbar(
-          context,
-          'Error: ${e.toString()}',
-        );
+        SnackbarService.showErrorSnackbar(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -360,7 +362,8 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             SizedBox(width: 8.w),
                             InfoTooltip(
                               title: 'Habit Types',
-                              message: 'Single: Simple habits that you complete and earn the base score. Perfect for habits like "drink 8 glasses of water" or "take vitamins".\n\nMultipler: Habits with a multiplier based on quantity, duration, or intensity. For example, "Running" - if you set multiplier to 1 you get points for 10 minutes of running, if you set 6 you get points for 60 minutes of running. Great for scalable activities like exercise, reading, or studying.',
+                              message:
+                                  'Single: Simple habits that you complete and earn the base score. Perfect for habits like "drink 8 glasses of water" or "take vitamins".\n\nMultipler: Habits with a multiplier based on quantity, duration, or intensity. For example, "Running" - if you set multiplier to 1 you get points for 10 minutes of running, if you set 6 you get points for 60 minutes of running. Great for scalable activities like exercise, reading, or studying.',
                             ),
                           ],
                         ),
@@ -414,7 +417,8 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             SizedBox(width: 8.w),
                             InfoTooltip(
                               title: 'About Points',
-                              message: 'Score and Penalty values can be decimal numbers (e.g., 1.5, 2.25). Always enter positive values only - the app handles the math automatically.\n\nScore: Points earned when completing the habit.\nPenalty: Points lost when missing the habit (for habits with penalties enabled).',
+                              message:
+                                  'Score and Penalty values can be decimal numbers (e.g., 1.5, 2.25). Always enter positive values only - the app handles the math automatically.\n\nScore: Points earned when completing the habit.\nPenalty: Points lost when missing the habit (for habits with penalties enabled).',
                             ),
                           ],
                         ),
@@ -539,10 +543,11 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                           controller: _penaltyController,
                                           decoration: InputDecoration(
                                             isDense: true,
-                                            contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 12.w,
-                                              vertical: 12.h,
-                                            ),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 12.w,
+                                                  vertical: 12.h,
+                                                ),
                                             border: const OutlineInputBorder(),
                                           ),
                                           keyboardType:
@@ -552,11 +557,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                           enabled: _includePenalty,
                                           validator: (value) {
                                             if (!_includePenalty) return null;
-                                            if (value == null || value.isEmpty) {
+                                            if (value == null ||
+                                                value.isEmpty) {
                                               return 'Required';
                                             }
                                             try {
-                                              final penalty = double.parse(value);
+                                              final penalty = double.parse(
+                                                value,
+                                              );
                                               if (penalty < 0) {
                                                 return 'Must be positive (≥ 0)';
                                               }
@@ -569,14 +577,19 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                       ),
                                       SizedBox(width: 4.w),
                                       IconButton(
-                                        onPressed: _includePenalty && _includeScore
-                                            ? () {
-                                                setState(() {
-                                                  _penaltyController.text = _scoreController.text;
-                                                });
-                                              }
-                                            : null,
-                                        icon: Icon(Icons.content_copy, size: 18.sp),
+                                        onPressed:
+                                            _includePenalty && _includeScore
+                                                ? () {
+                                                  setState(() {
+                                                    _penaltyController.text =
+                                                        _scoreController.text;
+                                                  });
+                                                }
+                                                : null,
+                                        icon: Icon(
+                                          Icons.content_copy,
+                                          size: 18.sp,
+                                        ),
                                         tooltip: 'Set penalty equal to score',
                                         padding: EdgeInsets.all(4.w),
                                         constraints: BoxConstraints(
@@ -591,6 +604,62 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                           ),
                         ),
+                        SizedBox(height: 12.h),
+                        // Streak toggle for single habits
+                        if (_selectedType == 'single') ...[
+                          Row(
+                            children: [
+                              Text(
+                                'Streak Visualization',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              InfoTooltip(
+                                title: 'Streak Visualization',
+                                message:
+                                    'When enabled, shows a fire icon when you complete the habit both yesterday and today. This helps you maintain consistent daily habits.',
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Card(
+                            margin: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.w),
+                              child: Row(
+                                children: [
+                                  Switch(
+                                    value: _showStreak,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _showStreak = value;
+                                      });
+                                    },
+                                    activeColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    inactiveThumbColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.5),
+                                    inactiveTrackColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withAlpha(0x1A),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      'Show streak indicator',
+                                      style: TextStyle(fontSize: 16.sp),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                         SizedBox(height: 24.h),
                         SizedBox(
                           width: double.infinity,

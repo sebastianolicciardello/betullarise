@@ -250,12 +250,37 @@ class _HabitsPageState extends State<HabitsPage> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      habit.title,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            habit.title,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        // Show fire icon for streak if enabled and habit is single type
+                        if (habit.type.startsWith('single') && habit.showStreak)
+                          FutureBuilder<bool>(
+                            future: _dbHelper.hasStreak(habit.id!),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const SizedBox.shrink();
+                              }
+                              if (snapshot.hasData && snapshot.data == true) {
+                                return Icon(
+                                  Icons.local_fire_department,
+                                  color: Colors.orange,
+                                  size: 16.sp,
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                      ],
                     ),
                   ),
                   Icon(typeIcon, size: 16.sp),
