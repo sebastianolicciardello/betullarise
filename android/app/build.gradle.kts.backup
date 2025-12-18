@@ -1,3 +1,4 @@
+
 import java.util.Properties
 
 plugins {
@@ -33,19 +34,26 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("betullarise-release.keystore")
-            storePassword = "betullarise123"
-            keyAlias = "betullarise-key"
-            keyPassword = "betullarise123"
+            val keyProperties = Properties()
+            val keyPropertiesFile = rootProject.file("key.properties")
+            if (keyPropertiesFile.exists()) {
+                keyPropertiesFile.inputStream().use { stream ->
+                    keyProperties.load(stream)
+                }
+            }
+            storeFile = file(keyProperties.getProperty("storeFile") ?: "release.keystore"
+            storePassword = keyProperties.getProperty("storePassword")
+            keyAlias = keyProperties.getProperty("keyAlias")
+            keyPassword = keyProperties.getProperty("keyPassword")
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
