@@ -50,7 +50,7 @@ dependencies:
   path_provider_platform_interface: ^2.1.2
   device_info_plus: ^11.4.0
   platform: ^3.1.6
-  
+  app_usage: ^4.0.1
 
 dev_dependencies:
   flutter_test:
