@@ -413,6 +413,38 @@ class _HabitsPageState extends State<HabitsPage> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
+                                    // Show goal progress if habit has a goal set
+                                    if (habit.goal != null && habit.goal! > 0)
+                                      FutureBuilder<double>(
+                                        future: _dbHelper.getTodaysProgress(
+                                          habit.id!,
+                                        ),
+                                        builder: (context, snapshot) {
+                                          final double todaysProgress =
+                                              snapshot.data ?? 0.0;
+                                          final int goal = habit.goal!;
+                                          final bool goalReached =
+                                              todaysProgress >= goal;
+
+                                          return Padding(
+                                            padding: EdgeInsets.only(top: 2.h),
+                                            child: Text(
+                                              'Progress: ${todaysProgress.toStringAsFixed(1)}/$goal',
+                                              style: TextStyle(
+                                                fontSize: 10.sp,
+                                                color:
+                                                    goalReached
+                                                        ? Colors.green[700]
+                                                        : Colors.grey[600],
+                                                fontWeight:
+                                                    goalReached
+                                                        ? FontWeight.w600
+                                                        : FontWeight.normal,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                   ],
                                 ],
                               );

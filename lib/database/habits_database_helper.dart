@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 class HabitsDatabaseHelper {
   // Database name and table
   static const _databaseName = 'betullarise.db';
-  static const _databaseVersion = 2;
+  static const _databaseVersion = 3;
   static const tableHabits = 'habits';
 
   // Column definitions
@@ -21,6 +21,7 @@ class HabitsDatabaseHelper {
   static const columnCreatedTime = 'created_time';
   static const columnUpdatedTime = 'updated_time';
   static const columnShowStreak = 'show_streak';
+  static const columnGoal = 'goal';
 
   // Habit completions table
   static const tableHabitCompletions = 'habit_completions';
@@ -129,6 +130,12 @@ class HabitsDatabaseHelper {
       );
       developer.log("Added show_streak column to habits table", name: "HABITS");
     }
+
+    if (oldVersion < 3) {
+      // Add goal column to habits table
+      await db.execute('ALTER TABLE $tableHabits ADD COLUMN goal INTEGER');
+      developer.log("Added goal column to habits table", name: "HABITS");
+    }
   }
 
   // Create table in the database
@@ -144,7 +151,8 @@ class HabitsDatabaseHelper {
         $columnType TEXT NOT NULL,
         $columnCreatedTime INTEGER NOT NULL,
         $columnUpdatedTime INTEGER NOT NULL,
-        $columnShowStreak INTEGER NOT NULL DEFAULT 0
+        $columnShowStreak INTEGER NOT NULL DEFAULT 0,
+        goal INTEGER
       )
     ''');
 
@@ -433,6 +441,55 @@ class HabitsDatabaseHelper {
       whereArgs: [habitId],
       orderBy: '$columnCompletionTime DESC',
     );
+  }
+
+  // Count today's completions for a specific habit
+  Future<int> countTodaysCompletions(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+    final results = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+    );
+
+    return results.length;
+  }
+
+  // Calculate today's total progress for a specific habit (sum of multipliers)
+  Future<double> getTodaysProgress(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+    final results = await db.query(
+      tableHabitCompletions,
+      columns: ['SUM($columnPoints) as total_points'],
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+    );
+
+    final totalPoints = results.first['total_points'] as double? ?? 0.0;
+
+    // Get the habit to calculate the base score
+    final habit = await queryHabitById(habitId);
+    if (habit == null || habit.score <= 0) return 0.0;
+
+    // Calculate progress as total points divided by base score
+    // This gives us the total "units" completed today
+    return totalPoints / habit.score;
   }
 
   // Delete a habit completion (for undo functionality)

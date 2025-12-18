@@ -31,6 +31,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   final _descriptionController = TextEditingController();
   final _penaltyController = TextEditingController();
   final _scoreController = TextEditingController();
+  final _goalController = TextEditingController();
 
   String _selectedType = 'single'; // Default type
   bool _includeScore = true;
@@ -51,6 +52,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       _descriptionController.text = widget.habit!.description;
       _penaltyController.text = widget.habit!.penalty.toString();
       _scoreController.text = widget.habit!.score.toString();
+      _goalController.text = widget.habit!.goal?.toString() ?? '';
 
       // Determine habit type and properties
       final type = widget.habit!.type;
@@ -85,6 +87,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       // Set default values for new habit
       _scoreController.text = '1.0';
       _penaltyController.text = '0.0';
+      _goalController.text = '';
 
       _initialTitle = '';
       _initialDescription = '';
@@ -103,6 +106,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     _descriptionController.dispose();
     _penaltyController.dispose();
     _scoreController.dispose();
+    _goalController.dispose();
     super.dispose();
   }
 
@@ -111,6 +115,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         _descriptionController.text != (_initialDescription ?? '') ||
         _penaltyController.text != (_initialPenalty ?? '') ||
         _scoreController.text != (_initialScore ?? '') ||
+        _goalController.text != (widget.habit?.goal?.toString() ?? '') ||
         _selectedType != (_initialType ?? 'single') ||
         _includeScore != (_initialIncludeScore ?? true) ||
         _includePenalty != (_initialIncludePenalty ?? false) ||
@@ -190,6 +195,11 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       final double penalty =
           _includePenalty ? double.parse(_penaltyController.text) : 0;
 
+      int? goal;
+      if (_selectedType == 'multipler' && _goalController.text.isNotEmpty) {
+        goal = int.tryParse(_goalController.text);
+      }
+
       final habit = Habit(
         id: widget.habit?.id,
         title: _titleController.text,
@@ -198,6 +208,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         penalty: penalty,
         type: _determineHabitType(),
         showStreak: _showStreak,
+        goal: goal,
         createdTime: widget.habit?.createdTime ?? now,
         updatedTime: now,
       );
@@ -605,6 +616,65 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           ),
                         ),
                         SizedBox(height: 12.h),
+                        // Goal field for multipler habits
+                        if (_selectedType == 'multipler') ...[
+                          Row(
+                            children: [
+                              Text(
+                                'Goal',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              InfoTooltip(
+                                title: 'Goal',
+                                message:
+                                    'Set a daily goal for this habit. The card will turn green when you reach this goal today.',
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Card(
+                            margin: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.w),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _goalController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Daily Goal',
+                                        hintText: 'e.g., 5',
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12.w,
+                                          vertical: 12.h,
+                                        ),
+                                        border: const OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      validator: (value) {
+                                        if (value != null && value.isNotEmpty) {
+                                          final goal = int.tryParse(value);
+                                          if (goal == null || goal <= 0) {
+                                            return 'Must be a positive number';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                         // Streak toggle for single habits
                         if (_selectedType == 'single') ...[
                           Row(

@@ -71,7 +71,7 @@ class ScreenTimeCalculationService {
 
   /// Applica la penalità al sistema punti
   Future<bool> applyPenaltyToPoints(
-    BuildContext context,
+    PointsProvider pointsProvider,
     DailyScreenUsage usage,
   ) async {
     try {
@@ -82,12 +82,6 @@ class ScreenTimeCalculationService {
 
       debugPrint(
         '$_tag: Applying penalty of ${usage.calculatedPenalty} points',
-      );
-
-      // Ottieni il PointsProvider dal context
-      final pointsProvider = Provider.of<PointsProvider>(
-        context,
-        listen: false,
       );
 
       // Crea un Point per la penalità

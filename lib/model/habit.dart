@@ -6,6 +6,7 @@ class Habit {
   double penalty;
   String type; // single, multipler, badMultipler, counter
   bool showStreak; // Mostra visualizzazione streak per habit singolo
+  int? goal; // Numero da raggiungere per habit multipler
   int createdTime;
   int updatedTime;
 
@@ -17,6 +18,7 @@ class Habit {
     required this.penalty,
     required this.type,
     this.showStreak = false,
+    this.goal,
     required this.createdTime,
     required this.updatedTime,
   }) {
@@ -41,6 +43,7 @@ class Habit {
     double? penalty,
     String? type,
     bool? showStreak,
+    int? goal,
     int? createdTime,
     int? updatedTime,
   }) {
@@ -52,6 +55,7 @@ class Habit {
       penalty: penalty ?? this.penalty,
       type: type ?? this.type,
       showStreak: showStreak ?? this.showStreak,
+      goal: goal ?? this.goal,
       createdTime: createdTime ?? this.createdTime,
       updatedTime: updatedTime ?? this.updatedTime,
     );
@@ -66,6 +70,7 @@ class Habit {
       'penalty': penalty,
       'type': type,
       'show_streak': showStreak ? 1 : 0,
+      'goal': goal,
       'created_time': createdTime,
       'updated_time': updatedTime,
     };
@@ -86,6 +91,7 @@ class Habit {
       penalty: map['penalty'],
       type: map['type'],
       showStreak: (map['show_streak'] ?? 0) == 1,
+      goal: map['goal'],
       createdTime: map['created_time'],
       updatedTime: map['updated_time'],
     );
@@ -93,6 +99,6 @@ class Habit {
 
   @override
   String toString() {
-    return 'Habit(id: $id, title: $title, description: $description, score: $score, penalty: $penalty, type: $type, showStreak: $showStreak, createdTime: $createdTime, updatedTime: $updatedTime)';
+    return 'Habit(id: $id, title: $title, description: $description, score: $score, penalty: $penalty, type: $type, showStreak: $showStreak, goal: $goal, createdTime: $createdTime, updatedTime: $updatedTime)';
   }
 }
