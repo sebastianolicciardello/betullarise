@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Servizio per gestire le statistiche di utilizzo delle app su Android
 class AndroidUsageStatsService {
@@ -12,17 +13,40 @@ class AndroidUsageStatsService {
     }
 
     try {
-      // Per ora implementazione semplificata, si integrerà con le API reali
       debugPrint('$_tag: Checking usage stats permission...');
-      return true; // Placeholder
+
+      // Usa un timeout più breve per evitare blocchi dell'UI
+      final result = await Future.any([
+        // Prova ad accedere ai dati di utilizzo
+        _checkPermissionByAccess(),
+        // Timeout dopo 1 secondo
+        Future.delayed(const Duration(seconds: 1), () => false),
+      ]);
+
+      debugPrint('$_tag: Permission check result: $result');
+      return result;
     } catch (e) {
-      debugPrint('$_tag: Error checking usage stats permission: $e');
+      debugPrint('$_tag: Usage stats permission not granted: $e');
+      return false;
+    }
+  }
+
+  /// Controlla il permesso provando ad accedere ai dati con timeout
+  Future<bool> _checkPermissionByAccess() async {
+    try {
+      final testDate = DateTime.now();
+      await getAppsUsageForDay(testDate, []);
+      debugPrint('$_tag: Usage stats permission granted');
+      return true;
+    } catch (e) {
+      debugPrint('$_tag: Permission check failed: $e');
       return false;
     }
   }
 
   /// Richiede il permesso PACKAGE_USAGE_STATS
-  /// Ritorna true se il permesso è concesso, false altrimenti
+  /// Su Android apre le impostazioni dove l'utente può concedere il permesso manualmente
+  /// Ritorna false poiché il permesso deve essere concesso manualmente
   Future<bool> requestUsageStatsPermission() async {
     if (!Platform.isAndroid) {
       debugPrint('$_tag: Usage stats not supported on this platform');
@@ -30,11 +54,39 @@ class AndroidUsageStatsService {
     }
 
     try {
-      debugPrint('$_tag: Requesting usage stats permission...');
-      // Placeholder - implementazione reale aprirà le impostazioni
-      return true;
+      debugPrint(
+        '$_tag: Opening Android settings for usage stats permission...',
+      );
+
+      // Prova diversi metodi per aprire le impostazioni
+      const usageUrl = 'android.settings.USAGE_ACCESS_SETTINGS';
+      const appDetailsUrl = 'android.settings.APPLICATION_DETAILS_SETTINGS';
+
+      // Prima prova: impostazioni di accesso ai dati di utilizzo
+      if (await canLaunchUrl(Uri.parse(usageUrl))) {
+        await launchUrl(Uri.parse(usageUrl));
+        debugPrint('$_tag: Opened usage access settings');
+      }
+      // Seconda prova: dettagli app specifici
+      else if (await canLaunchUrl(
+        Uri(scheme: 'package', path: 'betullarise'),
+      )) {
+        await launchUrl(Uri(scheme: 'package', path: 'betullarise'));
+        debugPrint('$_tag: Opened app details');
+      }
+      // Terza prova: impostazioni generali
+      else if (await canLaunchUrl(Uri.parse(appDetailsUrl))) {
+        await launchUrl(Uri.parse(appDetailsUrl));
+        debugPrint('$_tag: Opened general app details');
+      } else {
+        debugPrint('$_tag: Could not launch any settings URL');
+        throw 'No valid URL found';
+      }
+
+      debugPrint('$_tag: Opened settings for user to grant permission');
+      return false; // Il permesso deve essere concesso manualmente
     } catch (e) {
-      debugPrint('$_tag: Error requesting usage stats permission: $e');
+      debugPrint('$_tag: Error opening settings: $e');
       return false;
     }
   }

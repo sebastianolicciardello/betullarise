@@ -21,7 +21,7 @@ class ScreenTimeProvider with ChangeNotifier {
   List<ScreenTimeRule> _rules = [];
   List<DailyScreenUsage> _unconfirmedDays = [];
   bool _isLoading = false;
-  bool _hasPermission = false;
+  bool _hasPermission = true; // Default a true, controlla dopo
   String? _errorMessage;
 
   // Getters
@@ -235,13 +235,10 @@ class ScreenTimeProvider with ChangeNotifier {
       setLoading(true);
       clearError();
 
-      // 1. Controlla i permessi
-      await checkUsageStatsPermission();
-
-      // 2. Carica le regole attive
+      // 1. Carica le regole attive
       await loadActiveRules();
 
-      // 3. Controlla i giorni non confermati
+      // 2. Controlla i giorni non confermati
       await checkForUnconfirmedDays();
 
       debugPrint('ScreenTimeProvider: Initial check completed');
