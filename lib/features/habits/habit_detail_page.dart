@@ -37,6 +37,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   bool _includeScore = true;
   bool _includePenalty = false;
   bool _showStreak = false;
+  bool _showStreakMultiplier = false;
 
   late final HabitsDatabaseHelper _dbHelper;
   final DialogService _dialogService = DialogService();
@@ -47,6 +48,9 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   void initState() {
     super.initState();
     _dbHelper = widget.dbHelper ?? HabitsDatabaseHelper.instance;
+    _goalController.addListener(() {
+      setState(() {});
+    });
     if (widget.habit != null) {
       _titleController.text = widget.habit!.title;
       _descriptionController.text = widget.habit!.description;
@@ -83,6 +87,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       _initialIncludeScore = _includeScore;
       _initialIncludePenalty = _includePenalty;
       _showStreak = widget.habit!.showStreak;
+      _showStreakMultiplier = widget.habit!.showStreakMultiplier;
     } else {
       // Set default values for new habit
       _scoreController.text = '1.0';
@@ -97,6 +102,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       _initialIncludeScore = _includeScore;
       _initialIncludePenalty = _includePenalty;
       _showStreak = false;
+      _showStreakMultiplier = false;
     }
   }
 
@@ -119,7 +125,8 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         _selectedType != (_initialType ?? 'single') ||
         _includeScore != (_initialIncludeScore ?? true) ||
         _includePenalty != (_initialIncludePenalty ?? false) ||
-        _showStreak != (widget.habit?.showStreak ?? false);
+        _showStreak != (widget.habit?.showStreak ?? false) ||
+        _showStreakMultiplier != (widget.habit?.showStreakMultiplier ?? false);
   }
 
   Future<bool> _onWillPop() async {
@@ -208,6 +215,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         penalty: penalty,
         type: _determineHabitType(),
         showStreak: _showStreak,
+        showStreakMultiplier: _showStreakMultiplier,
         goal: goal,
         createdTime: widget.habit?.createdTime ?? now,
         updatedTime: now,
@@ -640,34 +648,106 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             margin: EdgeInsets.symmetric(vertical: 8.h),
                             child: Padding(
                               padding: EdgeInsets.all(8.w),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _goalController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Daily Goal',
+                                            hintText: 'e.g., 5',
+                                            isDense: true,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 12.w,
+                                                  vertical: 12.h,
+                                                ),
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                          ],
+                                          validator: (value) {
+                                            if (value != null &&
+                                                value.isNotEmpty) {
+                                              final goal = int.tryParse(value);
+                                              if (goal == null || goal <= 0) {
+                                                return 'Must be a positive number';
+                                              }
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        // Streak toggle for multipler habits
+                        if (_selectedType == 'multipler') ...[
+                          Row(
+                            children: [
+                              Text(
+                                'Streak Visualization',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              InfoTooltip(
+                                title: 'Streak Visualization',
+                                message:
+                                    'When enabled, shows a fire icon when you reach your daily goal both yesterday and today. Awards a 2x multiplier bonus on points when reaching the goal consecutively.',
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Card(
+                            margin: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.w),
                               child: Row(
                                 children: [
+                                  Switch(
+                                    value: _showStreakMultiplier,
+                                    onChanged:
+                                        (_goalController.text.isNotEmpty &&
+                                                int.tryParse(
+                                                      _goalController.text,
+                                                    ) !=
+                                                    null &&
+                                                int.tryParse(
+                                                      _goalController.text,
+                                                    )! >
+                                                    0)
+                                            ? (value) {
+                                              setState(() {
+                                                _showStreakMultiplier = value;
+                                              });
+                                            }
+                                            : null,
+                                    activeColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    inactiveThumbColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.5),
+                                    inactiveTrackColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.1),
+                                  ),
+                                  SizedBox(width: 8.w),
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _goalController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Daily Goal',
-                                        hintText: 'e.g., 5',
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 12.w,
-                                          vertical: 12.h,
-                                        ),
-                                        border: const OutlineInputBorder(),
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      validator: (value) {
-                                        if (value != null && value.isNotEmpty) {
-                                          final goal = int.tryParse(value);
-                                          if (goal == null || goal <= 0) {
-                                            return 'Must be a positive number';
-                                          }
-                                        }
-                                        return null;
-                                      },
+                                    child: Text(
+                                      'Show streak indicator',
+                                      style: TextStyle(fontSize: 16.sp),
                                     ),
                                   ),
                                 ],

@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 class HabitsDatabaseHelper {
   // Database name and table
   static const _databaseName = 'betullarise.db';
-  static const _databaseVersion = 3;
+  static const _databaseVersion = 4;
   static const tableHabits = 'habits';
 
   // Column definitions
@@ -21,6 +21,7 @@ class HabitsDatabaseHelper {
   static const columnCreatedTime = 'created_time';
   static const columnUpdatedTime = 'updated_time';
   static const columnShowStreak = 'show_streak';
+  static const columnShowStreakMultiplier = 'show_streak_multiplier';
   static const columnGoal = 'goal';
 
   // Habit completions table
@@ -136,6 +137,17 @@ class HabitsDatabaseHelper {
       await db.execute('ALTER TABLE $tableHabits ADD COLUMN goal INTEGER');
       developer.log("Added goal column to habits table", name: "HABITS");
     }
+
+    if (oldVersion < 4) {
+      // Add show_streak_multiplier column to habits table
+      await db.execute(
+        'ALTER TABLE $tableHabits ADD COLUMN $columnShowStreakMultiplier INTEGER NOT NULL DEFAULT 0',
+      );
+      developer.log(
+        "Added show_streak_multiplier column to habits table",
+        name: "HABITS",
+      );
+    }
   }
 
   // Create table in the database
@@ -152,6 +164,7 @@ class HabitsDatabaseHelper {
         $columnCreatedTime INTEGER NOT NULL,
         $columnUpdatedTime INTEGER NOT NULL,
         $columnShowStreak INTEGER NOT NULL DEFAULT 0,
+        $columnShowStreakMultiplier INTEGER NOT NULL DEFAULT 0,
         goal INTEGER
       )
     ''');
@@ -490,6 +503,88 @@ class HabitsDatabaseHelper {
     // Calculate progress as total points divided by base score
     // This gives us the total "units" completed today
     return totalPoints / habit.score;
+  }
+
+  // Get yesterday's progress for a habit
+  Future<double> getYesterdaysProgress(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    // Convert to milliseconds since epoch for the query
+    final yesterdayStart = yesterday.millisecondsSinceEpoch;
+    final yesterdayEnd = today.millisecondsSinceEpoch;
+
+    final results = await db.query(
+      tableHabitCompletions,
+      columns: ['SUM($columnPoints) as total_points'],
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, yesterdayStart, yesterdayEnd],
+    );
+
+    final totalPoints = results.first['total_points'] as double? ?? 0.0;
+
+    // Get the habit to calculate the base score
+    final habit = await queryHabitById(habitId);
+    if (habit == null || habit.score <= 0) return 0.0;
+
+    // Calculate progress as total points divided by base score
+    return totalPoints / habit.score;
+  }
+
+  // Check if habit has streak multiplier (reached goal yesterday and today)
+  Future<bool> hasStreakMultiplier(int habitId) async {
+    final habit = await queryHabitById(habitId);
+    if (habit == null || habit.goal == null) return false;
+
+    final yesterdayProgress = await getYesterdaysProgress(habitId);
+    final todayProgress = await getTodaysProgress(habitId);
+
+    return yesterdayProgress >= habit.goal! && todayProgress >= habit.goal!;
+  }
+
+  // Check if strike multiplier bonus should be awarded today
+  Future<bool> shouldAwardStrikeMultiplierBonus(int habitId) async {
+    final habit = await queryHabitById(habitId);
+    if (habit == null || habit.goal == null) return false;
+
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+    // Check if yesterday's progress reached the goal
+    final yesterdayProgress = await getYesterdaysProgress(habitId);
+    if (yesterdayProgress < habit.goal!) return false;
+
+    // Check if there are any completions today BEFORE this one
+    // that would have already awarded the bonus
+    final todayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+    );
+
+    // If there are no completions today yet, this will be the first one
+    // and we reached the goal yesterday, so this creates a streak!
+    if (todayResults.isEmpty) return true;
+
+    // Check the total today's progress
+    final todayProgress = await getTodaysProgress(habitId);
+    // If today's progress is still below goal, no bonus yet
+    if (todayProgress < habit.goal!) return false;
+
+    // If we already reached the goal today before this completion, check if bonus was awarded
+    // For simplicity, since the bonus is awarded when reaching the goal, we can check if the total points today indicate bonus was applied
+    // But to keep it simple, we'll award bonus only on the completion that makes it reach the goal
+    // For now, return false if already reached goal today
+    return false;
   }
 
   // Delete a habit completion (for undo functionality)

@@ -261,10 +261,16 @@ class _HabitsPageState extends State<HabitsPage> {
                             ),
                           ),
                         ),
-                        // Show fire icon for streak if enabled and habit is single type
-                        if (habit.type.startsWith('single') && habit.showStreak)
+                        // Show fire icon for streak if enabled
+                        if ((habit.type.startsWith('single') &&
+                                habit.showStreak) ||
+                            (habit.type.startsWith('multipler') &&
+                                habit.showStreakMultiplier))
                           FutureBuilder<bool>(
-                            future: _dbHelper.hasStreak(habit.id!),
+                            future:
+                                habit.type.startsWith('single')
+                                    ? _dbHelper.hasStreak(habit.id!)
+                                    : _dbHelper.hasStreakMultiplier(habit.id!),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -662,11 +668,20 @@ class _HabitsPageState extends State<HabitsPage> {
     double finalPoints = points;
     bool strikeBonusAwarded = false;
 
-    // Check if this is a single type habit and should award strike bonus
-    if (habit.type.startsWith('single')) {
+    // Check if this habit should award strike bonus
+    if (habit.type.startsWith('single') && habit.showStreak) {
       final shouldAwardStrike = await _dbHelper.shouldAwardStrikeBonus(habitId);
       if (shouldAwardStrike) {
         finalPoints = points * 2; // Double the points!
+        strikeBonusAwarded = true;
+      }
+    } else if (habit.type.startsWith('multipler') &&
+        habit.showStreakMultiplier) {
+      final shouldAwardStrike = await _dbHelper
+          .shouldAwardStrikeMultiplierBonus(habitId);
+      if (shouldAwardStrike) {
+        finalPoints =
+            points + (habit.score * 2); // Add bonus of score * 2 for streak!
         strikeBonusAwarded = true;
       }
     }
@@ -693,12 +708,14 @@ class _HabitsPageState extends State<HabitsPage> {
     // Build the appropriate message
     String message;
     if (strikeBonusAwarded) {
+      final bonusText =
+          habit.type.startsWith('single') ? 'doubled!' : 'multiplier x2 bonus!';
       if (finalPoints >= 0) {
         message =
-            '🔥 STRIKE! +${finalPoints.toStringAsFixed(1)} points (doubled!)';
+            '🔥 STRIKE! +${finalPoints.toStringAsFixed(1)} points ($bonusText)';
       } else {
         message =
-            '🔥 STRIKE! ${finalPoints.toStringAsFixed(1)} points (doubled!)';
+            '🔥 STRIKE! ${finalPoints.toStringAsFixed(1)} points ($bonusText)';
       }
     } else {
       message =
