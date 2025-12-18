@@ -623,8 +623,24 @@ class _HabitsPageState extends State<HabitsPage> {
   void _addPoints(int habitId, double points) async {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
 
-    // Record habit completion
-    await _dbHelper.insertHabitCompletion(habitId, points);
+    // Get the habit to check if it's a single type and if strike bonus applies
+    final habit = await _dbHelper.queryHabitById(habitId);
+    if (habit == null) return;
+
+    double finalPoints = points;
+    bool strikeBonusAwarded = false;
+
+    // Check if this is a single type habit and should award strike bonus
+    if (habit.type.startsWith('single')) {
+      final shouldAwardStrike = await _dbHelper.shouldAwardStrikeBonus(habitId);
+      if (shouldAwardStrike) {
+        finalPoints = points * 2; // Double the points!
+        strikeBonusAwarded = true;
+      }
+    }
+
+    // Record habit completion with the final points (possibly doubled)
+    await _dbHelper.insertHabitCompletion(habitId, finalPoints);
 
     // Update the completion key to force UI refresh
     setState(() {
@@ -635,18 +651,33 @@ class _HabitsPageState extends State<HabitsPage> {
     final point = Point(
       referenceId: habitId,
       type: 'habit',
-      points: points,
+      points: finalPoints,
       insertTime: DateTime.now().millisecondsSinceEpoch,
     );
 
     // Save the points
     pointsProvider.savePoints(point);
 
+    // Build the appropriate message
+    String message;
+    if (strikeBonusAwarded) {
+      if (finalPoints >= 0) {
+        message =
+            '🔥 STRIKE! +${finalPoints.toStringAsFixed(1)} points (doubled!)';
+      } else {
+        message =
+            '🔥 STRIKE! ${finalPoints.toStringAsFixed(1)} points (doubled!)';
+      }
+    } else {
+      message =
+          finalPoints >= 0
+              ? 'Good job! +${finalPoints.toStringAsFixed(1)} points'
+              : 'Better luck next time! ${finalPoints.toStringAsFixed(1)} points';
+    }
+
     SnackbarService.showSnackbar(
       context,
-      points >= 0
-          ? 'Good job! +${points.toStringAsFixed(1)} points'
-          : 'Better luck next time! ${points.toStringAsFixed(1)} points',
+      message,
       duration: const Duration(seconds: 4),
       action: SnackBarAction(
         label: 'UNDO',
@@ -656,11 +687,22 @@ class _HabitsPageState extends State<HabitsPage> {
           pointsProvider.removePointsByEntity(point);
 
           // Show confirmation
+          String undoMessage;
+          if (strikeBonusAwarded) {
+            undoMessage =
+                finalPoints >= 0
+                    ? 'Strike bonus undone. -${finalPoints.toStringAsFixed(1)} points'
+                    : 'Strike penalty undone. +${(-finalPoints).toStringAsFixed(1)} points';
+          } else {
+            undoMessage =
+                finalPoints >= 0
+                    ? 'Habit completion undone. -${finalPoints.toStringAsFixed(1)} points'
+                    : 'Habit failure undone. +${(-finalPoints).toStringAsFixed(1)} points';
+          }
+
           SnackbarService.showSnackbar(
             context,
-            points >= 0
-                ? 'Habit completion undone. -${points.toStringAsFixed(1)} points'
-                : 'Habit failure undone. +${(-points).toStringAsFixed(1)} points',
+            undoMessage,
             duration: const Duration(seconds: 2),
           );
         },

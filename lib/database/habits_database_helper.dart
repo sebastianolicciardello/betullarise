@@ -267,6 +267,96 @@ class HabitsDatabaseHelper {
     return todayResults.isNotEmpty && yesterdayResults.isNotEmpty;
   }
 
+  // Check if strike bonus has already been awarded today for this habit
+  Future<bool> hasStrikeBonusToday(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+    // Check for any completion today that earned double points (indicating strike bonus)
+    final todayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+      orderBy: '$columnCompletionTime DESC',
+    );
+
+    if (todayResults.isEmpty) return false;
+
+    // Get the habit to check its base score
+    final habit = await queryHabitById(habitId);
+    if (habit == null) return false;
+
+    // Check if any completion today earned double the base points
+    for (final completion in todayResults) {
+      final awardedPoints = completion['points'] as double;
+
+      // For positive points, check if it's double the base score
+      if (awardedPoints > 0 && habit.score > 0) {
+        // Allow for small floating point differences
+        if ((awardedPoints - habit.score * 2).abs() < 0.01) {
+          return true; // Strike bonus already awarded today
+        }
+      }
+
+      // For negative points (penalties), check if it's double the base penalty
+      if (awardedPoints < 0 && habit.penalty > 0) {
+        // Allow for small floating point differences
+        if ((awardedPoints + habit.penalty * 2).abs() < 0.01) {
+          return true; // Strike bonus already awarded today
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Check if this completion should trigger strike bonus (was completed yesterday and this is first completion today)
+  Future<bool> shouldAwardStrikeBonus(int habitId) async {
+    Database db = await instance.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    // Convert to milliseconds since epoch for the query
+    final todayStart = today.millisecondsSinceEpoch;
+    final todayEnd = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final yesterdayStart = yesterday.millisecondsSinceEpoch;
+    final yesterdayEnd = todayStart;
+
+    // Check if there was a completion yesterday
+    final yesterdayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, yesterdayStart, yesterdayEnd],
+      limit: 1,
+    );
+
+    if (yesterdayResults.isEmpty) return false; // No completion yesterday
+
+    // Check if there are any completions today BEFORE this one
+    final todayResults = await db.query(
+      tableHabitCompletions,
+      where:
+          '$columnHabitId = ? AND $columnCompletionTime >= ? AND $columnCompletionTime < ?',
+      whereArgs: [habitId, todayStart, todayEnd],
+    );
+
+    // If there are no completions today yet, this will be the first one
+    // and we completed yesterday, so this creates a strike!
+    if (todayResults.isEmpty) return true;
+
+    // If there are completions today, check if strike bonus was already awarded
+    final hasBonusToday = await hasStrikeBonusToday(habitId);
+    return !hasBonusToday;
+  }
+
   // Delete a habit by id
   Future<int> deleteHabit(int id) async {
     Database db = await instance.database;
