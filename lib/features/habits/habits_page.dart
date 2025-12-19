@@ -706,7 +706,7 @@ class _HabitsPageState extends State<HabitsPage> {
     } else if (habit.type.startsWith('multipler') &&
         habit.showStreakMultiplier) {
       final shouldAwardStrike = await _dbHelper
-          .shouldAwardStrikeMultiplierBonus(habitId);
+          .shouldAwardStrikeMultiplierBonus(habitId, points);
       if (shouldAwardStrike) {
         finalPoints =
             points + (habit.score * 2); // Add bonus of score * 2 for streak!
@@ -714,8 +714,8 @@ class _HabitsPageState extends State<HabitsPage> {
       }
     }
 
-    // Record habit completion with the final points (possibly doubled)
-    await _dbHelper.insertHabitCompletion(habitId, finalPoints);
+    // Record habit completion with the base points (without bonus)
+    await _dbHelper.insertHabitCompletion(habitId, points);
 
     // Update the completion key to force UI refresh
     setState(() {

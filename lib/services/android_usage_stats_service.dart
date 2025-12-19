@@ -1,10 +1,26 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:app_usage/app_usage.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 /// Servizio per gestire le statistiche di utilizzo delle app su Android
 class AndroidUsageStatsService {
   static const String _tag = 'AndroidUsageStatsService';
+
+  /// Ottiene la versione di Android del dispositivo
+  Future<int> _getAndroidVersion() async {
+    if (!Platform.isAndroid) return 0;
+
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.version.sdkInt;
+    } catch (e) {
+      debugPrint('$_tag: Error getting Android version: $e');
+      return 0;
+    }
+  }
 
   /// Controlla se il permesso PACKAGE_USAGE_STATS è stato concesso
   Future<bool> isUsageStatsPermissionGranted() async {
@@ -15,28 +31,88 @@ class AndroidUsageStatsService {
     try {
       debugPrint('$_tag: Checking usage stats permission...');
 
-      // Usa un timeout più breve per evitare blocchi dell'UI
-      final result = await Future.any([
-        // Prova ad accedere ai dati di utilizzo
-        _checkPermissionByAccess(),
-        // Timeout dopo 1 secondo
-        Future.delayed(const Duration(seconds: 1), () => false),
-      ]);
+      final androidVersion = await _getAndroidVersion();
+      debugPrint('$_tag: Android version: $androidVersion (API level)');
+
+      bool result;
+
+      // Per Android 11+ (API 30+), usa l'approccio AppOps che è più affidabile
+      if (androidVersion >= 30) {
+        result = await _checkPermissionWithAppOps();
+        debugPrint('$_tag: Used AppOps method for Android 11+');
+      } else {
+        // Per versioni precedenti, usa il metodo tradizionale
+        result = await _checkPermissionByAccess();
+        debugPrint('$_tag: Used traditional method for Android < 11');
+      }
 
       debugPrint('$_tag: Permission check result: $result');
       return result;
     } catch (e) {
-      debugPrint('$_tag: Usage stats permission not granted: $e');
-      return false;
+      debugPrint('$_tag: Primary permission check failed: $e');
+
+      // Fallback: prova l'altro metodo indipendentemente dalla versione
+      try {
+        final fallbackResult = await _checkPermissionByAccess();
+        debugPrint('$_tag: Fallback permission check result: $fallbackResult');
+        return fallbackResult;
+      } catch (fallbackError) {
+        debugPrint('$_tag: All permission checks failed: $fallbackError');
+        return false;
+      }
     }
   }
 
-  /// Controlla il permesso provando ad accedere ai dati con timeout
+  /// Controlla il permesso usando AppOpsManager (più affidabile per Android 11+)
+  Future<bool> _checkPermissionWithAppOps() async {
+    try {
+      // Questo approccio usa il package app_usage che internamente controlla
+      // lo stato del permesso tramite AppOpsManager
+      final testDate = DateTime.now();
+      final startDate = DateTime(testDate.year, testDate.month, testDate.day);
+      final endDate = startDate.add(const Duration(days: 1));
+
+      debugPrint(
+        '$_tag: Testing permission with date range: $startDate to $endDate',
+      );
+
+      // Se riusciamo ad ottenere i dati senza eccezioni, il permesso è concesso
+      final usageList = await AppUsage().getAppUsage(startDate, endDate);
+
+      debugPrint('$_tag: Usage list length: ${usageList.length}');
+
+      // Anche una lista vuota può significare permesso concesso se non ci sono dati
+      // L'importante è che non lanci un'eccezione
+      debugPrint(
+        '$_tag: Usage stats permission granted (via AppOps - no exception thrown)',
+      );
+      return true;
+    } catch (e) {
+      debugPrint('$_tag: AppOps permission check failed: $e');
+      // Se otteniamo un'eccezione di sicurezza o permesso negato, il permesso non è concesso
+      if (e.toString().contains('permission') ||
+          e.toString().contains('denied') ||
+          e.toString().contains('PACKAGE_USAGE_STATS')) {
+        return false;
+      }
+      // Altre eccezioni potrebbero essere dovute ad altri problemi, non necessariamente permessi
+      debugPrint(
+        '$_tag: Exception may not be permission-related, assuming granted',
+      );
+      return true;
+    }
+  }
+
+  /// Controlla il permesso provando ad accedere ai dati con timeout (fallback)
   Future<bool> _checkPermissionByAccess() async {
     try {
       final testDate = DateTime.now();
-      await getAppsUsageForDay(testDate, []);
-      debugPrint('$_tag: Usage stats permission granted');
+      final startDate = DateTime(testDate.year, testDate.month, testDate.day);
+      final endDate = startDate.add(const Duration(days: 1));
+
+      // Prova ad ottenere i dati di utilizzo - se riesce, il permesso è concesso
+      await AppUsage().getAppUsage(startDate, endDate);
+      debugPrint('$_tag: Usage stats permission granted (fallback method)');
       return true;
     } catch (e) {
       debugPrint('$_tag: Permission check failed: $e');
@@ -58,29 +134,52 @@ class AndroidUsageStatsService {
         '$_tag: Opening Android settings for usage stats permission...',
       );
 
-      // Prova diversi metodi per aprire le impostazioni
-      const usageUrl = 'android.settings.USAGE_ACCESS_SETTINGS';
-      const appDetailsUrl = 'android.settings.APPLICATION_DETAILS_SETTINGS';
+      // Usa intent specifici invece di URL schemes per migliore compatibilità con Android 11+
+      bool opened = false;
 
-      // Prima prova: impostazioni di accesso ai dati di utilizzo
-      if (await canLaunchUrl(Uri.parse(usageUrl))) {
-        await launchUrl(Uri.parse(usageUrl));
-        debugPrint('$_tag: Opened usage access settings');
+      // Prima prova: apri direttamente le impostazioni di accesso ai dati di utilizzo
+      try {
+        const usageAccessSettings = 'android.settings.USAGE_ACCESS_SETTINGS';
+        if (await canLaunchUrl(Uri.parse(usageAccessSettings))) {
+          await launchUrl(Uri.parse(usageAccessSettings));
+          debugPrint('$_tag: Opened usage access settings via intent');
+          opened = true;
+        }
+      } catch (e) {
+        debugPrint('$_tag: Failed to open usage access settings: $e');
       }
-      // Seconda prova: dettagli app specifici
-      else if (await canLaunchUrl(
-        Uri(scheme: 'package', path: 'betullarise'),
-      )) {
-        await launchUrl(Uri(scheme: 'package', path: 'betullarise'));
-        debugPrint('$_tag: Opened app details');
+
+      // Seconda prova: apri i dettagli dell'app specifici (per Android 11+)
+      if (!opened) {
+        try {
+          final packageUri = Uri.parse('package:betullarise');
+          if (await canLaunchUrl(packageUri)) {
+            await launchUrl(packageUri);
+            debugPrint('$_tag: Opened app details via package URI');
+            opened = true;
+          }
+        } catch (e) {
+          debugPrint('$_tag: Failed to open app details: $e');
+        }
       }
-      // Terza prova: impostazioni generali
-      else if (await canLaunchUrl(Uri.parse(appDetailsUrl))) {
-        await launchUrl(Uri.parse(appDetailsUrl));
-        debugPrint('$_tag: Opened general app details');
-      } else {
-        debugPrint('$_tag: Could not launch any settings URL');
-        throw 'No valid URL found';
+
+      // Terza prova: impostazioni generali delle app
+      if (!opened) {
+        try {
+          const appDetailsUrl = 'android.settings.APPLICATION_DETAILS_SETTINGS';
+          if (await canLaunchUrl(Uri.parse(appDetailsUrl))) {
+            await launchUrl(Uri.parse(appDetailsUrl));
+            debugPrint('$_tag: Opened general app details');
+            opened = true;
+          }
+        } catch (e) {
+          debugPrint('$_tag: Failed to open general app details: $e');
+        }
+      }
+
+      if (!opened) {
+        debugPrint('$_tag: Could not launch any settings');
+        throw 'No settings could be opened';
       }
 
       debugPrint('$_tag: Opened settings for user to grant permission');
@@ -115,27 +214,25 @@ class AndroidUsageStatsService {
 
       debugPrint('$_tag: Getting usage from $startDate to $endDate');
 
-      // Placeholder - implementazione reale userà le API di UsageStats
-      final Map<String, int> mockData = {};
+      // Usa il plugin app_usage per ottenere i dati reali
+      final List<AppUsageInfo> usageList = await AppUsage().getAppUsage(
+        startDate,
+        endDate,
+      );
 
-      // Dati mock per test
-      for (final package in packages) {
-        // Simula dati di utilizzo per le app più comuni
-        if (package.contains('whatsapp')) {
-          mockData[package] = 45; // 45 minuti
-        } else if (package.contains('telegram')) {
-          mockData[package] = 30; // 30 minuti
-        } else if (package.contains('instagram')) {
-          mockData[package] = 60; // 60 minuti
-        } else if (package.contains('facebook')) {
-          mockData[package] = 25; // 25 minuti
-        } else {
-          mockData[package] = 15; // 15 minuti default
+      final Map<String, int> usageData = {};
+
+      for (final info in usageList) {
+        // Filtra per package se specificati
+        if (packages.isEmpty || packages.contains(info.packageName)) {
+          // Converti Duration in minuti
+          final minutes = info.usage.inMinutes;
+          usageData[info.packageName] = minutes;
         }
       }
 
-      debugPrint('$_tag: Found usage for ${mockData.length} apps');
-      return mockData;
+      debugPrint('$_tag: Found usage for ${usageData.length} apps');
+      return usageData;
     } catch (e) {
       debugPrint('$_tag: Error getting app usage for day: $e');
       return {};

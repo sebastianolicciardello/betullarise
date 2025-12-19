@@ -5,6 +5,7 @@ import '../../model/screen_time_rule.dart';
 import '../../provider/screen_time_provider.dart';
 import '../../provider/points_provider.dart';
 import '../../services/screen_time_calculation_service.dart';
+import '../../services/ui/snackbar_service.dart';
 
 class PenaltyConfirmationDialog extends StatefulWidget {
   final DailyScreenUsage usage;
@@ -127,28 +128,20 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
 
         // Mostra messaggio di successo
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Penalità di ${widget.usage.calculatedPenalty.toStringAsFixed(2)} punti applicata!',
-              ),
-              backgroundColor: Colors.green,
-            ),
+          SnackbarService.showSuccessSnackbar(
+            context,
+            'Penalità di ${widget.usage.calculatedPenalty.toStringAsFixed(2)} punti applicata!',
           );
         }
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Errore nell\'applicazione della penalità'),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarService.showErrorSnackbar(
+          context,
+          'Errore nell\'applicazione della penalità',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
-        );
+        SnackbarService.showErrorSnackbar(context, 'Errore: $e');
       }
     } finally {
       if (mounted) {

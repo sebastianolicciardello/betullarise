@@ -206,7 +206,13 @@ class ScreenTimeProvider with ChangeNotifier {
   /// Verifica se il permesso per le statistiche di utilizzo è concesso
   Future<bool> checkUsageStatsPermission() async {
     try {
+      // Aggiungi un piccolo delay per permettere al sistema di aggiornare i permessi
+      await Future.delayed(const Duration(milliseconds: 500));
+
       _hasPermission = await _usageStatsService.isUsageStatsPermissionGranted();
+      debugPrint(
+        'ScreenTimeProvider: Permission check result: $_hasPermission',
+      );
       notifyListeners();
       return _hasPermission;
     } catch (e) {
@@ -234,6 +240,15 @@ class ScreenTimeProvider with ChangeNotifier {
     try {
       setLoading(true);
       clearError();
+
+      // 0. Controlla i permessi (PRIMA di tutto)
+      await checkUsageStatsPermission();
+
+      // Se non abbiamo il permesso, non carichiamo altro
+      if (!_hasPermission) {
+        debugPrint('ScreenTimeProvider: No permission, skipping other checks');
+        return;
+      }
 
       // 1. Carica le regole attive
       await loadActiveRules();

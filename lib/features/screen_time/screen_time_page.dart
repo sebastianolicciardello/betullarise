@@ -5,6 +5,7 @@ import '../../provider/screen_time_provider.dart';
 import 'penalty_confirmation_dialog.dart';
 import 'widgets/rule_card.dart';
 import 'widgets/loading_indicator.dart';
+import '../../../services/ui/snackbar_service.dart';
 
 class ScreenTimePage extends StatefulWidget {
   const ScreenTimePage({super.key});
@@ -173,33 +174,42 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                         ElevatedButton(
                           onPressed: () async {
                             Navigator.of(context).pop(); // Chiudi dialog
-                            // Ricontrolla i permessi
-                            final screenTimeProvider =
-                                Provider.of<ScreenTimeProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                            final hasPermission =
-                                await screenTimeProvider
-                                    .checkUsageStatsPermission();
-                            debugPrint(
-                              'Permission check result: $hasPermission',
-                            );
-
-                            // Mostra feedback all'utente
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    hasPermission
-                                        ? '✅ Permesso concesso! Ora puoi creare regole.'
-                                        : '❌ Permesso non ancora concesso. Riprova dopo averlo abilitato.',
-                                  ),
-                                  backgroundColor:
-                                      hasPermission ? Colors.green : Colors.red,
-                                  duration: const Duration(seconds: 3),
-                                ),
+                            try {
+                              // Ricontrolla i permessi
+                              final screenTimeProvider =
+                                  Provider.of<ScreenTimeProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+                              final hasPermission =
+                                  await screenTimeProvider
+                                      .checkUsageStatsPermission();
+                              debugPrint(
+                                'Permission check result: $hasPermission',
                               );
+
+                              // Mostra feedback all'utente
+                              if (mounted) {
+                                if (hasPermission) {
+                                  SnackbarService.showSuccessSnackbar(
+                                    context,
+                                    'Permesso concesso! Ora puoi creare regole.',
+                                  );
+                                } else {
+                                  SnackbarService.showErrorSnackbar(
+                                    context,
+                                    'Permesso non ancora concesso. Riprova dopo averlo abilitato.',
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              debugPrint('Error checking permission: $e');
+                              if (mounted) {
+                                SnackbarService.showErrorSnackbar(
+                                  context,
+                                  'Errore nel controllo del permesso: $e',
+                                );
+                              }
                             }
                           },
                           child: const Text('Ho concesso il permesso'),
@@ -278,8 +288,43 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () async {
-                await screenTimeProvider.requestUsageStatsPermission();
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Come concedere il permesso'),
+                      content: const Text(
+                        'Per monitorare l\'uso delle app, devi concedere manualmente il permesso di accesso ai dati di utilizzo:\n\n'
+                        '1. Apri Impostazioni del telefono\n'
+                        '2. Vai su "App" o "Applicazioni"\n'
+                        '3. Trova e seleziona "Betullarise"\n'
+                        '4. Vai su "Permessi" o "Autorizzazioni"\n'
+                        '5. Abilita "Accesso ai dati di utilizzo"\n\n'
+                        'Dopo aver concesso il permesso, premi "Ho concesso il permesso".',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Annulla'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            // Prova ad aprire le impostazioni
+                            try {
+                              await screenTimeProvider
+                                  .requestUsageStatsPermission();
+                            } catch (e) {
+                              debugPrint('Error opening settings: $e');
+                            }
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Apri Impostazioni'),
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
               child: const Text('Richiedi Permesso'),
             ),

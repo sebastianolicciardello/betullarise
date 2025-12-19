@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class SnackbarService {
+  static Timer? _snackbarTimer;
+
   static void showSnackbar(
     BuildContext context,
     String message, {
@@ -10,20 +13,31 @@ class SnackbarService {
     Color? textColor,
   }) {
     if (!context.mounted) return;
-    
+
+    // Cancella timer precedente
+    _snackbarTimer?.cancel();
+
     ScaffoldMessenger.of(context).clearSnackBars();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(color: textColor),
-        ),
-        duration: duration,
+        content: Text(message, style: TextStyle(color: textColor)),
+        duration: const Duration(
+          seconds: 30,
+        ), // Long duration, timer handles dismissal
         action: action,
         backgroundColor: backgroundColor,
       ),
     );
+
+    // Always create a timer for reliable auto-dismissal
+    _snackbarTimer = Timer(duration, () {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).hideCurrentSnackBar(reason: SnackBarClosedReason.timeout);
+      }
+    });
   }
 
   static void showSuccessSnackbar(
