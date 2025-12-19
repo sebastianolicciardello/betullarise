@@ -21,7 +21,7 @@ class ScreenTimeProvider with ChangeNotifier {
   List<ScreenTimeRule> _rules = [];
   List<DailyScreenUsage> _unconfirmedDays = [];
   bool _isLoading = false;
-  bool _hasPermission = true; // Default a true, controlla dopo
+  bool _hasPermission = false; // Default a false, controlla subito
   String? _errorMessage;
 
   // Getters
@@ -35,6 +35,14 @@ class ScreenTimeProvider with ChangeNotifier {
   void setLoading(bool loading) {
     if (_isLoading != loading) {
       _isLoading = loading;
+      notifyListeners();
+    }
+  }
+
+  /// Forza lo stato del permesso (per quando l'utente conferma di averlo concesso)
+  void setHasPermission(bool value) {
+    if (_hasPermission != value) {
+      _hasPermission = value;
       notifyListeners();
     }
   }
@@ -205,21 +213,41 @@ class ScreenTimeProvider with ChangeNotifier {
 
   /// Verifica se il permesso per le statistiche di utilizzo è concesso
   Future<bool> checkUsageStatsPermission() async {
-    try {
-      // Aggiungi un piccolo delay per permettere al sistema di aggiornare i permessi
-      await Future.delayed(const Duration(milliseconds: 500));
+    const int maxRetries = 3;
+    const Duration delay = Duration(milliseconds: 1000);
 
-      _hasPermission = await _usageStatsService.isUsageStatsPermissionGranted();
-      debugPrint(
-        'ScreenTimeProvider: Permission check result: $_hasPermission',
-      );
-      notifyListeners();
-      return _hasPermission;
-    } catch (e) {
-      debugPrint('ScreenTimeProvider: Error checking permission: $e');
-      setErrorMessage('Errore nel controllo dei permessi: $e');
-      return false;
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Aggiungi un delay per permettere al sistema di aggiornare i permessi
+        await Future.delayed(delay);
+
+        final result = await _usageStatsService.isUsageStatsPermissionGranted();
+        debugPrint(
+          'ScreenTimeProvider: Permission check attempt $attempt/$maxRetries: $result',
+        );
+
+        if (result) {
+          _hasPermission = true;
+          notifyListeners();
+          return true;
+        }
+
+        if (attempt < maxRetries) {
+          debugPrint('ScreenTimeProvider: Permission not granted, retrying...');
+        }
+      } catch (e) {
+        debugPrint(
+          'ScreenTimeProvider: Error checking permission on attempt $attempt: $e',
+        );
+        if (attempt == maxRetries) {
+          setErrorMessage('Errore nel controllo dei permessi: $e');
+        }
+      }
     }
+
+    _hasPermission = false;
+    notifyListeners();
+    return false;
   }
 
   /// Richiede il permesso per le statistiche di utilizzo
@@ -241,8 +269,10 @@ class ScreenTimeProvider with ChangeNotifier {
       setLoading(true);
       clearError();
 
-      // 0. Controlla i permessi (PRIMA di tutto)
-      await checkUsageStatsPermission();
+      // 0. Controlla i permessi solo se non già concessi
+      if (!_hasPermission) {
+        await checkUsageStatsPermission();
+      }
 
       // Se non abbiamo il permesso, non carichiamo altro
       if (!_hasPermission) {

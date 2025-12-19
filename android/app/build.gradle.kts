@@ -13,8 +13,6 @@ android {
     namespace = "com.example.betullarise"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
-    flavorDimensions += "version"
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -30,13 +28,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-    }
-
-    productFlavors {
-        create("dev") {
-            dimension = "version"
-            applicationIdSuffix = ".dev"
-        }
     }
 
     signingConfigs {

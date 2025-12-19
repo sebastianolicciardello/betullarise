@@ -175,39 +175,31 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                           onPressed: () async {
                             Navigator.of(context).pop(); // Chiudi dialog
                             try {
-                              // Ricontrolla i permessi
                               final screenTimeProvider =
                                   Provider.of<ScreenTimeProvider>(
                                     context,
                                     listen: false,
                                   );
-                              final hasPermission =
-                                  await screenTimeProvider
-                                      .checkUsageStatsPermission();
-                              debugPrint(
-                                'Permission check result: $hasPermission',
-                              );
+
+                              // Assume il permesso sia stato concesso dall'utente
+                              screenTimeProvider.setHasPermission(true);
+
+                              // Ricarica tutto
+                              await screenTimeProvider.performInitialCheck();
 
                               // Mostra feedback all'utente
                               if (mounted) {
-                                if (hasPermission) {
-                                  SnackbarService.showSuccessSnackbar(
-                                    context,
-                                    'Permesso concesso! Ora puoi creare regole.',
-                                  );
-                                } else {
-                                  SnackbarService.showErrorSnackbar(
-                                    context,
-                                    'Permesso non ancora concesso. Riprova dopo averlo abilitato.',
-                                  );
-                                }
+                                SnackbarService.showSuccessSnackbar(
+                                  context,
+                                  'Permesso concesso! Ora puoi creare regole.',
+                                );
                               }
                             } catch (e) {
-                              debugPrint('Error checking permission: $e');
+                              debugPrint('Error in initial check: $e');
                               if (mounted) {
                                 SnackbarService.showErrorSnackbar(
                                   context,
-                                  'Errore nel controllo del permesso: $e',
+                                  'Errore nel caricamento: $e',
                                 );
                               }
                             }

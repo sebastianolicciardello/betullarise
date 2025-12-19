@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:app_usage/app_usage.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
@@ -24,42 +25,16 @@ class AndroidUsageStatsService {
 
   /// Controlla se il permesso PACKAGE_USAGE_STATS è stato concesso
   Future<bool> isUsageStatsPermissionGranted() async {
-    if (!Platform.isAndroid) {
-      return false;
-    }
-
     try {
       debugPrint('$_tag: Checking usage stats permission...');
 
-      final androidVersion = await _getAndroidVersion();
-      debugPrint('$_tag: Android version: $androidVersion (API level)');
-
-      bool result;
-
-      // Per Android 11+ (API 30+), usa l'approccio AppOps che è più affidabile
-      if (androidVersion >= 30) {
-        result = await _checkPermissionWithAppOps();
-        debugPrint('$_tag: Used AppOps method for Android 11+');
-      } else {
-        // Per versioni precedenti, usa il metodo tradizionale
-        result = await _checkPermissionByAccess();
-        debugPrint('$_tag: Used traditional method for Android < 11');
-      }
-
+      // Usa sempre l'approccio AppOps che è più lenient e affidabile
+      final result = await _checkPermissionWithAppOps();
       debugPrint('$_tag: Permission check result: $result');
       return result;
     } catch (e) {
-      debugPrint('$_tag: Primary permission check failed: $e');
-
-      // Fallback: prova l'altro metodo indipendentemente dalla versione
-      try {
-        final fallbackResult = await _checkPermissionByAccess();
-        debugPrint('$_tag: Fallback permission check result: $fallbackResult');
-        return fallbackResult;
-      } catch (fallbackError) {
-        debugPrint('$_tag: All permission checks failed: $fallbackError');
-        return false;
-      }
+      debugPrint('$_tag: Permission check failed: $e');
+      return false;
     }
   }
 
@@ -138,26 +113,28 @@ class AndroidUsageStatsService {
       bool opened = false;
 
       // Prima prova: apri direttamente le impostazioni di accesso ai dati di utilizzo
-      try {
-        const usageAccessSettings = 'android.settings.USAGE_ACCESS_SETTINGS';
-        if (await canLaunchUrl(Uri.parse(usageAccessSettings))) {
-          await launchUrl(Uri.parse(usageAccessSettings));
+      if (!opened) {
+        try {
+          const usageAccessSettings =
+              'android.settings://usage_access_settings';
+          await launchUrl(
+            Uri.parse(usageAccessSettings),
+            mode: LaunchMode.externalApplication,
+          );
           debugPrint('$_tag: Opened usage access settings via intent');
           opened = true;
+        } catch (e) {
+          debugPrint('$_tag: Failed to open usage access settings: $e');
         }
-      } catch (e) {
-        debugPrint('$_tag: Failed to open usage access settings: $e');
       }
 
       // Seconda prova: apri i dettagli dell'app specifici (per Android 11+)
       if (!opened) {
         try {
           final packageUri = Uri.parse('package:betullarise');
-          if (await canLaunchUrl(packageUri)) {
-            await launchUrl(packageUri);
-            debugPrint('$_tag: Opened app details via package URI');
-            opened = true;
-          }
+          await launchUrl(packageUri, mode: LaunchMode.externalApplication);
+          debugPrint('$_tag: Opened app details via package URI');
+          opened = true;
         } catch (e) {
           debugPrint('$_tag: Failed to open app details: $e');
         }
@@ -166,14 +143,29 @@ class AndroidUsageStatsService {
       // Terza prova: impostazioni generali delle app
       if (!opened) {
         try {
-          const appDetailsUrl = 'android.settings.APPLICATION_DETAILS_SETTINGS';
-          if (await canLaunchUrl(Uri.parse(appDetailsUrl))) {
-            await launchUrl(Uri.parse(appDetailsUrl));
-            debugPrint('$_tag: Opened general app details');
-            opened = true;
-          }
+          const appDetailsUrl =
+              'android.settings://application_details_settings?package=betullarise';
+          await launchUrl(
+            Uri.parse(appDetailsUrl),
+            mode: LaunchMode.externalApplication,
+          );
+          debugPrint('$_tag: Opened general app details');
+          opened = true;
         } catch (e) {
           debugPrint('$_tag: Failed to open general app details: $e');
+        }
+      }
+
+      // Quarta prova: usa permission_handler per aprire le impostazioni dell'app
+      if (!opened) {
+        try {
+          await openAppSettings();
+          debugPrint('$_tag: Opened app settings via permission_handler');
+          opened = true;
+        } catch (e) {
+          debugPrint(
+            '$_tag: Failed to open app settings via permission_handler: $e',
+          );
         }
       }
 
