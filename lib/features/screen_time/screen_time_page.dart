@@ -5,7 +5,6 @@ import '../../provider/screen_time_provider.dart';
 import 'penalty_confirmation_dialog.dart';
 import 'widgets/rule_card.dart';
 import 'widgets/loading_indicator.dart';
-import '../../../services/ui/snackbar_service.dart';
 
 class ScreenTimePage extends StatefulWidget {
   const ScreenTimePage({super.key});
@@ -89,10 +88,6 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             );
           }
 
-          if (!screenTimeProvider.hasPermission) {
-            return _buildPermissionRequiredView(screenTimeProvider);
-          }
-
           return RefreshIndicator(
             onRefresh: () async {
               await screenTimeProvider.performInitialCheck();
@@ -103,6 +98,9 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Banner di permesso se non concesso
+                  if (!screenTimeProvider.hasPermission)
+                    _buildPermissionBanner(screenTimeProvider),
                   // Lista delle regole attive
                   if (screenTimeProvider.rules.isEmpty)
                     _buildEmptyState(screenTimeProvider)
@@ -124,97 +122,49 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.security, size: 80, color: Colors.orange),
+            Icon(Icons.rule, size: 80, color: Colors.blue),
             const SizedBox(height: 24),
             Text(
-              'Permesso Richiesto',
+              'Nessuna Regola Creata',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.orange.shade800,
+                color: Colors.blue.shade800,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Per utilizzare la funzionalità Screen Time, l\'app ha bisogno del permesso di accesso alle statistiche di utilizzo delle app.',
+              'Crea la tua prima regola per monitorare il tempo trascorso nelle app.',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Text(
-              'Questo permesso è necessario per monitorare il tempo trascorso nelle applicazioni.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
+            if (!screenTimeProvider.hasPermission)
+              Text(
+                'Nota: concedi il permesso per abilitare il monitoraggio automatico.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Come concedere il permesso'),
-                      content: const Text(
-                        'Per monitorare l\'uso delle app, devi concedere manualmente il permesso di accesso ai dati di utilizzo:\n\n'
-                        '1. Apri Impostazioni del telefono\n'
-                        '2. Vai su "App" o "Applicazioni"\n'
-                        '3. Trova e seleziona "Betullarise"\n'
-                        '4. Vai su "Permessi" o "Autorizzazioni"\n'
-                        '5. Abilita "Accesso ai dati di utilizzo"\n\n'
-                        'Dopo aver concesso il permesso, torna all\'app.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Annulla'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop(); // Chiudi dialog
-                            try {
-                              final screenTimeProvider =
-                                  Provider.of<ScreenTimeProvider>(
-                                    context,
-                                    listen: false,
-                                  );
-
-                              // Assume il permesso sia stato concesso dall'utente
-                              screenTimeProvider.setHasPermission(true);
-
-                              // Ricarica tutto
-                              await screenTimeProvider.performInitialCheck();
-
-                              // Mostra feedback all'utente
-                              if (mounted) {
-                                SnackbarService.showSuccessSnackbar(
-                                  context,
-                                  'Permesso concesso! Ora puoi creare regole.',
-                                );
-                              }
-                            } catch (e) {
-                              debugPrint('Error in initial check: $e');
-                              if (mounted) {
-                                SnackbarService.showErrorSnackbar(
-                                  context,
-                                  'Errore nel caricamento: $e',
-                                );
-                              }
-                            }
-                          },
-                          child: const Text('Ho concesso il permesso'),
-                        ),
-                      ],
-                    );
-                  },
+                // TODO: Naviga alla pagina di creazione regola
+                // Per ora, mostra un messaggio
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Funzione di creazione regola non ancora implementata',
+                    ),
+                  ),
                 );
               },
-              icon: const Icon(Icons.info),
-              label: const Text('Come concedere il permesso'),
+              icon: const Icon(Icons.add),
+              label: const Text('Crea Regola'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -228,6 +178,75 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPermissionBanner(ScreenTimeProvider screenTimeProvider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning, color: Colors.orange.shade800),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Permesso richiesto per monitorare l\'uso delle app. Concedi il permesso per abilitare le regole.',
+              style: TextStyle(color: Colors.orange.shade800),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Come concedere il permesso'),
+                    content: const Text(
+                      'Per monitorare l\'uso delle app, devi concedere manualmente il permesso di accesso ai dati di utilizzo:\n\n'
+                      '1. Apri Impostazioni del telefono\n'
+                      '2. Vai su "App" o "Applicazioni"\n'
+                      '3. Trova e seleziona "Betullarise"\n'
+                      '4. Vai su "Permessi" o "Autorizzazioni"\n'
+                      '5. Abilita "Accesso ai dati di utilizzo"\n\n'
+                      'Dopo aver concesso il permesso, torna all\'app e ricarica.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Annulla'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          // Prova ad aprire le impostazioni
+                          try {
+                            await screenTimeProvider
+                                .requestUsageStatsPermission();
+                          } catch (e) {
+                            debugPrint('Error opening settings: $e');
+                          }
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Apri Impostazioni'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: const Text('Concedi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -256,73 +275,6 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildPermissionRequiredView(ScreenTimeProvider screenTimeProvider) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.security, size: 64, color: Colors.orange),
-            const SizedBox(height: 16),
-            Text(
-              'Permesso Richiesto',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Per monitorare l\'uso delle app, l\'app ha bisogno del permesso di accesso alle statistiche di utilizzo.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Come concedere il permesso'),
-                      content: const Text(
-                        'Per monitorare l\'uso delle app, devi concedere manualmente il permesso di accesso ai dati di utilizzo:\n\n'
-                        '1. Apri Impostazioni del telefono\n'
-                        '2. Vai su "App" o "Applicazioni"\n'
-                        '3. Trova e seleziona "Betullarise"\n'
-                        '4. Vai su "Permessi" o "Autorizzazioni"\n'
-                        '5. Abilita "Accesso ai dati di utilizzo"\n\n'
-                        'Dopo aver concesso il permesso, premi "Ho concesso il permesso".',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Annulla'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            // Prova ad aprire le impostazioni
-                            try {
-                              await screenTimeProvider
-                                  .requestUsageStatsPermission();
-                            } catch (e) {
-                              debugPrint('Error opening settings: $e');
-                            }
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Apri Impostazioni'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-              child: const Text('Richiedi Permesso'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
