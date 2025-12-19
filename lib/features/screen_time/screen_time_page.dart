@@ -165,8 +165,14 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
               icon: Icon(Icons.add, size: 20.sp),
               label: Text('Crea Regola', style: TextStyle(fontSize: 16.sp)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                backgroundColor:
+                    Theme.of(context).brightness == Brightness.light
+                        ? Colors.black
+                        : Colors.white,
+                foregroundColor:
+                    Theme.of(context).brightness == Brightness.light
+                        ? Colors.white
+                        : Colors.black,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 textStyle: TextStyle(
                   fontSize: 16.sp,
@@ -201,8 +207,14 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              backgroundColor:
+                  Theme.of(context).brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+              foregroundColor:
+                  Theme.of(context).brightness == Brightness.light
+                      ? Colors.white
+                      : Colors.black,
             ),
             onPressed: () {
               if (context.mounted) {
@@ -235,9 +247,13 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Colors.black
+                                    : Colors.white,
                             foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Colors.white
+                                    : Colors.black,
                           ),
                           onPressed: () async {
                             // Prova ad aprire le impostazioni
