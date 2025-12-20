@@ -392,6 +392,57 @@ class _HabitsPageState extends State<HabitsPage> {
               ] else ...[
                 SizedBox(height: 8.h),
               ],
+              // Progress bar for multipler habits with goals
+              if (habit.type.startsWith('multipler') &&
+                  habit.goal != null &&
+                  habit.goal! > 0) ...[
+                FutureBuilder<double>(
+                  future: _dbHelper.getTodaysProgress(habit.id!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox.shrink();
+                    }
+                    final currentProgress = snapshot.data ?? 0.0;
+                    final goal = habit.goal!.toDouble();
+                    final progressValue = (currentProgress / goal).clamp(
+                      0.0,
+                      1.0,
+                    );
+
+                    // Format numbers: show decimal only if not .0
+                    String formatNumber(double num) {
+                      return num % 1 == 0
+                          ? num.toInt().toString()
+                          : num.toStringAsFixed(1);
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Progress: ${formatNumber(currentProgress)}/${formatNumber(goal)}',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        LinearProgressIndicator(
+                          value: progressValue,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            progressValue >= 1.0
+                                ? Colors.green
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                          minHeight: 6.h,
+                        ),
+                        SizedBox(height: 12.h),
+                      ],
+                    );
+                  },
+                ),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -403,89 +454,6 @@ class _HabitsPageState extends State<HabitsPage> {
                           Text('Score: +${habit.score.toStringAsFixed(2)}'),
                         if (habit.penalty > 0)
                           Text('Penalty: -${habit.penalty.toStringAsFixed(2)}'),
-                        FutureBuilder<Map<String, dynamic>?>(
-                          future: _dbHelper.getLatestHabitCompletion(habit.id!),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const SizedBox.shrink();
-                            }
-                            if (snapshot.hasData && snapshot.data != null) {
-                              final completion = snapshot.data!;
-                              final completionTime =
-                                  completion['completion_time'] as int;
-                              final points = completion['points'] as double;
-                              final pointsText =
-                                  points >= 0
-                                      ? '+${points.toStringAsFixed(1)}'
-                                      : points.toStringAsFixed(1);
-
-                              final bool isMultipler = habit.type.startsWith(
-                                'multipler',
-                              );
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    'Last: ${_formatDate(completionTime)}',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  if (isMultipler) ...[
-                                    Text(
-                                      'Points: $pointsText',
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color:
-                                            points >= 0
-                                                ? Colors.green[600]
-                                                : Colors.red[600],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    // Show goal progress if habit has a goal set
-                                    if (habit.goal != null && habit.goal! > 0)
-                                      FutureBuilder<double>(
-                                        future: _dbHelper.getTodaysProgress(
-                                          habit.id!,
-                                        ),
-                                        builder: (context, snapshot) {
-                                          final double todaysProgress =
-                                              snapshot.data ?? 0.0;
-                                          final int goal = habit.goal!;
-                                          final bool goalReached =
-                                              todaysProgress >= goal;
-
-                                          return Padding(
-                                            padding: EdgeInsets.only(top: 2.h),
-                                            child: Text(
-                                              'Progress: ${todaysProgress.toStringAsFixed(1)}/$goal',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color:
-                                                    goalReached
-                                                        ? Colors.green[700]
-                                                        : Colors.grey[600],
-                                                fontWeight:
-                                                    goalReached
-                                                        ? FontWeight.w600
-                                                        : FontWeight.normal,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                  ],
-                                ],
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
                       ],
                     ),
                   ),
