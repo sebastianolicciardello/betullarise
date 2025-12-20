@@ -9,6 +9,7 @@ import 'package:betullarise/model/point.dart';
 import 'package:provider/provider.dart';
 import 'package:betullarise/services/ui/dialog_service.dart';
 import 'package:betullarise/services/ui/snackbar_service.dart';
+import 'package:betullarise/services/habit_completion_date_picker_service.dart';
 import 'package:intl/intl.dart';
 
 class HabitsPage extends StatefulWidget {
@@ -529,17 +530,17 @@ class _HabitsPageState extends State<HabitsPage> {
     final bool hasScore = habit.score > 0;
     final bool hasPenalty = habit.penalty > 0;
 
-    // Per habit 'single' con solo score o solo penalty, esegui direttamente
+    // Per habit 'single' con solo score o solo penalty, mostra dialog semplice
     if (habit.type.startsWith('single')) {
       if (hasScore && hasPenalty) {
         // Se ha entrambi score e penalty, mostra il popup di conferma
         _showCompleteTaskDialog(habit);
       } else if (hasScore) {
-        // Solo score, esegui direttamente
-        _addPoints(habit.id!, habit.score);
+        // Solo score, mostra dialog semplice con data
+        _showSingleHabitSimpleDialog(habit, habit.score);
       } else if (hasPenalty) {
-        // Solo penalty, esegui direttamente
-        _addPoints(habit.id!, -habit.penalty);
+        // Solo penalty, mostra dialog semplice con data
+        _showSingleHabitSimpleDialog(habit, -habit.penalty);
       }
     } else if (habit.type.startsWith('multipler')) {
       // Per multipler mantieni il comportamento attuale
@@ -555,7 +556,11 @@ class _HabitsPageState extends State<HabitsPage> {
       if (hasScore && hasPenalty) {
         _showSingleHabitChoiceDialog(habit);
       } else if (hasScore) {
-        _addPoints(habit.id!, habit.score);
+        _addPoints(
+          habit.id!,
+          habit.score,
+          DateTime.now().millisecondsSinceEpoch,
+        );
       } else if (hasPenalty) {
         _addPoints(habit.id!, -habit.penalty);
       }
@@ -571,6 +576,8 @@ class _HabitsPageState extends State<HabitsPage> {
   }
 
   Future<void> _showSingleHabitChoiceDialog(Habit habit) async {
+    DateTime selectedDate = DateTime.now();
+
     final message =
         'What would you like to do?\n\n'
         'Completing will add ${habit.score.toStringAsFixed(1)} points\n'
@@ -596,54 +603,174 @@ class _HabitsPageState extends State<HabitsPage> {
     final String? choice = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Complete "${habit.title}"?'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text(message), SizedBox(height: 16.h), ...choices],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Complete "${habit.title}"?'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(message),
+                    SizedBox(height: 16.h),
+                    ...choices,
+                    SizedBox(height: 16.h),
+                    const Divider(),
+                    SizedBox(height: 8.h),
+                    InkWell(
+                      onTap: () async {
+                        final DateTime? pickedDate =
+                            await HabitCompletionDatePickerService.showCompletionDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                            );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 20),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'Date: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
     if (choice == 'complete') {
-      _addPoints(habit.id!, habit.score);
+      _addPoints(habit.id!, habit.score, selectedDate.millisecondsSinceEpoch);
     } else if (choice == 'fail') {
-      _addPoints(habit.id!, -habit.penalty);
+      _addPoints(
+        habit.id!,
+        -habit.penalty,
+        selectedDate.millisecondsSinceEpoch,
+      );
     }
   }
 
   Future<void> _showMultiplerRedemptionDialog(Habit habit) async {
-    final String? result = await _dialogService.showInputDialog(
-      context,
-      'Complete "${habit.title}"',
-      message: 'Enter the multiplier value',
-      initialValue: '1',
-      labelText: 'Multiplier',
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter a value';
-        }
-        final multiplier = double.tryParse(value);
-        if (multiplier == null || multiplier <= 0) {
-          return 'Please enter a valid positive number';
-        }
-        return null;
+    DateTime selectedDate = DateTime.now();
+    String multiplierValue = '1';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Complete "${habit.title}"'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      initialValue: multiplierValue,
+                      decoration: const InputDecoration(
+                        labelText: 'Multiplier',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (value) {
+                        multiplierValue = value;
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a value';
+                        }
+                        final multiplier = double.tryParse(value);
+                        if (multiplier == null || multiplier <= 0) {
+                          return 'Please enter a valid positive number';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16.h),
+                    const Divider(),
+                    SizedBox(height: 8.h),
+                    InkWell(
+                      onTap: () async {
+                        final DateTime? pickedDate =
+                            await HabitCompletionDatePickerService.showCompletionDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                            );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 20),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'Date: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                    foregroundColor:
+                        Theme.of(context).brightness == Brightness.light
+                            ? Colors.white
+                            : Colors.black,
+                  ),
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
 
-    if (result != null && mounted) {
-      final multiplier = double.tryParse(result) ?? 1;
+    if (result == true) {
+      final multiplier = double.tryParse(multiplierValue) ?? 1;
       final totalScore = multiplier * habit.score;
       final totalPenalty = multiplier * habit.penalty;
       final bool hasScore = habit.score > 0;
@@ -695,19 +822,112 @@ class _HabitsPageState extends State<HabitsPage> {
         );
 
         if (choice == 'complete') {
-          _addPoints(habit.id!, totalScore);
+          _addPoints(
+            habit.id!,
+            totalScore,
+            selectedDate.millisecondsSinceEpoch,
+          );
         } else if (choice == 'fail') {
-          _addPoints(habit.id!, -totalPenalty);
+          _addPoints(
+            habit.id!,
+            -totalPenalty,
+            selectedDate.millisecondsSinceEpoch,
+          );
         }
       } else if (hasScore) {
-        _addPoints(habit.id!, totalScore);
+        _addPoints(habit.id!, totalScore, selectedDate.millisecondsSinceEpoch);
       } else if (hasPenalty) {
-        _addPoints(habit.id!, -totalPenalty);
+        _addPoints(
+          habit.id!,
+          -totalPenalty,
+          selectedDate.millisecondsSinceEpoch,
+        );
       }
     }
   }
 
-  void _addPoints(int habitId, double points) async {
+  Future<void> _showSingleHabitSimpleDialog(Habit habit, double points) async {
+    DateTime selectedDate = DateTime.now();
+
+    final String action = points > 0 ? 'Complete' : 'Fail';
+    final String pointsText =
+        points > 0
+            ? '+${points.toStringAsFixed(1)} points'
+            : '${points.toStringAsFixed(1)} points';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('${action} "${habit.title}"?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('This will give you $pointsText'),
+                  SizedBox(height: 16.h),
+                  InkWell(
+                    onTap: () async {
+                      final DateTime? pickedDate =
+                          await HabitCompletionDatePickerService.showCompletionDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                          );
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'Date: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                    foregroundColor:
+                        Theme.of(context).brightness == Brightness.light
+                            ? Colors.white
+                            : Colors.black,
+                  ),
+                  child: Text(action),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      _addPoints(habit.id!, points, selectedDate.millisecondsSinceEpoch);
+    }
+  }
+
+  void _addPoints(int habitId, double points, [int? completionTime]) async {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
 
     // Get the habit to check if it's a single type and if strike bonus applies
@@ -736,7 +956,7 @@ class _HabitsPageState extends State<HabitsPage> {
     }
 
     // Record habit completion with the base points (without bonus)
-    await _dbHelper.insertHabitCompletion(habitId, points);
+    await _dbHelper.insertHabitCompletion(habitId, points, completionTime);
 
     // Update the completion key to force UI refresh
     setState(() {

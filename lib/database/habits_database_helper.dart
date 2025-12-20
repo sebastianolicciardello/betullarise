@@ -429,13 +429,17 @@ class HabitsDatabaseHelper {
   }
 
   // Insert a new habit completion
-  Future<int> insertHabitCompletion(int habitId, double points) async {
+  Future<int> insertHabitCompletion(
+    int habitId,
+    double points, [
+    int? completionTime,
+  ]) async {
     Database db = await instance.database;
-    final completionTime = DateTime.now().millisecondsSinceEpoch;
+    final timestamp = completionTime ?? DateTime.now().millisecondsSinceEpoch;
 
     return await db.insert(tableHabitCompletions, {
       columnHabitId: habitId,
-      columnCompletionTime: completionTime,
+      columnCompletionTime: timestamp,
       columnPoints: points,
     });
   }
