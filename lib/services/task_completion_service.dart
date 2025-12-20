@@ -18,7 +18,8 @@ class TaskCompletionService {
     required Task task,
     required VoidCallback onTaskUpdated,
   }) async {
-    final bool isOverdue = task.deadline <
+    final bool isOverdue =
+        task.deadline <
         DateTime.now()
             .copyWith(hour: 0, minute: 0, second: 0, millisecond: 0)
             .millisecondsSinceEpoch;
@@ -50,7 +51,9 @@ class TaskCompletionService {
             Navigator.of(context).pop();
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
+              MaterialPageRoute(
+                builder: (context) => TaskDetailPage(task: task),
+              ),
             );
             if (result == true) {
               onTaskUpdated();
@@ -82,40 +85,49 @@ class TaskCompletionService {
     final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
     final navigator = Navigator.of(context);
 
-    final DateTime? pickedDate = await CompletionDatePickerService.showCompletionDatePicker(
-      context: context,
-      task: task,
-    );
+    final DateTime? pickedDate =
+        await CompletionDatePickerService.showCompletionDatePicker(
+          context: context,
+          task: task,
+        );
+
+    if (!context.mounted) return;
 
     if (pickedDate != null) {
       // Chiudi il dialog overdue ora
-      Navigator.of(context).pop();
+      navigator.pop();
 
-      final DateTime deadline = DateTime.fromMillisecondsSinceEpoch(task.deadline);
+      final DateTime deadline = DateTime.fromMillisecondsSinceEpoch(
+        task.deadline,
+      );
       final DateTime completionDate = pickedDate.copyWith(hour: 23, minute: 59);
 
-      final Map<String, dynamic> calculation = CompletionDatePickerService.calculatePointsForDate(
-        task: task,
-        completionDate: completionDate,
-      );
+      final Map<String, dynamic> calculation =
+          CompletionDatePickerService.calculatePointsForDate(
+            task: task,
+            completionDate: completionDate,
+          );
 
       if (context.mounted) {
-
-        final bool? confirm = await CompletionDatePickerService.showCompletionConfirmation(
-          context: context,
-          completionDate: completionDate,
-          deadline: deadline,
-          pointsToAssign: calculation['pointsToAssign'],
-          isOnTime: calculation['isOnTime'],
-        );
+        final bool? confirm =
+            await CompletionDatePickerService.showCompletionConfirmation(
+              context: context,
+              completionDate: completionDate,
+              deadline: deadline,
+              pointsToAssign: calculation['pointsToAssign'],
+              isOnTime: calculation['isOnTime'],
+            );
 
         debugPrint('TaskCompletion - Confirmation result: $confirm');
 
         if (confirm == true) {
-          debugPrint('TaskCompletion - User confirmed, context mounted: ${context.mounted}');
+          debugPrint(
+            'TaskCompletion - User confirmed, context mounted: ${context.mounted}',
+          );
           // Non controllare context.mounted - procedi direttamente con il completion
           debugPrint('TaskCompletion - Completing task with date');
           await _completeTaskWithDateAndProvider(
+            // ignore: use_build_context_synchronously
             context,
             task,
             calculation['pointsToAssign'],
@@ -131,10 +143,11 @@ class TaskCompletionService {
       }
     } else {
       // Se l'utente cancella il date picker, non chiudere il dialog overdue
-      debugPrint('TaskCompletion - Date picker cancelled, keeping overdue dialog');
+      debugPrint(
+        'TaskCompletion - Date picker cancelled, keeping overdue dialog',
+      );
     }
   }
-
 
   static Future<void> _completeTask(
     BuildContext context,
@@ -167,6 +180,8 @@ class TaskCompletionService {
       ),
     );
 
+    if (!navigator.context.mounted) return;
+
     final currentTime = DateTime.now().millisecondsSinceEpoch;
     final point = Point(
       referenceId: task.id!,
@@ -192,7 +207,13 @@ class TaskCompletionService {
         label: 'UNDO',
         textColor: Colors.red,
         onPressed: () async {
-          await _undoTaskCompletionWithProvider(scaffoldContext, task, point, onTaskUpdated, pointsProvider);
+          await _undoTaskCompletionWithProvider(
+            scaffoldContext,
+            task,
+            point,
+            onTaskUpdated,
+            pointsProvider,
+          );
         },
       ),
     );
@@ -205,7 +226,9 @@ class TaskCompletionService {
     int completionTime,
     VoidCallback onTaskUpdated,
   ) async {
-    debugPrint('TaskCompletion - _completeTaskWithDate called for task ${task.id} with $pointsToAssign points');
+    debugPrint(
+      'TaskCompletion - _completeTaskWithDate called for task ${task.id} with $pointsToAssign points',
+    );
     await _dbHelper.updateTask(
       task.copyWith(
         completionTime: completionTime,
@@ -229,7 +252,10 @@ class TaskCompletionService {
 
     if (context.mounted) {
       // Capture the PointsProvider reference before showing snackbar
-      final pointsProvider = Provider.of<PointsProvider>(context, listen: false);
+      final pointsProvider = Provider.of<PointsProvider>(
+        context,
+        listen: false,
+      );
 
       SnackbarService.showSnackbar(
         context,
@@ -242,7 +268,13 @@ class TaskCompletionService {
           textColor: Colors.red,
           onPressed: () async {
             debugPrint('UNDO button pressed!');
-            await _undoTaskCompletionWithProvider(context, task, point, onTaskUpdated, pointsProvider);
+            await _undoTaskCompletionWithProvider(
+              context,
+              task,
+              point,
+              onTaskUpdated,
+              pointsProvider,
+            );
           },
         ),
       );
@@ -256,7 +288,9 @@ class TaskCompletionService {
     VoidCallback onTaskUpdated,
     PointsProvider pointsProvider,
   ) async {
-    debugPrint('UNDO: _undoTaskCompletionWithProvider called for task ${task.id} with ${point.points} points');
+    debugPrint(
+      'UNDO: _undoTaskCompletionWithProvider called for task ${task.id} with ${point.points} points',
+    );
 
     debugPrint('UNDO: Updating task completion status...');
     await _dbHelper.updateTask(
@@ -265,6 +299,8 @@ class TaskCompletionService {
         updatedTime: DateTime.now().millisecondsSinceEpoch,
       ),
     );
+
+    if (!context.mounted) return;
 
     debugPrint('UNDO: Task updated. Context mounted: ${context.mounted}');
 
@@ -275,18 +311,25 @@ class TaskCompletionService {
 
       // Get all points for this task with matching points value
       final allPoints = await pointsDb.getAllPoints();
-      final taskPoints = allPoints.where((p) =>
-        p.referenceId == task.id &&
-        p.type == 'task' &&
-        (p.points - point.points).abs() < 0.01 // Handle floating point precision
-      ).toList();
+      final taskPoints =
+          allPoints
+              .where(
+                (p) =>
+                    p.referenceId == task.id &&
+                    p.type == 'task' &&
+                    (p.points - point.points).abs() <
+                        0.01, // Handle floating point precision
+              )
+              .toList();
 
       if (taskPoints.isNotEmpty) {
         // Sort by insertion time, most recent first
         taskPoints.sort((a, b) => b.insertTime.compareTo(a.insertTime));
         final mostRecentPoint = taskPoints.first;
 
-        debugPrint('UNDO: Removing point with insertTime: ${mostRecentPoint.insertTime}, points: ${mostRecentPoint.points}');
+        debugPrint(
+          'UNDO: Removing point with insertTime: ${mostRecentPoint.insertTime}, points: ${mostRecentPoint.points}',
+        );
 
         // Remove the most recent point directly from database
         await pointsDb.deletePointUndo(
@@ -301,7 +344,9 @@ class TaskCompletionService {
         await pointsProvider.loadAllPoints();
         debugPrint('UNDO: Points provider refreshed successfully');
       } else {
-        debugPrint('UNDO: No matching points found for task ${task.id} with ${point.points} points');
+        debugPrint(
+          'UNDO: No matching points found for task ${task.id} with ${point.points} points',
+        );
       }
     } catch (e) {
       debugPrint('UNDO failed: $e');
@@ -319,7 +364,6 @@ class TaskCompletionService {
       );
     }
   }
-
 
   static int _calculateOverdueDays(Task task) {
     final now = DateTime.now();

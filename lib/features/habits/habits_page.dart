@@ -562,6 +562,8 @@ class _HabitsPageState extends State<HabitsPage> {
   Future<void> _showSingleHabitChoiceDialog(Habit habit) async {
     DateTime selectedDate = DateTime.now();
 
+    final navigator = Navigator.of(context);
+
     final message =
         'What would you like to do?\n\n'
         'Completing will add ${habit.score.toStringAsFixed(1)} points\n'
@@ -573,14 +575,14 @@ class _HabitsPageState extends State<HabitsPage> {
           'Complete (+${habit.score})',
           style: const TextStyle(color: Colors.green),
         ),
-        onTap: () => Navigator.of(context).pop('complete'),
+        onTap: () => navigator.pop('complete'),
       ),
       ListTile(
         title: Text(
           'Failed (-${habit.penalty})',
           style: const TextStyle(color: Colors.red),
         ),
-        onTap: () => Navigator.of(context).pop('fail'),
+        onTap: () => navigator.pop('fail'),
       ),
     ];
 
@@ -784,6 +786,7 @@ class _HabitsPageState extends State<HabitsPage> {
         ];
 
         final String? choice = await showDialog<String>(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -804,6 +807,8 @@ class _HabitsPageState extends State<HabitsPage> {
             );
           },
         );
+
+        if (!mounted) return;
 
         if (choice == 'complete') {
           _addPoints(
@@ -941,6 +946,8 @@ class _HabitsPageState extends State<HabitsPage> {
 
     // Record habit completion with the base points (without bonus)
     await _dbHelper.insertHabitCompletion(habitId, points, completionTime);
+
+    if (!mounted) return;
 
     // Update the completion key to force UI refresh
     setState(() {

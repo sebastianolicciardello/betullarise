@@ -10,29 +10,27 @@ class ThemeSelectorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Select theme:', style: TextStyle(fontSize: 18.sp)),
-        RadioListTile<ThemeMode>(
-          title: const Text('Automatic'),
-          value: ThemeMode.system,
-          groupValue: themeNotifier.themeMode,
-          onChanged: (m) => m != null ? themeNotifier.setThemeMode(m) : null,
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Light'),
-          value: ThemeMode.light,
-          groupValue: themeNotifier.themeMode,
-          onChanged: (m) => m != null ? themeNotifier.setThemeMode(m) : null,
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Dark'),
-          value: ThemeMode.dark,
-          groupValue: themeNotifier.themeMode,
-          onChanged: (m) => m != null ? themeNotifier.setThemeMode(m) : null,
-        ),
-      ],
+    return RadioGroup<ThemeMode>(
+      groupValue: themeNotifier.themeMode,
+      onChanged: (m) => m != null ? themeNotifier.setThemeMode(m) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Select theme:', style: TextStyle(fontSize: 18.sp)),
+          RadioListTile<ThemeMode>(
+            title: const Text('Automatic'),
+            value: ThemeMode.system,
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Light'),
+            value: ThemeMode.light,
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Dark'),
+            value: ThemeMode.dark,
+          ),
+        ],
+      ),
     );
   }
 }

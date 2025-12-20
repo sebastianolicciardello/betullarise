@@ -230,7 +230,9 @@ class AutoBackupSectionWidget extends StatelessWidget {
                         final success =
                             await autoBackupProvider
                                 .checkAndPerformAutoBackup();
-                        Navigator.of(context).pop(); // Close loading dialog
+                        if (context.mounted) {
+                          Navigator.of(context).pop(); // Close loading dialog
+                        }
 
                         if (context.mounted) {
                           if (success) {
@@ -250,7 +252,9 @@ class AutoBackupSectionWidget extends StatelessWidget {
                           }
                         }
                       } catch (e) {
-                        Navigator.of(context).pop(); // Close loading dialog
+                        if (context.mounted) {
+                          Navigator.of(context).pop(); // Close loading dialog
+                        }
                         if (context.mounted) {
                           dialogService.showResultDialog(
                             context,
@@ -314,11 +318,13 @@ class AutoBackupSectionWidget extends StatelessWidget {
                                 if (success) {
                                   final backupFiles =
                                       await autoBackupProvider.getBackupFiles();
-                                  dialogService.showResultDialog(
-                                    context,
-                                    'Backup Complete',
-                                    'Your data has been backed up successfully.\n\nBackup location:\n${autoBackupProvider.backupFolderPath}\n\nTotal backups: ${backupFiles.length}',
-                                  );
+                                  if (context.mounted) {
+                                    dialogService.showResultDialog(
+                                      context,
+                                      'Backup Complete',
+                                      'Your data has been backed up successfully.\n\nBackup location:\n${autoBackupProvider.backupFolderPath}\n\nTotal backups: ${backupFiles.length}',
+                                    );
+                                  }
                                 } else {
                                   final errorMessage =
                                       autoBackupProvider.lastError ??

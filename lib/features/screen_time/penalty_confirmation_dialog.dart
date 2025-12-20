@@ -119,32 +119,32 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
         widget.usage,
       );
 
-      if (success && mounted) {
+      if (success) {
         // Aggiorna la lista dei giorni non confermati
         await screenTimeProvider.checkForUnconfirmedDays();
 
-        // Chiudi il dialog
-        Navigator.of(context).pop(true);
+        if (context.mounted) {
+          // Chiudi il dialog
+          Navigator.of(context).pop(true);
 
-        // Mostra messaggio di successo
-        if (mounted) {
+          // Mostra messaggio di successo
           SnackbarService.showSuccessSnackbar(
             context,
             'Penalità di ${widget.usage.calculatedPenalty.toStringAsFixed(2)} punti applicata!',
           );
         }
-      } else if (mounted) {
+      } else if (context.mounted) {
         SnackbarService.showErrorSnackbar(
           context,
           'Errore nell\'applicazione della penalità',
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         SnackbarService.showErrorSnackbar(context, 'Errore: $e');
       }
     } finally {
-      if (mounted) {
+      if (context.mounted) {
         setState(() => _isApplying = false);
       }
     }

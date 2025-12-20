@@ -78,7 +78,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
   Future<bool> _onWillPop() async {
     if (_isShowingDiscardDialog) return false;
     if (!_isDirty) return true;
-    
+
     _isShowingDiscardDialog = true;
     final shouldDiscard = await _dialogService.showConfirmDialog(
       context,
@@ -89,7 +89,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       isDangerous: true,
     );
     _isShowingDiscardDialog = false;
-    
+
     return shouldDiscard == true;
   }
 
@@ -150,10 +150,7 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
       });
 
       if (mounted) {
-        SnackbarService.showErrorSnackbar(
-          context,
-          'Error: ${e.toString()}',
-        );
+        SnackbarService.showErrorSnackbar(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -294,46 +291,43 @@ class _RewardDetailPageState extends State<RewardDetailPage> {
                             SizedBox(width: 8.w),
                             InfoTooltip(
                               title: 'Reward Types',
-                              message: 'Single: Simple rewards that cost the base points to redeem. Perfect for rewards like "watch a movie" or "buy a coffee".\n\nMultipler: Rewards with a multiplier based on quantity or value. For example, "Buy snacks" - if you set multiplier to 1 you spend the base points, if you set 3 you spend 3x the points for more expensive snacks. Great for scalable rewards like shopping, entertainment, or treats.',
+                              message:
+                                  'Single: Simple rewards that cost the base points to redeem. Perfect for rewards like "watch a movie" or "buy a coffee".\n\nMultipler: Rewards with a multiplier based on quantity or value. For example, "Buy snacks" - if you set multiplier to 1 you spend the base points, if you set 3 you spend 3x the points for more expensive snacks. Great for scalable rewards like shopping, entertainment, or treats.',
                             ),
                           ],
                         ),
                         SizedBox(height: 8.h),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: RadioListTile<String>(
-                                title: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: const Text('Single'),
+                        RadioGroup<String>(
+                          groupValue: _selectedType,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: const Text('Single'),
+                                  ),
+                                  value: 'single',
                                 ),
-                                value: 'single',
-                                groupValue: _selectedType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedType = value!;
-                                  });
-                                },
                               ),
-                            ),
-                            Expanded(
-                              child: RadioListTile<String>(
-                                title: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: const Text('Multipler'),
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: const Text('Multipler'),
+                                  ),
+                                  value: 'multipler',
                                 ),
-                                value: 'multipler',
-                                groupValue: _selectedType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedType = value!;
-                                  });
-                                },
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         SizedBox(height: 12.h),
                         TextFormField(

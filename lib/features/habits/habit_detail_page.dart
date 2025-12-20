@@ -387,41 +387,37 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           ],
                         ),
                         SizedBox(height: 8.h),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: RadioListTile<String>(
-                                title: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: const Text('Single'),
+                        RadioGroup<String>(
+                          groupValue: _selectedType,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: const Text('Single'),
+                                  ),
+                                  value: 'single',
                                 ),
-                                value: 'single',
-                                groupValue: _selectedType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedType = value!;
-                                  });
-                                },
                               ),
-                            ),
-                            Expanded(
-                              child: RadioListTile<String>(
-                                title: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: const Text('Multipler'),
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: const Text('Multipler'),
+                                  ),
+                                  value: 'multipler',
                                 ),
-                                value: 'multipler',
-                                groupValue: _selectedType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedType = value!;
-                                  });
-                                },
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         SizedBox(height: 12.h),
                         Row(
