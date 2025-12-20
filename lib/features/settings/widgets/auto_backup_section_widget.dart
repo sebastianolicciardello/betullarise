@@ -137,8 +137,10 @@ class AutoBackupSectionWidget extends StatelessWidget {
                     width: double.infinity,
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      color: Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Column(
@@ -178,8 +180,10 @@ class AutoBackupSectionWidget extends StatelessWidget {
                     width: double.infinity,
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      border: Border.all(color: Colors.green.withOpacity(0.3)),
+                      color: Colors.green.withValues(alpha: 0.1),
+                      border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Row(

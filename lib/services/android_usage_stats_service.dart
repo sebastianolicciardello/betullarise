@@ -3,25 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:app_usage/app_usage.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 
 /// Servizio per gestire le statistiche di utilizzo delle app su Android
 class AndroidUsageStatsService {
   static const String _tag = 'AndroidUsageStatsService';
-
-  /// Ottiene la versione di Android del dispositivo
-  Future<int> _getAndroidVersion() async {
-    if (!Platform.isAndroid) return 0;
-
-    try {
-      final deviceInfo = DeviceInfoPlugin();
-      final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.version.sdkInt;
-    } catch (e) {
-      debugPrint('$_tag: Error getting Android version: $e');
-      return 0;
-    }
-  }
 
   /// Controlla se il permesso PACKAGE_USAGE_STATS è stato concesso
   Future<bool> isUsageStatsPermissionGranted() async {
@@ -75,23 +60,6 @@ class AndroidUsageStatsService {
         '$_tag: Exception may not be permission-related, assuming granted',
       );
       return true;
-    }
-  }
-
-  /// Controlla il permesso provando ad accedere ai dati con timeout (fallback)
-  Future<bool> _checkPermissionByAccess() async {
-    try {
-      final testDate = DateTime.now();
-      final startDate = DateTime(testDate.year, testDate.month, testDate.day);
-      final endDate = startDate.add(const Duration(days: 1));
-
-      // Prova ad ottenere i dati di utilizzo - se riesce, il permesso è concesso
-      await AppUsage().getAppUsage(startDate, endDate);
-      debugPrint('$_tag: Usage stats permission granted (fallback method)');
-      return true;
-    } catch (e) {
-      debugPrint('$_tag: Permission check failed: $e');
-      return false;
     }
   }
 

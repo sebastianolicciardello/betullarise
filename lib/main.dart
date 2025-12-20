@@ -179,12 +179,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _openScreenTime(BuildContext context) {
-    setState(() {
-      _currentIndex = 2; // Screen Time is now at index 2
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Use Consumer to access total points from the provider
@@ -251,7 +245,7 @@ class _HomePageState extends State<HomePage> {
             selectedItemColor: ColorScheme.of(context).primary,
             unselectedItemColor: ColorScheme.of(
               context,
-            ).onSurface.withOpacity(0.6),
+            ).onSurface.withValues(alpha: 0.6),
             backgroundColor: Theme.of(context).colorScheme.surface,
             type: BottomNavigationBarType.fixed,
             items: [

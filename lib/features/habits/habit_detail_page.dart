@@ -736,12 +736,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                             : null,
                                     activeThumbColor:
                                         Theme.of(context).colorScheme.primary,
-                                    inactiveThumbColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.5),
-                                    inactiveTrackColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.1),
+                                    inactiveThumbColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.5),
+                                    inactiveTrackColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.1),
                                   ),
                                   SizedBox(width: 8.w),
                                   Expanded(

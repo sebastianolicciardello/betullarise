@@ -72,22 +72,6 @@ class _HabitsPageState extends State<HabitsPage> {
     });
   }
 
-  String _formatDate(int timestamp) {
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Today at ${DateFormat('HH:mm').format(date)}';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday at ${DateFormat('HH:mm').format(date)}';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago at ${DateFormat('HH:mm').format(date)}';
-    } else {
-      return DateFormat('dd/MM/yyyy HH:mm').format(date);
-    }
-  }
-
   Future<void> _loadHabits() async {
     setState(() {
       _isLoading = true;
@@ -861,7 +845,7 @@ class _HabitsPageState extends State<HabitsPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('${action} "${habit.title}"?'),
+              title: Text('$action "${habit.title}"?'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
