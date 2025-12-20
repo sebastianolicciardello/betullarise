@@ -104,6 +104,34 @@ class _HabitsPageState extends State<HabitsPage> {
     });
   }
 
+  Future<bool> _shouldShowGreenBorder(Habit habit) async {
+    if (habit.id == null) return false;
+
+    final todaysCompletions = await _dbHelper.countTodaysCompletions(habit.id!);
+
+    // Condition 1: Single habit completed at least once today
+    if (habit.type.startsWith('single') && todaysCompletions > 0) {
+      return true;
+    }
+
+    // Condition 2: Multipler habit without goal completed at least once today
+    if (habit.type.startsWith('multipler') &&
+        habit.goal == null &&
+        todaysCompletions > 0) {
+      return true;
+    }
+
+    // Condition 3: Multipler habit with goal completed today (goal reached)
+    if (habit.type.startsWith('multipler') && habit.goal != null) {
+      final todaysProgress = await _dbHelper.getTodaysProgress(habit.id!);
+      if (todaysProgress >= habit.goal!) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,258 +245,283 @@ class _HabitsPageState extends State<HabitsPage> {
     const double minCardHeight = 56;
     const double normalCardHeight = 120;
 
-    return Card(
-      key: ValueKey('habit_${habit.id}_${_habitCompletionKeys[habit.id] ?? 0}'),
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.primary,
-          width: 2,
-        ),
-      ),
-      child: InkWell(
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HabitDetailPage(habit: habit),
-            ),
-          );
-          if (result == true) {
-            _loadHabits();
-          }
-        },
-        child: Container(
-          constraints: BoxConstraints(
-            minHeight: hasDescription ? normalCardHeight : minCardHeight,
+    return FutureBuilder<bool>(
+      future: _shouldShowGreenBorder(habit),
+      builder: (context, snapshot) {
+        final shouldShowGreen = snapshot.data ?? false;
+        return Card(
+          key: ValueKey(
+            'habit_${habit.id}_${_habitCompletionKeys[habit.id] ?? 0}',
           ),
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            habit.title,
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        // Show fire icon for streak if enabled
-                        if ((habit.type.startsWith('single') &&
-                                habit.showStreak) ||
-                            (habit.type.startsWith('multipler') &&
-                                habit.showStreakMultiplier))
-                          FutureBuilder<bool>(
-                            future:
-                                habit.type.startsWith('single')
-                                    ? _dbHelper.hasStreak(habit.id!)
-                                    : _dbHelper.hasStreakMultiplier(habit.id!),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const SizedBox.shrink();
-                              }
-                              if (snapshot.hasData && snapshot.data == true) {
-                                return Icon(
-                                  Icons.local_fire_department,
-                                  color: Colors.orange,
-                                  size: 16.sp,
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                        // Show dot indicating if yesterday was completed
-                        if ((habit.type.startsWith('single') &&
-                                habit.showStreak) ||
-                            (habit.type.startsWith('multipler') &&
-                                habit.showStreakMultiplier))
-                          FutureBuilder<bool>(
-                            future:
-                                habit.type.startsWith('single')
-                                    ? _dbHelper.wasCompletedYesterday(habit.id!)
-                                    : _dbHelper.wasGoalReachedYesterday(
-                                      habit.id!,
-                                    ),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                      ConnectionState.waiting ||
-                                  snapshot.data != true) {
-                                return const SizedBox.shrink();
-                              }
-                              return Container(
-                                width: 8.sp,
-                                height: 8.sp,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.green,
-                                ),
-                              );
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                  Icon(typeIcon, size: 16.sp),
-                  SizedBox(width: 12.w),
-                ],
+          margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.r),
+            side: BorderSide(
+              color:
+                  shouldShowGreen
+                      ? Colors.green
+                      : Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+          ),
+          child: InkWell(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HabitDetailPage(habit: habit),
+                ),
+              );
+              if (result == true) {
+                _loadHabits();
+              }
+            },
+            child: Container(
+              constraints: BoxConstraints(
+                minHeight: hasDescription ? normalCardHeight : minCardHeight,
               ),
-              if (hasDescription) ...[
-                SizedBox(height: 8.h),
-                Builder(
-                  builder: (context) {
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isExpanded = _expandedCards.contains(habit.id);
-                        final span = TextSpan(
-                          text: habit.description,
-                          style: TextStyle(fontSize: 14.sp),
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                habit.title,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            // Show fire icon for streak if enabled
+                            if ((habit.type.startsWith('single') &&
+                                    habit.showStreak) ||
+                                (habit.type.startsWith('multipler') &&
+                                    habit.showStreakMultiplier))
+                              FutureBuilder<bool>(
+                                future:
+                                    habit.type.startsWith('single')
+                                        ? _dbHelper.hasStreak(habit.id!)
+                                        : _dbHelper.hasStreakMultiplier(
+                                          habit.id!,
+                                        ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  if (snapshot.hasData &&
+                                      snapshot.data == true) {
+                                    return Icon(
+                                      Icons.local_fire_department,
+                                      color: Colors.orange,
+                                      size: 16.sp,
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            // Show dot indicating if yesterday was completed
+                            if ((habit.type.startsWith('single') &&
+                                    habit.showStreak) ||
+                                (habit.type.startsWith('multipler') &&
+                                    habit.showStreakMultiplier))
+                              FutureBuilder<bool>(
+                                future:
+                                    habit.type.startsWith('single')
+                                        ? _dbHelper.wasCompletedYesterday(
+                                          habit.id!,
+                                        )
+                                        : _dbHelper.wasGoalReachedYesterday(
+                                          habit.id!,
+                                        ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                          ConnectionState.waiting ||
+                                      snapshot.data != true) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Container(
+                                    width: 8.sp,
+                                    height: 8.sp,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.green,
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Icon(typeIcon, size: 16.sp),
+                      SizedBox(width: 12.w),
+                    ],
+                  ),
+                  if (hasDescription) ...[
+                    SizedBox(height: 8.h),
+                    Builder(
+                      builder: (context) {
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isExpanded = _expandedCards.contains(
+                              habit.id,
+                            );
+                            final span = TextSpan(
+                              text: habit.description,
+                              style: TextStyle(fontSize: 14.sp),
+                            );
+                            final tp = TextPainter(
+                              text: span,
+                              maxLines: maxDescriptionLines,
+                              textDirection: ui.TextDirection.ltr,
+                            )..layout(maxWidth: constraints.maxWidth);
+                            final isOverflowing = tp.didExceedMaxLines;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  habit.description,
+                                  maxLines:
+                                      isExpanded ? null : maxDescriptionLines,
+                                  overflow:
+                                      isExpanded
+                                          ? TextOverflow.visible
+                                          : TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 14.sp),
+                                ),
+                                if (isOverflowing) ...[
+                                  SizedBox(height: 4.h),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isExpanded) {
+                                          _expandedCards.remove(habit.id);
+                                        } else {
+                                          _expandedCards.add(habit.id!);
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(4.r),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.w,
+                                        vertical: 2.h,
+                                      ),
+                                      child: Text(
+                                        isExpanded
+                                            ? '▲ Show less'
+                                            : '▼ Show more',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.7),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            );
+                          },
                         );
-                        final tp = TextPainter(
-                          text: span,
-                          maxLines: maxDescriptionLines,
-                          textDirection: ui.TextDirection.ltr,
-                        )..layout(maxWidth: constraints.maxWidth);
-                        final isOverflowing = tp.didExceedMaxLines;
+                      },
+                    ),
+                    SizedBox(height: 12.h),
+                  ] else ...[
+                    SizedBox(height: 8.h),
+                  ],
+                  // Progress bar for multipler habits with goals
+                  if (habit.type.startsWith('multipler') &&
+                      habit.goal != null &&
+                      habit.goal! > 0) ...[
+                    FutureBuilder<double>(
+                      future: _dbHelper.getTodaysProgress(habit.id!),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox.shrink();
+                        }
+                        final currentProgress = snapshot.data ?? 0.0;
+                        final goal = habit.goal!.toDouble();
+                        final progressValue = (currentProgress / goal).clamp(
+                          0.0,
+                          1.0,
+                        );
+
+                        // Format numbers: show decimal only if not .0
+                        String formatNumber(double num) {
+                          return num % 1 == 0
+                              ? num.toInt().toString()
+                              : num.toStringAsFixed(1);
+                        }
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              habit.description,
-                              maxLines: isExpanded ? null : maxDescriptionLines,
-                              overflow:
-                                  isExpanded
-                                      ? TextOverflow.visible
-                                      : TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14.sp),
-                            ),
-                            if (isOverflowing) ...[
-                              SizedBox(height: 4.h),
-                              InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    if (isExpanded) {
-                                      _expandedCards.remove(habit.id);
-                                    } else {
-                                      _expandedCards.add(habit.id!);
-                                    }
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(4.r),
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 4.w,
-                                    vertical: 2.h,
-                                  ),
-                                  child: Text(
-                                    isExpanded ? '▲ Show less' : '▼ Show more',
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.7),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
+                              'Progress: ${formatNumber(currentProgress)}/${formatNumber(goal)}',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ],
+                            ),
+                            SizedBox(height: 4.h),
+                            LinearProgressIndicator(
+                              value: progressValue,
+                              backgroundColor: Colors.grey[300],
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                progressValue >= 1.0
+                                    ? Colors.green
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              minHeight: 6.h,
+                            ),
+                            SizedBox(height: 12.h),
                           ],
                         );
                       },
-                    );
-                  },
-                ),
-                SizedBox(height: 12.h),
-              ] else ...[
-                SizedBox(height: 8.h),
-              ],
-              // Progress bar for multipler habits with goals
-              if (habit.type.startsWith('multipler') &&
-                  habit.goal != null &&
-                  habit.goal! > 0) ...[
-                FutureBuilder<double>(
-                  future: _dbHelper.getTodaysProgress(habit.id!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox.shrink();
-                    }
-                    final currentProgress = snapshot.data ?? 0.0;
-                    final goal = habit.goal!.toDouble();
-                    final progressValue = (currentProgress / goal).clamp(
-                      0.0,
-                      1.0,
-                    );
-
-                    // Format numbers: show decimal only if not .0
-                    String formatNumber(double num) {
-                      return num % 1 == 0
-                          ? num.toInt().toString()
-                          : num.toStringAsFixed(1);
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Progress: ${formatNumber(currentProgress)}/${formatNumber(goal)}',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        LinearProgressIndicator(
-                          value: progressValue,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            progressValue >= 1.0
-                                ? Colors.green
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                          minHeight: 6.h,
-                        ),
-                        SizedBox(height: 12.h),
-                      ],
-                    );
-                  },
-                ),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (habit.score > 0)
-                          Text('Score: +${habit.score.toStringAsFixed(2)}'),
-                        if (habit.penalty > 0)
-                          Text('Penalty: -${habit.penalty.toStringAsFixed(2)}'),
-                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.circle_outlined, size: 24.sp),
-                    onPressed: () {
-                      _handleHabitCompletion(habit);
-                    },
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (habit.score > 0)
+                              Text('Score: +${habit.score.toStringAsFixed(2)}'),
+                            if (habit.penalty > 0)
+                              Text(
+                                'Penalty: -${habit.penalty.toStringAsFixed(2)}',
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.circle_outlined, size: 24.sp),
+                        onPressed: () {
+                          _handleHabitCompletion(habit);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -33,7 +33,7 @@ class InterfaceSectionWidget extends StatelessWidget {
                     labelText: 'Theme',
                     border: OutlineInputBorder(),
                   ),
-                  value: themeNotifier.themeMode,
+                  initialValue: themeNotifier.themeMode,
                   items: const [
                     DropdownMenuItem(
                       value: ThemeMode.system,
@@ -65,7 +65,7 @@ class InterfaceSectionWidget extends StatelessWidget {
                     labelText: 'First Day of Week',
                     border: OutlineInputBorder(),
                   ),
-                  value: firstDayProvider.firstDayOfWeek,
+                  initialValue: firstDayProvider.firstDayOfWeek,
                   items: const [
                     DropdownMenuItem(
                       value: WeekStartDay.monday,
@@ -95,7 +95,7 @@ class InterfaceSectionWidget extends StatelessWidget {
                     tooltipProvider.setShowTooltips(value);
                   },
                   contentPadding: EdgeInsets.zero,
-                  activeColor: Theme.of(context).colorScheme.primary,
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
                   activeTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                 );
               },

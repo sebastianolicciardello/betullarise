@@ -88,7 +88,7 @@ class RuleCard extends StatelessWidget {
                           style: const TextStyle(fontSize: 12),
                         ),
                         backgroundColor:
-                            Theme.of(context).colorScheme.surfaceVariant,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                       );
                     }).toList(),
               ),

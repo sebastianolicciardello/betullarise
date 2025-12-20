@@ -461,7 +461,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     });
                                   },
                                   // Theme color
-                                  activeColor:
+                                  activeThumbColor:
                                       Theme.of(context).colorScheme.primary,
                                   inactiveThumbColor: Theme.of(context)
                                       .colorScheme
@@ -536,7 +536,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     });
                                   },
                                   // Theme color
-                                  activeColor:
+                                  activeThumbColor:
                                       Theme.of(context).colorScheme.primary,
                                   inactiveThumbColor: Theme.of(
                                     context,
@@ -734,7 +734,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                               });
                                             }
                                             : null,
-                                    activeColor:
+                                    activeThumbColor:
                                         Theme.of(context).colorScheme.primary,
                                     inactiveThumbColor: Theme.of(
                                       context,
@@ -788,7 +788,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                         _showStreak = value;
                                       });
                                     },
-                                    activeColor:
+                                    activeThumbColor:
                                         Theme.of(context).colorScheme.primary,
                                     inactiveThumbColor: Theme.of(context)
                                         .colorScheme

@@ -57,7 +57,7 @@ class AutoBackupSectionWidget extends StatelessWidget {
                     ),
                   ),
                   value: autoBackupProvider.isEnabled,
-                  activeColor: Theme.of(context).colorScheme.primary,
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
                   onChanged: (value) {
                     autoBackupProvider.setEnabled(value);
                   },

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../model/screen_time_rule.dart';
 import '../model/daily_screen_usage.dart';
