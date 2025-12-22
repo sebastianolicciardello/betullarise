@@ -4,6 +4,7 @@ import '../model/daily_screen_usage.dart';
 import '../database/screen_time_rules_database_helper.dart';
 import '../services/android_usage_stats_service.dart';
 import '../services/screen_time_calculation_service.dart';
+import '../provider/points_provider.dart';
 
 /// Provider to manage screen time state
 class ScreenTimeProvider with ChangeNotifier {
@@ -168,13 +169,22 @@ class ScreenTimeProvider with ChangeNotifier {
   }
 
   /// Update an existing rule
-  Future<bool> updateRule(ScreenTimeRule rule) async {
+  Future<bool> updateRule(
+    ScreenTimeRule rule,
+    PointsProvider pointsProvider,
+  ) async {
     try {
       setLoading(true);
       clearError();
 
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
       await dbHelper.updateScreenTimeRule(rule);
+
+      // Recalculate penalties for past usages with the updated rule
+      await _calculationService.recalculatePenaltiesForRule(
+        rule,
+        pointsProvider,
+      );
 
       // Reload rules
       await loadRules();

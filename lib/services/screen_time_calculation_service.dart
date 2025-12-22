@@ -267,6 +267,70 @@ class ScreenTimeCalculationService {
     }
   }
 
+  /// Recalculate penalties for a specific rule after rule update
+  Future<void> recalculatePenaltiesForRule(
+    ScreenTimeRule updatedRule,
+    PointsProvider pointsProvider,
+  ) async {
+    try {
+      debugPrint('$_tag: Recalculating penalties for rule ${updatedRule.name}');
+
+      final dbHelper = DailyScreenUsageDatabaseHelper.instance;
+      final usages = await dbHelper.queryDailyUsageByRule(
+        updatedRule.id!,
+        limitDays: 365,
+      ); // Get all past usages
+
+      for (final usage in usages) {
+        // Recalculate penalty with new rule parameters
+        final oldPenalty = usage.calculatedPenalty;
+
+        usage.calculateExceededMinutesAndPenalty(
+          updatedRule.dailyTimeLimitMinutes,
+          updatedRule.penaltyPerMinuteExtra,
+        );
+
+        final newPenalty = usage.calculatedPenalty;
+
+        if (usage.penaltyConfirmed) {
+          // For confirmed penalties, adjust points if changed
+          if (oldPenalty != newPenalty) {
+            final penaltyDifference = newPenalty - oldPenalty;
+
+            if (penaltyDifference != 0.0) {
+              // Create adjustment point
+              final adjustmentPoint = Point(
+                points: penaltyDifference,
+                type: 'screen_time_adjustment',
+                referenceId: usage.id,
+                insertTime: DateTime.now().millisecondsSinceEpoch,
+              );
+
+              await pointsProvider.savePoints(adjustmentPoint);
+              debugPrint(
+                '$_tag: Adjusted points by $penaltyDifference for confirmed penalty on ${usage.date}',
+              );
+            }
+          }
+        } else {
+          // For unconfirmed, just update the calculation
+          debugPrint(
+            '$_tag: Updated unconfirmed penalty on ${usage.date} from $oldPenalty to $newPenalty',
+          );
+        }
+
+        // Update the usage record with new penalty
+        await dbHelper.updateDailyScreenUsage(usage);
+      }
+
+      debugPrint(
+        '$_tag: Finished recalculating penalties for rule ${updatedRule.name}',
+      );
+    } catch (e) {
+      debugPrint('$_tag: Error recalculating penalties: $e');
+    }
+  }
+
   /// Get statistics for a specific rule
   Future<Map<String, dynamic>> getRuleStatistics(int ruleId) async {
     try {

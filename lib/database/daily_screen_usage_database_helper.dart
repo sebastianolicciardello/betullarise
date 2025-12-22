@@ -259,6 +259,27 @@ class DailyScreenUsageDatabaseHelper {
     return List.generate(maps.length, (i) => DailyScreenUsage.fromMap(maps[i]));
   }
 
+  // Query confirmed daily usage for a specific rule
+  Future<List<DailyScreenUsage>> queryConfirmedDailyUsageByRule(
+    int ruleId,
+  ) async {
+    Database db = await instance.database;
+    // Check if the table exists before querying
+    bool exists = await _doesTableExist(db, tableDailyScreenUsage);
+    if (!exists) {
+      return [];
+    }
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableDailyScreenUsage,
+      where: '$columnRuleId = ? AND $columnPenaltyConfirmed = ?',
+      whereArgs: [ruleId, 1],
+      orderBy: '$columnDate DESC',
+    );
+
+    return List.generate(maps.length, (i) => DailyScreenUsage.fromMap(maps[i]));
+  }
+
   // Query all unconfirmed daily usage (chronological order)
   Future<List<DailyScreenUsage>> queryUnconfirmedDailyUsage() async {
     Database db = await instance.database;

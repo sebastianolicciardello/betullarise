@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../model/screen_time_rule.dart';
 import '../../provider/screen_time_provider.dart';
+import '../../provider/points_provider.dart';
 import '../../services/ui/snackbar_service.dart';
 import '../../services/ui/dialog_service.dart';
 import 'widgets/app_selector_widget.dart';
@@ -73,8 +74,15 @@ class _EditRulePageState extends State<EditRulePage> {
         context,
         listen: false,
       );
+      final pointsProvider = Provider.of<PointsProvider>(
+        context,
+        listen: false,
+      );
 
-      final success = await screenTimeProvider.updateRule(updatedRule);
+      final success = await screenTimeProvider.updateRule(
+        updatedRule,
+        pointsProvider,
+      );
 
       if (success && mounted) {
         SnackbarService.showSuccessSnackbar(
