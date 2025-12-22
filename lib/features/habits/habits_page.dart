@@ -463,7 +463,11 @@ class _HabitsPageState extends State<HabitsPage> {
                             SizedBox(height: 4.h),
                             LinearProgressIndicator(
                               value: progressValue,
-                              backgroundColor: Colors.grey[300],
+                              backgroundColor:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.grey[700]
+                                      : Colors.grey[300],
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 progressValue >= 1.0
                                     ? Colors.green
