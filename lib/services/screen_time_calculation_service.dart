@@ -121,6 +121,19 @@ class ScreenTimeCalculationService {
       final List<DailyScreenUsage> results = [];
 
       for (final rule in activeRules) {
+        // Check if penalty is already confirmed for today
+        final dbHelper = DailyScreenUsageDatabaseHelper.instance;
+        final dateStr = _formatDate(date);
+        final existingUsage = await dbHelper.queryDailyUsageByRuleAndDate(
+          rule.id!,
+          dateStr,
+        );
+
+        if (existingUsage != null && existingUsage.penaltyConfirmed) {
+          // Penalty already accepted, skip calculation
+          continue;
+        }
+
         // Calculate total usage for the packages in this rule
         int totalUsage = 0;
         for (final package in rule.appPackages) {

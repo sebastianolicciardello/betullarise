@@ -31,6 +31,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
     final penalty = widget.usage.calculatedPenalty;
 
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text('Penalty for ${widget.rule.name}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -53,7 +54,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
           Text(
             'Minutes exceeded: $exceededMinutes',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.orange,
+              color: Colors.yellow,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -66,9 +67,9 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Do you want to apply this penalty to your score?',
-            style: TextStyle(fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),

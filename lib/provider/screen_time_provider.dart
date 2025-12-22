@@ -124,10 +124,37 @@ class ScreenTimeProvider with ChangeNotifier {
       clearError();
 
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
-      await dbHelper.insertScreenTimeRule(rule);
+      final id = await dbHelper.insertScreenTimeRule(rule);
+      rule.id = id;
 
       // Reload rules
       await loadRules();
+
+      // Immediately calculate penalties for today with the new rule
+      try {
+        final today = DateTime.now();
+        final todayPenalties = await calculatePenaltiesForDate(today);
+
+        // Save the calculated penalties
+        for (final usage in todayPenalties) {
+          if (usage.calculatedPenalty < 0) {
+            // Only save if there's a penalty to apply
+            await saveDailyUsage(usage);
+          }
+        }
+
+        // Reload unconfirmed days to include new penalties
+        await checkForUnconfirmedDays();
+
+        debugPrint(
+          'ScreenTimeProvider: Recalculated penalties for today after adding rule',
+        );
+      } catch (e) {
+        debugPrint(
+          'ScreenTimeProvider: Error recalculating penalties after adding rule: $e',
+        );
+        // Don't fail the rule addition if recalculation fails
+      }
 
       debugPrint('ScreenTimeProvider: Added rule ${rule.name}');
       return true;

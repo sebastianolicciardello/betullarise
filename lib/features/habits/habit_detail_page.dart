@@ -459,13 +459,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                   // Theme color
                                   activeThumbColor:
                                       Theme.of(context).colorScheme.primary,
+                                  activeTrackColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.3),
                                   inactiveThumbColor: Theme.of(context)
                                       .colorScheme
                                       .onSurface
                                       .withValues(alpha: 0.5),
-                                  inactiveTrackColor: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withAlpha(0x1A),
+                                  inactiveTrackColor: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.1),
                                 ),
                                 SizedBox(width: 8.w),
                                 Expanded(
@@ -534,12 +538,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                   // Theme color
                                   activeThumbColor:
                                       Theme.of(context).colorScheme.primary,
-                                  inactiveThumbColor: Theme.of(
+                                  activeTrackColor: Theme.of(
                                     context,
-                                  ).colorScheme.onSurface.withAlpha(0x80),
-                                  inactiveTrackColor: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withAlpha(0x1A),
+                                  ).colorScheme.primary.withValues(alpha: 0.3),
+                                  inactiveThumbColor: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.5),
+                                  inactiveTrackColor: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.1),
                                 ),
                                 SizedBox(width: 8.w),
                                 Expanded(
@@ -732,6 +741,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                             : null,
                                     activeThumbColor:
                                         Theme.of(context).colorScheme.primary,
+                                    activeTrackColor: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.3),
                                     inactiveThumbColor: Theme.of(context)
                                         .colorScheme
                                         .onSurface
@@ -788,13 +801,18 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                     },
                                     activeThumbColor:
                                         Theme.of(context).colorScheme.primary,
+                                    activeTrackColor: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.3),
                                     inactiveThumbColor: Theme.of(context)
                                         .colorScheme
                                         .onSurface
                                         .withValues(alpha: 0.5),
-                                    inactiveTrackColor: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withAlpha(0x1A),
+                                    inactiveTrackColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.1),
                                   ),
                                   SizedBox(width: 8.w),
                                   Expanded(

@@ -22,6 +22,7 @@ class _AppSelectorWidgetState extends State<AppSelectorWidget> {
   List<AppInfo> _installedApps = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  bool _showSystemApps = false;
   final AndroidUsageStatsService _usageStatsService =
       AndroidUsageStatsService();
 
@@ -224,10 +225,17 @@ class _AppSelectorWidgetState extends State<AppSelectorWidget> {
   }
 
   List<AppInfo> get _filteredApps {
-    if (_searchQuery.isEmpty) {
-      return _installedApps;
+    var apps = _installedApps;
+
+    // Filter out system apps if not showing them
+    if (!_showSystemApps) {
+      apps = apps.where((app) => !app.isSystemApp).toList();
     }
-    return _installedApps.where((app) {
+
+    if (_searchQuery.isEmpty) {
+      return apps;
+    }
+    return apps.where((app) {
       final query = _searchQuery.toLowerCase();
       return app.appName.toLowerCase().contains(query) ||
           app.packageName.toLowerCase().contains(query);
@@ -303,164 +311,206 @@ class _AppSelectorWidgetState extends State<AppSelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header with selection count
-        Padding(
-          padding: EdgeInsets.only(left: 16.w, bottom: 12.h),
-          child: Row(
-            children: [
-              Text(
-                'Select Apps',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  '${widget.selectedPackages.length} selected',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Selected apps preview
-        if (widget.selectedPackages.isNotEmpty) ...[
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with selection count
+          Padding(
+            padding: EdgeInsets.only(left: 16.w, bottom: 12.h),
+            child: Row(
               children: [
                 Text(
-                  'Selected Apps',
+                  'Select Apps',
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 8.h),
-                SizedBox(
-                  height: 150.h,
-                  child: SingleChildScrollView(
-                    child: Wrap(
-                      spacing: 6.w,
-                      runSpacing: 6.h,
-                      children:
-                          widget.selectedPackages.map((package) {
-                            final app =
-                                _installedApps
-                                    .where((a) => a.packageName == package)
-                                    .firstOrNull;
-                            return Chip(
-                              label: Text(
-                                app?.appName ?? package,
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                              onDeleted: () => _toggleAppSelection(package),
-                              deleteIcon: Icon(
-                                Icons.close,
-                                size: 16.sp,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.surface,
-                              side: BorderSide.none,
-                            );
-                          }).toList(),
+                const Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    '${widget.selectedPackages.length} selected',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 12.h),
-        ],
 
-        // Search bar
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search apps...',
-              prefixIcon: Icon(Icons.search, size: 20.sp),
-              border: OutlineInputBorder(
+          // Selected apps preview
+          if (widget.selectedPackages.isNotEmpty) ...[
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 12.h,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Selected Apps',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.15,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 6.w,
+                        runSpacing: 6.h,
+                        children:
+                            widget.selectedPackages.map((package) {
+                              final app =
+                                  _installedApps
+                                      .where((a) => a.packageName == package)
+                                      .firstOrNull;
+                              return Chip(
+                                label: Text(
+                                  app?.appName ?? package,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                                onDeleted: () => _toggleAppSelection(package),
+                                deleteIcon: Icon(
+                                  Icons.close,
+                                  size: 16.sp,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.surface,
+                                side: BorderSide.none,
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            onChanged: (value) => setState(() => _searchQuery = value),
+            SizedBox(height: 12.h),
+          ],
+
+          // Search bar
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search apps...',
+                prefixIcon: Icon(Icons.search, size: 20.sp),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
           ),
-        ),
 
-        SizedBox(height: 12.h),
+          SizedBox(height: 12.h),
 
-        // Apps list
-        Expanded(
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredApps.isEmpty
-                  ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.apps,
-                          size: 64.sp,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          _searchQuery.isEmpty
-                              ? 'No apps found'
-                              : 'No apps match the search',
-                          style: TextStyle(
-                            fontSize: 16.sp,
+          // Toggle for showing system apps
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                Text(
+                  'Show system apps',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const Spacer(),
+                Switch(
+                  value: _showSystemApps,
+                  onChanged: (value) => setState(() => _showSystemApps = value),
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                  activeTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  inactiveThumbColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  inactiveTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 12.h),
+
+          // Apps list
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.4,
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredApps.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.apps,
+                            size: 64.sp,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          SizedBox(height: 16.h),
+                          Text(
+                            _searchQuery.isEmpty
+                                ? 'No apps found'
+                                : 'No apps match the search',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: _filteredApps.length,
+                      itemBuilder: (context, index) {
+                        final app = _filteredApps[index];
+                        return _buildAppTile(app);
+                      },
                     ),
-                  )
-                  : ListView.builder(
-                    itemCount: _filteredApps.length,
-                    itemBuilder: (context, index) {
-                      final app = _filteredApps[index];
-                      return _buildAppTile(app);
-                    },
-                  ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

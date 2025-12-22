@@ -66,7 +66,10 @@ class _CreateRulePageState extends State<CreateRulePage> {
           context,
           'Rule "${rule.name}" created successfully!',
         );
-        Navigator.of(context).pop();
+
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
       } else if (context.mounted) {
         SnackbarService.showErrorSnackbar(context, 'Error creating the rule');
       }
@@ -215,19 +218,23 @@ class _CreateRulePageState extends State<CreateRulePage> {
               SizedBox(height: 24.h),
 
               // App selector
-              Container(
-                height: 600.h,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  borderRadius: BorderRadius.circular(8.r),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
                 ),
-                child: AppSelectorWidget(
-                  selectedPackages: _selectedPackages,
-                  onSelectionChanged: (packages) {
-                    setState(() => _selectedPackages = packages);
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  child: AppSelectorWidget(
+                    selectedPackages: _selectedPackages,
+                    onSelectionChanged: (packages) {
+                      setState(() => _selectedPackages = packages);
+                    },
+                  ),
                 ),
               ),
 

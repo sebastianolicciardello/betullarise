@@ -106,8 +106,14 @@ class MyApp extends StatelessWidget {
               onSecondary: Colors.white,
               error: Colors.red,
               onError: Colors.black,
-              surface: Colors.black,
+              surface: Color(0xFF0D0D0D),
               onSurface: Colors.white,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF0D0D0D),
+              foregroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
             ),
             textTheme: TextTheme(
               bodyLarge: TextStyle(color: Colors.white),

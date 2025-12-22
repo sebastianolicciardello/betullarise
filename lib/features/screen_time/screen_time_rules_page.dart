@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../model/screen_time_rule.dart';
 import '../../provider/screen_time_provider.dart';
 import '../../services/ui/snackbar_service.dart';
-import 'create_rule_page.dart';
+import 'edit_rule_page.dart';
 
 class ScreenTimeRulesPage extends StatefulWidget {
   const ScreenTimeRulesPage({super.key});
@@ -25,17 +25,6 @@ class _ScreenTimeRulesPageState extends State<ScreenTimeRulesPage> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const CreateRulePage()),
-              );
-            },
-            icon: Icon(Icons.add, size: 24.sp),
-            tooltip: 'Create new rule',
-          ),
-        ],
       ),
       body: Consumer<ScreenTimeProvider>(
         builder: (context, screenTimeProvider, child) {
@@ -91,32 +80,6 @@ class _ScreenTimeRulesPageState extends State<ScreenTimeRulesPage> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 32.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const CreateRulePage(),
-                  ),
-                );
-              },
-              icon: Icon(Icons.add, size: 20.sp),
-              label: Text('Create Rule', style: TextStyle(fontSize: 16.sp)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Theme.of(context).brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                foregroundColor:
-                    Theme.of(context).brightness == Brightness.light
-                        ? Colors.white
-                        : Colors.black,
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                textStyle: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -175,7 +138,16 @@ class _ScreenTimeRulesPageState extends State<ScreenTimeRulesPage> {
                       );
                     }
                   },
-                  activeColor: Theme.of(context).colorScheme.primary,
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                  activeTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  inactiveThumbColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  inactiveTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ],
             ),
@@ -245,10 +217,10 @@ class _ScreenTimeRulesPageState extends State<ScreenTimeRulesPage> {
               children: [
                 TextButton.icon(
                   onPressed: () {
-                    // TODO: Implement rule editing
-                    SnackbarService.showErrorSnackbar(
-                      context,
-                      'Rule editing not yet implemented',
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => EditRulePage(rule: rule),
+                      ),
                     );
                   },
                   icon: Icon(Icons.edit, size: 18.sp),

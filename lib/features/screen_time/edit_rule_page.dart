@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../model/screen_time_rule.dart';
 import '../../provider/screen_time_provider.dart';
 import '../../services/ui/snackbar_service.dart';
+import '../../services/ui/dialog_service.dart';
 import 'widgets/app_selector_widget.dart';
 
 class EditRulePage extends StatefulWidget {
@@ -95,6 +96,56 @@ class _EditRulePageState extends State<EditRulePage> {
     }
   }
 
+  Future<void> _deleteRule() async {
+    if (widget.rule.id == null) {
+      SnackbarService.showErrorSnackbar(
+        context,
+        'Cannot delete rule without ID',
+      );
+      return;
+    }
+
+    final confirmed = await DialogService().showConfirmDialog(
+      context,
+      'Delete Rule',
+      'Are you sure you want to delete this rule? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDangerous: true,
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final screenTimeProvider = Provider.of<ScreenTimeProvider>(
+        context,
+        listen: false,
+      );
+
+      final success = await screenTimeProvider.deleteRule(widget.rule.id!);
+
+      if (success && mounted) {
+        SnackbarService.showSuccessSnackbar(
+          context,
+          'Rule deleted successfully!',
+        );
+        Navigator.of(context).pop();
+      } else if (mounted) {
+        SnackbarService.showErrorSnackbar(context, 'Failed to delete rule');
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarService.showErrorSnackbar(context, 'Error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,6 +160,9 @@ class _EditRulePageState extends State<EditRulePage> {
                 ? Colors.black
                 : Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(icon: const Icon(Icons.delete), onPressed: _deleteRule),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),

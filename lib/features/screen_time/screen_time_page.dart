@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,6 @@ import '../../provider/screen_time_provider.dart';
 import '../../database/daily_screen_usage_database_helper.dart';
 import 'create_rule_page.dart';
 import 'edit_rule_page.dart';
-import 'screen_time_rules_page.dart';
 import 'widgets/rule_card.dart';
 import 'widgets/loading_indicator.dart';
 
@@ -18,6 +18,7 @@ class ScreenTimePage extends StatefulWidget {
 
 class _ScreenTimePageState extends State<ScreenTimePage> {
   Map<int, int> _todayUsageMap = {}; // ruleId -> todayUsageMinutes
+  Timer? _usageUpdateTimer;
 
   @override
   void initState() {
@@ -26,6 +27,19 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _performInitialCheck();
     });
+
+    // Set up periodic updates every 5 minutes
+    _usageUpdateTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      if (mounted) {
+        _calculateTodayUsage();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _usageUpdateTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _performInitialCheck() async {
@@ -140,9 +154,11 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const CreateRulePage()),
-          );
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute(builder: (context) => const CreateRulePage()),
+              )
+              .then((_) => _performInitialCheck());
         },
         tooltip: 'Create new rule',
         backgroundColor:
@@ -192,61 +208,6 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                 textAlign: TextAlign.center,
               ),
             SizedBox(height: 32.h),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const CreateRulePage(),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.add, size: 20.sp),
-                    label: Text(
-                      'Create Rule',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).brightness == Brightness.light
-                              ? Colors.black
-                              : Colors.white,
-                      foregroundColor:
-                          Theme.of(context).brightness == Brightness.light
-                              ? Colors.white
-                              : Colors.black,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      textStyle: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                if (screenTimeProvider.rules.isNotEmpty)
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ScreenTimeRulesPage(),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.settings, size: 24.sp),
-                    style: IconButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      padding: EdgeInsets.all(12.w),
-                    ),
-                  ),
-              ],
-            ),
           ],
         ),
       ),
@@ -356,13 +317,6 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Active Rules',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 12.h),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
