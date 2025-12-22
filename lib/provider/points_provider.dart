@@ -7,6 +7,7 @@ class PointsProvider with ChangeNotifier {
   double _totalPoints = 0;
   double _taskPoints = 0;
   double _habitPoints = 0;
+  double _screenTimePoints = 0;
   final PointsDatabaseHelper _databaseHelper;
 
   PointsProvider({PointsDatabaseHelper? databaseHelper})
@@ -15,6 +16,7 @@ class PointsProvider with ChangeNotifier {
   double get totalPoints => _totalPoints;
   double get taskPoints => _taskPoints;
   double get habitPoints => _habitPoints;
+  double get screenTimePoints => _screenTimePoints;
 
   // Load all points from the database
   Future<void> loadAllPoints() async {
@@ -22,6 +24,9 @@ class PointsProvider with ChangeNotifier {
       _totalPoints = await _databaseHelper.getTotalPoints();
       _taskPoints = await _databaseHelper.getTotalPointsByType('task');
       _habitPoints = await _databaseHelper.getTotalPointsByType('habit');
+      _screenTimePoints = await _databaseHelper.getTotalPointsByType(
+        'screen_time',
+      );
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading points: ${e.toString()}');

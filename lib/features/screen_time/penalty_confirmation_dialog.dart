@@ -31,27 +31,27 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
     final penalty = widget.usage.calculatedPenalty;
 
     return AlertDialog(
-      title: Text('Penalità ${widget.rule.name}'),
+      title: Text('Penalty for ${widget.rule.name}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Data: ${widget.usage.date}',
+            'Date: ${widget.usage.date}',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Tempo utilizzato: ${widget.usage.totalUsageMinutes} minuti',
+            'Time used: ${widget.usage.totalUsageMinutes} minutes',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           Text(
-            'Limite: ${widget.rule.dailyTimeLimitMinutes} minuti',
+            'Limit: ${widget.rule.dailyTimeLimitMinutes} minutes',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Minuti superati: $exceededMinutes',
+            'Minutes exceeded: $exceededMinutes',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Colors.orange,
               fontWeight: FontWeight.bold,
@@ -59,7 +59,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Penalità calcolata: ${penalty.toStringAsFixed(2)} punti',
+            'Calculated penalty: ${penalty.toStringAsFixed(2)} points',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.red,
               fontWeight: FontWeight.bold,
@@ -67,7 +67,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Vuoi applicare questa penalità al tuo punteggio?',
+            'Do you want to apply this penalty to your score?',
             style: TextStyle(fontSize: 14),
           ),
         ],
@@ -75,7 +75,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
       actions: [
         TextButton(
           onPressed: _isApplying ? null : () => _onSkip(context),
-          child: const Text('Salta'),
+          child: const Text('Skip'),
         ),
         ElevatedButton(
           onPressed: _isApplying ? null : () => _onApply(context),
@@ -93,7 +93,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                  : const Text('Applica Penalità'),
+                  : const Text('Apply Penalty'),
         ),
       ],
     );
@@ -113,35 +113,35 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
       );
       final calculationService = ScreenTimeCalculationService();
 
-      // Applica la penalità passando il points provider
+      // Apply the penalty passing the points provider
       final success = await calculationService.applyPenaltyToPoints(
         pointsProvider,
         widget.usage,
       );
 
       if (success) {
-        // Aggiorna la lista dei giorni non confermati
+        // Update the list of unconfirmed days
         await screenTimeProvider.checkForUnconfirmedDays();
 
         if (context.mounted) {
-          // Chiudi il dialog
+          // Close the dialog
           Navigator.of(context).pop(true);
 
-          // Mostra messaggio di successo
+          // Show success message
           SnackbarService.showSuccessSnackbar(
             context,
-            'Penalità di ${widget.usage.calculatedPenalty.toStringAsFixed(2)} punti applicata!',
+            'Penalty of ${widget.usage.calculatedPenalty.toStringAsFixed(2)} points applied!',
           );
         }
       } else if (context.mounted) {
         SnackbarService.showErrorSnackbar(
           context,
-          'Errore nell\'applicazione della penalità',
+          'Error applying the penalty',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        SnackbarService.showErrorSnackbar(context, 'Errore: $e');
+        SnackbarService.showErrorSnackbar(context, 'Error: $e');
       }
     } finally {
       if (context.mounted) {
@@ -151,7 +151,7 @@ class _PenaltyConfirmationDialogState extends State<PenaltyConfirmationDialog> {
   }
 
   void _onSkip(BuildContext context) {
-    // Chiudi il dialog senza applicare la penalità
+    // Close the dialog without applying the penalty
     Navigator.of(context).pop(false);
   }
 }

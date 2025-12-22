@@ -3,7 +3,7 @@ class ScreenTimeRule {
   String name; // "CHAT", "SOCIAL", custom
   List<String> appPackages; // Package names Android
   int dailyTimeLimitMinutes; // 60, 120, etc.
-  double penaltyPerMinuteExtra; // -0.5, -1.0, etc.
+  double penaltyPerMinuteExtra; // negative value for penalty deduction
   bool isActive;
   int createdTime;
   int updatedTime;
@@ -43,7 +43,7 @@ class ScreenTimeRule {
     );
   }
 
-  // Converte un oggetto ScreenTimeRule in una mappa per SQLite.
+  // Converts a ScreenTimeRule object to a map for SQLite.
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       'name': name,
@@ -63,7 +63,7 @@ class ScreenTimeRule {
     return map;
   }
 
-  // Costruisce un oggetto ScreenTimeRule a partire da una mappa.
+  // Builds a ScreenTimeRule object from a map.
   factory ScreenTimeRule.fromMap(Map<String, dynamic> map) {
     return ScreenTimeRule(
       id: map['id'],

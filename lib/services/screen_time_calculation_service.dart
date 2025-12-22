@@ -7,12 +7,12 @@ import '../database/daily_screen_usage_database_helper.dart';
 import '../provider/points_provider.dart';
 import '../model/point.dart';
 
-/// Servizio per gestire i calcoli delle penalità dello screen time
+/// Service to manage screen time penalty calculations
 class ScreenTimeCalculationService {
   static const String _tag = 'ScreenTimeCalculationService';
 
-  /// Calcola i giorni non confermati che hanno penalità da applicare
-  /// Ritorna una lista ordinata dal più vecchio al più recente
+  /// Calculate unconfirmed days that have penalties to apply
+  /// Returns a list ordered from oldest to most recent
   Future<List<DailyScreenUsage>> getUnconfirmedDays() async {
     try {
       debugPrint('$_tag: Getting unconfirmed days...');
@@ -28,7 +28,7 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Calcola la penalità per una regola specifica in una data specifica
+  /// Calculate the penalty for a specific rule on a specific date
   Future<DailyScreenUsage> calculatePenaltyForRule(
     ScreenTimeRule rule,
     DateTime date,
@@ -44,14 +44,14 @@ class ScreenTimeCalculationService {
         '$_tag: Usage: ${actualUsageMinutes}min, Limit: ${rule.dailyTimeLimitMinutes}min',
       );
 
-      // Crea o aggiorna il record di utilizzo giornaliero
+      // Create or update the daily usage record
       final usage = DailyScreenUsage(
         ruleId: rule.id!,
         date: dateStr,
         totalUsageMinutes: actualUsageMinutes,
       );
 
-      // Calcola i minuti superati e la penalità
+      // Calculate exceeded minutes and penalty
       usage.calculateExceededMinutesAndPenalty(
         rule.dailyTimeLimitMinutes,
         rule.penaltyPerMinuteExtra,
@@ -68,7 +68,7 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Applica la penalità al sistema punti
+  /// Apply the penalty to the points system
   Future<bool> applyPenaltyToPoints(
     PointsProvider pointsProvider,
     DailyScreenUsage usage,
@@ -83,7 +83,7 @@ class ScreenTimeCalculationService {
         '$_tag: Applying penalty of ${usage.calculatedPenalty} points',
       );
 
-      // Crea un Point per la penalità
+      // Create a Point for the penalty
       final penaltyPoint = Point(
         points: usage.calculatedPenalty,
         type: 'screen_time',
@@ -91,10 +91,10 @@ class ScreenTimeCalculationService {
         insertTime: DateTime.now().millisecondsSinceEpoch,
       );
 
-      // Aggiungi i punti (saranno negativi se è una penalità)
+      // Add the points (will be negative if it's a penalty)
       await pointsProvider.savePoints(penaltyPoint);
 
-      // Marca la penalità come confermata
+      // Mark the penalty as confirmed
       final dbHelper = DailyScreenUsageDatabaseHelper.instance;
       await dbHelper.confirmPenalty(usage);
 
@@ -106,8 +106,8 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Controlla e calcola le penalità per tutte le regole attive
-  /// per una giornata specifica
+  /// Check and calculate penalties for all active rules
+  /// for a specific day
   Future<List<DailyScreenUsage>> checkAllRulesForDate(
     DateTime date,
     Map<String, int> appsUsage, // packageName -> usageMinutes
@@ -121,13 +121,13 @@ class ScreenTimeCalculationService {
       final List<DailyScreenUsage> results = [];
 
       for (final rule in activeRules) {
-        // Calcola l'uso totale per i package di questa regola
+        // Calculate total usage for the packages in this rule
         int totalUsage = 0;
         for (final package in rule.appPackages) {
           totalUsage += appsUsage[package] ?? 0;
         }
 
-        // Calcola la penalità per questa regola
+        // Calculate the penalty for this rule
         final usage = await calculatePenaltyForRule(rule, date, totalUsage);
         results.add(usage);
       }
@@ -142,12 +142,12 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Salva un record di utilizzo giornaliero nel database
+  /// Save a daily usage record in the database
   Future<bool> saveDailyUsage(DailyScreenUsage usage) async {
     try {
       final dbHelper = DailyScreenUsageDatabaseHelper.instance;
 
-      // Usa il metodo insertOrUpdate che gestisce sia insert che update
+      // Use the insertOrUpdate method that handles both insert and update
       await dbHelper.insertOrUpdateDailyScreenUsage(usage);
 
       debugPrint(
@@ -160,7 +160,7 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Elimina i dati vecchi (più di 1 mese)
+  /// Delete old data (more than 1 month)
   Future<bool> cleanupOldData() async {
     try {
       debugPrint('$_tag: Cleaning up old data...');
@@ -176,12 +176,12 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Formatta una data in stringa YYYY-MM-DD
+  /// Format a date as YYYY-MM-DD string
   String _formatDate(DateTime date) {
     return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// Controlla se ci sono penalità da confermare per una data specifica
+  /// Check if there are penalties to confirm for a specific date
   Future<bool> hasUnconfirmedPenaltiesForDate(DateTime date) async {
     try {
       final dateStr = _formatDate(date);
@@ -197,7 +197,7 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Ottieni un riepilogo delle penalità dell'ultimo mese
+  /// Get a summary of penalties from the last month
   Future<Map<String, dynamic>> getMonthlyPenaltySummary() async {
     try {
       final dbHelper = DailyScreenUsageDatabaseHelper.instance;
@@ -210,7 +210,7 @@ class ScreenTimeCalculationService {
         endDate,
       );
 
-      // Calcola giorni con penalità (necessita di query personalizzata)
+      // Calculate days with penalties (requires custom query)
       final Database db = await dbHelper.database;
       final result = await db.rawQuery(
         '''
@@ -223,7 +223,7 @@ class ScreenTimeCalculationService {
 
       final daysWithPenalties = result.first['days_with_penalty'] as int? ?? 0;
 
-      // Calcola giorni totali controllati
+      // Calculate total days checked
       final totalDaysResult = await db.rawQuery(
         '''
         SELECT COUNT(DISTINCT date) as total_days_checked
@@ -237,7 +237,7 @@ class ScreenTimeCalculationService {
           totalDaysResult.first['total_days_checked'] as int? ?? 0;
 
       return {
-        'totalPenalties': totalPenalty.abs(), // Valore assoluto per penalità
+        'totalPenalties': totalPenalty.abs(), // Absolute value for penalties
         'daysWithPenalties': daysWithPenalties,
         'totalDaysChecked': totalDaysChecked,
         'averagePenaltyPerDay':
@@ -254,7 +254,7 @@ class ScreenTimeCalculationService {
     }
   }
 
-  /// Ottieni le statistiche per una regola specifica
+  /// Get statistics for a specific rule
   Future<Map<String, dynamic>> getRuleStatistics(int ruleId) async {
     try {
       final dbHelper = DailyScreenUsageDatabaseHelper.instance;

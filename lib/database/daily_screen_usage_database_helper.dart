@@ -385,14 +385,14 @@ class DailyScreenUsageDatabaseHelper {
 
     final result = await db.rawQuery(
       '''
-      SELECT 
+      SELECT
         COUNT(*) as total_days,
         SUM($columnTotalUsageMinutes) as total_usage_minutes,
         SUM($columnExceededMinutes) as total_exceeded_minutes,
         SUM($columnCalculatedPenalty) as total_penalty,
-        COUNT(CASE WHEN $columnCalculatedPenalty < 0 THEN 1 END) as days_with_penalty
+        COUNT(CASE WHEN $columnCalculatedPenalty < 0 AND $columnPenaltyConfirmed = 1 THEN 1 END) as days_with_penalty
       FROM $tableDailyScreenUsage
-      WHERE $columnRuleId = ? AND $columnDate >= ? AND $columnDate <= ?
+      WHERE $columnRuleId = ? AND $columnDate >= ? AND $columnDate <= ? AND $columnPenaltyConfirmed = 1
     ''',
       [ruleId, startDate, endDate],
     );

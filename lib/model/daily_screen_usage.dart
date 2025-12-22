@@ -2,7 +2,7 @@ class DailyScreenUsage {
   int? id;
   int ruleId;
   String date; // YYYY-MM-DD format
-  int totalUsageMinutes; // Tempo effettivo usato
+  int totalUsageMinutes; // Actual time used
   int exceededMinutes; // Minuti oltre limite
   double calculatedPenalty; // Penalità calcolata
   bool penaltyConfirmed; // Se confermata dall'utente
@@ -41,7 +41,7 @@ class DailyScreenUsage {
     );
   }
 
-  // Calcola i minuti superati e la penalità basata sul limite
+  // Calculate exceeded minutes and penalty based on the limit
   void calculateExceededMinutesAndPenalty(
     int dailyTimeLimitMinutes,
     double penaltyPerMinuteExtra,
@@ -55,7 +55,7 @@ class DailyScreenUsage {
     }
   }
 
-  // Converte un oggetto DailyScreenUsage in una mappa per SQLite.
+  // Converts a DailyScreenUsage object to a map for SQLite.
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       'rule_id': ruleId,
@@ -73,7 +73,7 @@ class DailyScreenUsage {
     return map;
   }
 
-  // Costruisce un oggetto DailyScreenUsage a partire da una mappa.
+  // Builds a DailyScreenUsage object from a map.
   factory DailyScreenUsage.fromMap(Map<String, dynamic> map) {
     return DailyScreenUsage(
       id: map['id'],

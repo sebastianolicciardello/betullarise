@@ -33,7 +33,7 @@ class DailyUsageSummary extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Oggi',
+                      'Today',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -43,14 +43,14 @@ class DailyUsageSummary extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildSummaryRow(
                   context,
-                  'Regole attive',
+                  'Active rules',
                   '${screenTimeProvider.rules.where((rule) => rule.isActive).length}',
                   Icons.rule,
                 ),
                 const SizedBox(height: 8),
                 _buildSummaryRow(
                   context,
-                  'Giorni non confermati',
+                  'Unconfirmed days',
                   '${screenTimeProvider.unconfirmedDays.length}',
                   Icons.pending_actions,
                   color:
@@ -61,8 +61,8 @@ class DailyUsageSummary extends StatelessWidget {
                 const SizedBox(height: 8),
                 _buildSummaryRow(
                   context,
-                  'Permesso statistiche',
-                  screenTimeProvider.hasPermission ? 'Concesso' : 'Negato',
+                  'Statistics permission',
+                  screenTimeProvider.hasPermission ? 'Granted' : 'Denied',
                   screenTimeProvider.hasPermission
                       ? Icons.check_circle
                       : Icons.error,

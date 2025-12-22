@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import '../../../model/daily_screen_usage.dart';
 import '../../provider/screen_time_provider.dart';
-import 'penalty_confirmation_dialog.dart';
+import '../../database/daily_screen_usage_database_helper.dart';
+import 'create_rule_page.dart';
+import 'edit_rule_page.dart';
+import 'screen_time_rules_page.dart';
 import 'widgets/rule_card.dart';
 import 'widgets/loading_indicator.dart';
 
@@ -15,10 +17,12 @@ class ScreenTimePage extends StatefulWidget {
 }
 
 class _ScreenTimePageState extends State<ScreenTimePage> {
+  Map<int, int> _todayUsageMap = {}; // ruleId -> todayUsageMinutes
+
   @override
   void initState() {
     super.initState();
-    // Esegui il controllo iniziale quando la pagina si apre
+    // Perform initial check when the page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _performInitialCheck();
     });
@@ -32,49 +36,68 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
         listen: false,
       );
       await screenTimeProvider.performInitialCheck();
+
       debugPrint('ScreenTimePage: Initial check completed');
 
-      // Se ci sono giorni non confermati, mostra il primo dialog
-      if (screenTimeProvider.unconfirmedDays.isNotEmpty && mounted) {
-        debugPrint('ScreenTimePage: Showing penalty confirmation dialog');
-        _showPenaltyConfirmationDialog(
-          screenTimeProvider.unconfirmedDays.first,
-        );
-      } else {
-        debugPrint('ScreenTimePage: No unconfirmed days');
-      }
+      // Always calculate today's usage to check for new violations
+      await _calculateTodayUsage();
+      debugPrint('ScreenTimePage: Calculated today usage');
     } catch (e) {
       debugPrint('ScreenTimePage: Error in _performInitialCheck: $e');
-      // Non mostrare dialog di errore per evitare loop
+      // Don't show error dialog to avoid loop
     }
   }
 
-  void _showPenaltyConfirmationDialog(DailyScreenUsage usage) async {
-    final screenTimeProvider = Provider.of<ScreenTimeProvider>(
-      context,
-      listen: false,
-    );
-
-    // Trova la regola corrispondente
-    final rule = screenTimeProvider.getRuleById(usage.ruleId);
-    if (rule == null) return;
-
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false, // Non permettere di chiudere toccando fuori
-      builder: (context) => PenaltyConfirmationDialog(usage: usage, rule: rule),
-    );
-
-    // Se l'utente ha confermato o saltato, controlla se ci sono altri giorni
-    if (result != null && mounted) {
-      final updatedProvider = Provider.of<ScreenTimeProvider>(
+  Future<void> _calculateTodayUsage() async {
+    try {
+      final screenTimeProvider = Provider.of<ScreenTimeProvider>(
         context,
         listen: false,
       );
-      if (updatedProvider.unconfirmedDays.isNotEmpty) {
-        // Mostra il prossimo giorno non confermato
-        _showPenaltyConfirmationDialog(updatedProvider.unconfirmedDays.first);
+
+      final today = DateTime.now();
+      final appsUsage = await screenTimeProvider.calculatePenaltiesForDate(
+        today,
+      );
+
+      // Save penalties that have been calculated
+      for (final usage in appsUsage) {
+        if (usage.calculatedPenalty < 0) {
+          // Only save if there's a penalty to apply
+          // Check if this penalty is already confirmed for today
+          final dbHelper = DailyScreenUsageDatabaseHelper.instance;
+          final existingUsage = await dbHelper.queryDailyUsageByRuleAndDate(
+            usage.ruleId,
+            usage.date,
+          );
+
+          // Only save if no existing confirmed penalty for today
+          if (existingUsage == null || !existingUsage.penaltyConfirmed) {
+            await screenTimeProvider.saveDailyUsage(usage);
+          }
+        }
       }
+
+      // Reload unconfirmed days to show new penalties
+      await screenTimeProvider.checkForUnconfirmedDays();
+
+      // Create a map of ruleId -> totalUsageMinutes
+      final Map<int, int> usageMap = {};
+      for (final usage in appsUsage) {
+        usageMap[usage.ruleId] = usage.totalUsageMinutes;
+      }
+
+      if (mounted) {
+        setState(() {
+          _todayUsageMap = usageMap;
+        });
+      }
+
+      debugPrint(
+        'ScreenTimePage: Calculated today usage and saved penalties for ${usageMap.length} rules',
+      );
+    } catch (e) {
+      debugPrint('ScreenTimePage: Error calculating today usage: $e');
     }
   }
 
@@ -85,13 +108,15 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
         builder: (context, screenTimeProvider, child) {
           if (screenTimeProvider.isLoading) {
             return const LoadingIndicator(
-              message: 'Caricamento regole screen time...',
+              message: 'Loading screen time rules...',
             );
           }
 
           return RefreshIndicator(
             onRefresh: () async {
               await screenTimeProvider.performInitialCheck();
+              // Always calculate today usage to check for new violations
+              await _calculateTodayUsage();
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -99,10 +124,10 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner di permesso se non concesso
+                  // Permission banner if not granted
                   if (!screenTimeProvider.hasPermission)
                     _buildPermissionBanner(screenTimeProvider),
-                  // Lista delle regole attive
+                  // List of active rules
                   if (screenTimeProvider.rules.isEmpty)
                     _buildEmptyState(screenTimeProvider)
                   else
@@ -112,6 +137,23 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CreateRulePage()),
+          );
+        },
+        tooltip: 'Create new rule',
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.light
+                ? Colors.black
+                : Colors.white,
+        foregroundColor:
+            Theme.of(context).brightness == Brightness.light
+                ? Colors.white
+                : Colors.black,
+        child: Icon(Icons.add, size: 24.sp),
       ),
     );
   }
@@ -126,7 +168,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             Icon(Icons.rule, size: 80.sp, color: Colors.grey),
             SizedBox(height: 24.h),
             Text(
-              'Nessuna Regola Creata',
+              'No Rules Created',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -134,7 +176,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             ),
             SizedBox(height: 16.h),
             Text(
-              'Crea la tua prima regola per monitorare il tempo trascorso nelle app.',
+              'Create your first rule to monitor time spent on apps.',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
@@ -143,42 +185,67 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             SizedBox(height: 8.h),
             if (!screenTimeProvider.hasPermission)
               Text(
-                'Nota: concedi il permesso per abilitare il monitoraggio automatico.',
+                'Note: grant permission to enable automatic monitoring.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                 textAlign: TextAlign.center,
               ),
             SizedBox(height: 32.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Naviga alla pagina di creazione regola
-                // Per ora, mostra un messaggio
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Funzione di creazione regola non ancora implementata',
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const CreateRulePage(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.add, size: 20.sp),
+                    label: Text(
+                      'Create Rule',
+                      style: TextStyle(fontSize: 16.sp),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.light
+                              ? Colors.black
+                              : Colors.white,
+                      foregroundColor:
+                          Theme.of(context).brightness == Brightness.light
+                              ? Colors.white
+                              : Colors.black,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                );
-              },
-              icon: Icon(Icons.add, size: 20.sp),
-              label: Text('Crea Regola', style: TextStyle(fontSize: 16.sp)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Theme.of(context).brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                foregroundColor:
-                    Theme.of(context).brightness == Brightness.light
-                        ? Colors.white
-                        : Colors.black,
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                textStyle: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
+                SizedBox(width: 12.w),
+                if (screenTimeProvider.rules.isNotEmpty)
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ScreenTimeRulesPage(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.settings, size: 24.sp),
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      padding: EdgeInsets.all(12.w),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -201,7 +268,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              'Permesso richiesto per monitorare l\'uso delle app. Concedi il permesso per abilitare le regole.',
+              'Permission required to monitor app usage. Grant permission to enable rules.',
               style: TextStyle(color: Colors.grey.shade700, fontSize: 14.sp),
             ),
           ),
@@ -223,24 +290,24 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                   builder: (BuildContext context) {
                     return AlertDialog(
                       title: Text(
-                        'Come concedere il permesso',
+                        'How to grant permission',
                         style: TextStyle(fontSize: 18.sp),
                       ),
                       content: Text(
-                        'Per monitorare l\'uso delle app, devi concedere manualmente il permesso di accesso ai dati di utilizzo:\n\n'
-                        '1. Apri Impostazioni del telefono\n'
-                        '2. Vai su "App" o "Applicazioni"\n'
-                        '3. Trova e seleziona "Betullarise"\n'
-                        '4. Vai su "Permessi" o "Autorizzazioni"\n'
-                        '5. Abilita "Accesso ai dati di utilizzo"\n\n'
-                        'Dopo aver aver concesso il permesso, torna all\'app e ricarica.',
+                        'To monitor app usage, you need to manually grant permission to access usage data:\n\n'
+                        '1. Open phone Settings\n'
+                        '2. Go to "Apps" or "Applications"\n'
+                        '3. Find and select "Betullarise"\n'
+                        '4. Go to "Permissions" or "Authorizations"\n'
+                        '5. Enable "Access to usage data"\n\n'
+                        'After granting permission, return to the app and reload.',
                         style: TextStyle(fontSize: 14.sp),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
                           child: Text(
-                            'Annulla',
+                            'Cancel',
                             style: TextStyle(fontSize: 14.sp),
                           ),
                         ),
@@ -256,7 +323,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                                     : Colors.black,
                           ),
                           onPressed: () async {
-                            // Prova ad aprire le impostazioni
+                            // Try to open settings
                             try {
                               await screenTimeProvider
                                   .requestUsageStatsPermission();
@@ -268,7 +335,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                             }
                           },
                           child: Text(
-                            'Apri Impostazioni',
+                            'Open Settings',
                             style: TextStyle(fontSize: 14.sp),
                           ),
                         ),
@@ -278,7 +345,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
                 );
               }
             },
-            child: Text('Concedi', style: TextStyle(fontSize: 14.sp)),
+            child: Text('Grant', style: TextStyle(fontSize: 14.sp)),
           ),
         ],
       ),
@@ -290,7 +357,7 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Regole Attive',
+          'Active Rules',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -304,16 +371,35 @@ class _ScreenTimePageState extends State<ScreenTimePage> {
             final rule = screenTimeProvider.rules[index];
             return Padding(
               padding: EdgeInsets.only(bottom: 8.h),
-              child: Card(
-                margin: EdgeInsets.symmetric(horizontal: 0, vertical: 4.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (context) => EditRulePage(rule: rule),
+                        ),
+                      )
+                      .then((_) {
+                        // Refresh data after returning from edit page
+                        if (mounted) {
+                          _performInitialCheck();
+                        }
+                      });
+                },
+                child: Card(
+                  margin: EdgeInsets.symmetric(horizontal: 0, vertical: 4.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  child: RuleCard(
+                    rule: rule,
+                    todayUsageMinutes: _todayUsageMap[rule.id],
                   ),
                 ),
-                child: RuleCard(rule: rule),
               ),
             );
           },

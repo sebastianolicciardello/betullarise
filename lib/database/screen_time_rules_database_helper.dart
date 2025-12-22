@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 class ScreenTimeRulesDatabaseHelper {
   // Database name and table
   static const _databaseName = 'betullarise.db';
-  static const _databaseVersion = 2; // Update version for migration
+  static const _databaseVersion = 3; // Update version for penalty fix
   static const tableScreenTimeRules = 'screen_time_rules';
 
   // Column definitions
@@ -38,14 +38,14 @@ class ScreenTimeRulesDatabaseHelper {
 
   Future<Database> get database async {
     try {
-      developer.log("get database chiamato", name: "SCREEN_TIME_RULES");
+      developer.log("get database called", name: "SCREEN_TIME_RULES");
       if (_database != null) return _database!;
       // If the database has not been initialized yet, create it
       _database = await _initDatabase();
       return _database!;
     } catch (e, stackTrace) {
       developer.log(
-        "Errore in get database: $e\n$stackTrace",
+        "Error in get database: $e\n$stackTrace",
         name: "DATABASE_ERROR",
       );
       rethrow;
@@ -73,7 +73,7 @@ class ScreenTimeRulesDatabaseHelper {
           );
         } catch (e, stack) {
           developer.log(
-            "Errore apertura DB su macOS: $e\n$stack",
+            "Error opening DB on macOS: $e\n$stack",
             name: "DATABASE_ERROR",
           );
           rethrow;
@@ -91,7 +91,7 @@ class ScreenTimeRulesDatabaseHelper {
       }
     } catch (e, stack) {
       developer.log(
-        "Errore in _initDatabase: $e\n$stack",
+        "Error in _initDatabase: $e\n$stack",
         name: "DATABASE_ERROR",
       );
       rethrow;
@@ -123,6 +123,19 @@ class ScreenTimeRulesDatabaseHelper {
         name: "SCREEN_TIME_RULES",
       );
     }
+
+    if (oldVersion < 3) {
+      // Fix penalty values to be negative
+      await db.execute('''
+        UPDATE $tableScreenTimeRules
+        SET $columnPenaltyPerMinuteExtra = $columnPenaltyPerMinuteExtra * -1
+        WHERE $columnPenaltyPerMinuteExtra > 0
+      ''');
+      developer.log(
+        "Updated penalty values to negative in migration",
+        name: "SCREEN_TIME_RULES",
+      );
+    }
   }
 
   // Create table in the database
@@ -151,7 +164,7 @@ class ScreenTimeRulesDatabaseHelper {
 
   // Make sure the table exists when we open the database
   Future _onOpen(Database db) async {
-    // Verifica l'esistenza della tabella screen_time_rules
+    // Check the existence of the screen_time_rules table
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
       [tableScreenTimeRules],

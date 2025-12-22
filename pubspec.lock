@@ -270,6 +270,30 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_device_apps:
+    dependency: "direct main"
+    description:
+      name: flutter_device_apps
+      sha256: b15f81a2ce1dae371fa693377d8dc2b9b03fc80c3a7e3b68ad287e0ea7133665
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
+  flutter_device_apps_android:
+    dependency: transitive
+    description:
+      name: flutter_device_apps_android
+      sha256: "94e2741cb0970ac33787ad06f1e43fdd4b557bf91f7c8dd90fe015aacf6e3234"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  flutter_device_apps_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_device_apps_platform_interface
+      sha256: fb80982290f664a3f7c6d480c37c51a9d21ca45219487f29a1ca7a5d1de47494
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:

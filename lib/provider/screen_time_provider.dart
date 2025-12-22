@@ -5,7 +5,7 @@ import '../database/screen_time_rules_database_helper.dart';
 import '../services/android_usage_stats_service.dart';
 import '../services/screen_time_calculation_service.dart';
 
-/// Provider per gestire lo stato dello screen time
+/// Provider to manage screen time state
 class ScreenTimeProvider with ChangeNotifier {
   final AndroidUsageStatsService _usageStatsService;
   final ScreenTimeCalculationService _calculationService;
@@ -17,11 +17,11 @@ class ScreenTimeProvider with ChangeNotifier {
        _calculationService =
            calculationService ?? ScreenTimeCalculationService();
 
-  // Stati
+  // States
   List<ScreenTimeRule> _rules = [];
   List<DailyScreenUsage> _unconfirmedDays = [];
   bool _isLoading = false;
-  bool _hasPermission = false; // Default a false, controlla subito
+  bool _hasPermission = false; // Default to false, check immediately
   String? _errorMessage;
 
   // Getters
@@ -31,7 +31,7 @@ class ScreenTimeProvider with ChangeNotifier {
   bool get hasPermission => _hasPermission;
   String? get errorMessage => _errorMessage;
 
-  /// Imposta il loading state
+  /// Set the loading state
   void setLoading(bool loading) {
     if (_isLoading != loading) {
       _isLoading = loading;
@@ -39,7 +39,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Forza lo stato del permesso (per quando l'utente conferma di averlo concesso)
+  /// Force the permission state (when user confirms they granted it)
   void setHasPermission(bool value) {
     if (_hasPermission != value) {
       _hasPermission = value;
@@ -47,19 +47,19 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Imposta un messaggio di errore
+  /// Set an error message
   void setErrorMessage(String? message) {
     _errorMessage = message;
     notifyListeners();
   }
 
-  /// Pulisce il messaggio di errore
+  /// Clear the error message
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Carica tutte le regole attive
+  /// Load all active rules
   Future<void> loadRules() async {
     try {
       setLoading(true);
@@ -72,13 +72,13 @@ class ScreenTimeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error loading rules: $e');
-      setErrorMessage('Errore nel caricamento delle regole: $e');
+      setErrorMessage('Error loading rules: $e');
     } finally {
       setLoading(false);
     }
   }
 
-  /// Carica solo le regole attive
+  /// Load only active rules
   Future<void> loadActiveRules() async {
     try {
       setLoading(true);
@@ -91,13 +91,13 @@ class ScreenTimeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error loading active rules: $e');
-      setErrorMessage('Errore nel caricamento delle regole attive: $e');
+      setErrorMessage('Error loading active rules: $e');
     } finally {
       setLoading(false);
     }
   }
 
-  /// Controlla se ci sono giorni non confermati con penalità
+  /// Check if there are unconfirmed days with penalties
   Future<void> checkForUnconfirmedDays() async {
     try {
       setLoading(true);
@@ -111,13 +111,13 @@ class ScreenTimeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error checking unconfirmed days: $e');
-      setErrorMessage('Errore nel controllo dei giorni non confermati: $e');
+      setErrorMessage('Error checking unconfirmed days: $e');
     } finally {
       setLoading(false);
     }
   }
 
-  /// Aggiunge una nuova regola
+  /// Add a new rule
   Future<bool> addRule(ScreenTimeRule rule) async {
     try {
       setLoading(true);
@@ -126,7 +126,7 @@ class ScreenTimeProvider with ChangeNotifier {
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
       await dbHelper.insertScreenTimeRule(rule);
 
-      // Ricarica le regole
+      // Reload rules
       await loadRules();
 
       debugPrint('ScreenTimeProvider: Added rule ${rule.name}');
@@ -140,7 +140,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Aggiorna una regola esistente
+  /// Update an existing rule
   Future<bool> updateRule(ScreenTimeRule rule) async {
     try {
       setLoading(true);
@@ -149,7 +149,7 @@ class ScreenTimeProvider with ChangeNotifier {
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
       await dbHelper.updateScreenTimeRule(rule);
 
-      // Ricarica le regole
+      // Reload rules
       await loadRules();
 
       debugPrint('ScreenTimeProvider: Updated rule ${rule.name}');
@@ -163,7 +163,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Elimina una regola
+  /// Delete a rule
   Future<bool> deleteRule(int ruleId) async {
     try {
       setLoading(true);
@@ -172,7 +172,7 @@ class ScreenTimeProvider with ChangeNotifier {
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
       await dbHelper.deleteScreenTimeRule(ruleId);
 
-      // Rimuovi dalla lista locale
+      // Remove from local list
       _rules.removeWhere((rule) => rule.id == ruleId);
 
       debugPrint('ScreenTimeProvider: Deleted rule with ID $ruleId');
@@ -187,7 +187,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Attiva/disattiva una regola
+  /// Activate/deactivate a rule
   Future<bool> toggleRuleActive(int ruleId, bool isActive) async {
     try {
       clearError();
@@ -195,7 +195,7 @@ class ScreenTimeProvider with ChangeNotifier {
       final dbHelper = ScreenTimeRulesDatabaseHelper.instance;
       await dbHelper.toggleScreenTimeRuleActive(ruleId, isActive);
 
-      // Aggiorna la regola locale
+      // Update local rule
       final ruleIndex = _rules.indexWhere((rule) => rule.id == ruleId);
       if (ruleIndex != -1) {
         _rules[ruleIndex] = _rules[ruleIndex].copyWith(isActive: isActive);
@@ -211,14 +211,14 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Verifica se il permesso per le statistiche di utilizzo è concesso
+  /// Check if usage stats permission is granted
   Future<bool> checkUsageStatsPermission() async {
     const int maxRetries = 3;
     const Duration delay = Duration(milliseconds: 1000);
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // Aggiungi un delay per permettere al sistema di aggiornare i permessi
+        // Add a delay to allow the system to update permissions
         await Future.delayed(delay);
 
         final result = await _usageStatsService.isUsageStatsPermissionGranted();
@@ -240,7 +240,7 @@ class ScreenTimeProvider with ChangeNotifier {
           'ScreenTimeProvider: Error checking permission on attempt $attempt: $e',
         );
         if (attempt == maxRetries) {
-          setErrorMessage('Errore nel controllo dei permessi: $e');
+          setErrorMessage('Error checking permissions: $e');
         }
       }
     }
@@ -250,7 +250,7 @@ class ScreenTimeProvider with ChangeNotifier {
     return false;
   }
 
-  /// Richiede il permesso per le statistiche di utilizzo
+  /// Request usage stats permission
   Future<bool> requestUsageStatsPermission() async {
     try {
       _hasPermission = await _usageStatsService.requestUsageStatsPermission();
@@ -258,61 +258,61 @@ class ScreenTimeProvider with ChangeNotifier {
       return _hasPermission;
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error requesting permission: $e');
-      setErrorMessage('Errore nella richiesta dei permessi: $e');
+      setErrorMessage('Error requesting permissions: $e');
       return false;
     }
   }
 
-  /// Esegue un check completo quando si apre la sezione screen time
+  /// Perform a complete check when opening the screen time section
   Future<void> performInitialCheck() async {
     try {
       setLoading(true);
       clearError();
 
-      // 0. Controlla i permessi solo se non già concessi
+      // 0. Check permissions only if not already granted
       if (!_hasPermission) {
         await checkUsageStatsPermission();
       }
 
-      // Se non abbiamo il permesso, non carichiamo altro
+      // If we don't have permission, don't load anything else
       if (!_hasPermission) {
         debugPrint('ScreenTimeProvider: No permission, skipping other checks');
         return;
       }
 
-      // 1. Carica le regole attive
+      // 1. Load active rules
       await loadActiveRules();
 
-      // 2. Controlla i giorni non confermati
+      // 2. Check unconfirmed days
       await checkForUnconfirmedDays();
 
       debugPrint('ScreenTimeProvider: Initial check completed');
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error in initial check: $e');
-      setErrorMessage('Errore nel controllo iniziale: $e');
+      setErrorMessage('Error in initial check: $e');
     } finally {
       setLoading(false);
     }
   }
 
-  /// Calcola le penalità per tutte le regole per una data specifica
+  /// Calculate penalties for all rules for a specific date
   Future<List<DailyScreenUsage>> calculatePenaltiesForDate(
     DateTime date,
   ) async {
     try {
-      // Ottieni l'uso delle app per il giorno specificato
+      // Get app usage for the specified day
       final appsUsage = await _usageStatsService.getAppsUsageForDay(date, []);
 
-      // Calcola le penalità per tutte le regole
+      // Calculate penalties for all rules
       return await _calculationService.checkAllRulesForDate(date, appsUsage);
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error calculating penalties: $e');
-      setErrorMessage('Errore nel calcolo delle penalità: $e');
+      setErrorMessage('Error calculating penalties: $e');
       return [];
     }
   }
 
-  /// Salva un utilizzo giornaliero
+  /// Save daily usage
   Future<bool> saveDailyUsage(DailyScreenUsage usage) async {
     try {
       return await _calculationService.saveDailyUsage(usage);
@@ -323,7 +323,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Pulisce i dati vecchi
+  /// Clean up old data
   Future<bool> cleanupOldData() async {
     try {
       setLoading(true);
@@ -331,26 +331,26 @@ class ScreenTimeProvider with ChangeNotifier {
 
       final result = await _calculationService.cleanupOldData();
 
-      // Ricarica i giorni non confermati dopo la pulizia
+      // Reload unconfirmed days after cleanup
       await checkForUnconfirmedDays();
 
       return result;
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error cleaning up old data: $e');
-      setErrorMessage('Errore nella pulizia dei dati vecchi: $e');
+      setErrorMessage('Error cleaning up old data: $e');
       return false;
     } finally {
       setLoading(false);
     }
   }
 
-  /// Ottiene un riepilogo mensile delle penalità
+  /// Get monthly penalty summary
   Future<Map<String, dynamic>> getMonthlySummary() async {
     try {
       return await _calculationService.getMonthlyPenaltySummary();
     } catch (e) {
       debugPrint('ScreenTimeProvider: Error getting monthly summary: $e');
-      setErrorMessage('Errore nel recupero del riepilogo mensile: $e');
+      setErrorMessage('Error retrieving monthly summary: $e');
       return {
         'totalPenalties': 0.0,
         'daysWithPenalties': 0,
@@ -360,7 +360,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Ottieni una regola specifica per ID
+  /// Get a specific rule by ID
   ScreenTimeRule? getRuleById(int ruleId) {
     try {
       return _rules.firstWhere((rule) => rule.id == ruleId);
@@ -369,7 +369,7 @@ class ScreenTimeProvider with ChangeNotifier {
     }
   }
 
-  /// Resetta lo stato del provider
+  /// Reset provider state
   void reset() {
     _rules = [];
     _unconfirmedDays = [];
